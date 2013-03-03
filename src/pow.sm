@@ -1,0 +1,33 @@
+	R
+	S k
+$4:	R
+	S n
+$3:	C 1
+	S r
+$2:	J $5
+$6:	L k
+	C 2
+	B %
+	C 0
+	B !=
+	JT $9
+	J $8
+$9:	L r
+	L n
+	B *
+	S r
+$8:	L n
+	L n
+	B *
+	S n
+$7:	L k
+	C 2
+	B /
+	S k
+$5:	L k
+	C 0
+	B >
+	JT $6
+$1:	L r
+	W
+$0:	E
