@@ -42,10 +42,11 @@ module Lexer =
 module Expr =
   struct
   
-    generic t = 
-      Var   of [string] 
-    | Const of [int] 
-    | Binop of [int -> int -> int] * [string] * t * t 
+    generic t = [>  
+        `Var   of [string] 
+      | `Const of [int]
+      | `Binop of [int -> int -> int] * [string] * t * t 
+    ]
 
     let prio = 
       let a = [
@@ -55,27 +56,27 @@ module Expr =
         "+", 6; "-", 6; 
         "*", 7; "/", 7; "%", 7
       ] in
-      function Binop (_, s, _, _) -> List.assoc s a | _ -> 8
+      function `Binop (_, s, _, _) -> List.assoc s a | _ -> 8
 
-    class virtual ['a, 'b] t_t =
+    class virtual ['self, 'a, 'b] t_t =
       object (this)
-        method virtual m_Var   : 'a -> t -> string -> 'b
-        method virtual m_Const : 'a -> t -> int -> 'b
-        method virtual m_Binop : 'a -> t -> (int -> int -> int) -> string -> ('a, t, 'b) Generic.a -> ('a, t, 'b) Generic.a -> 'b
+        method virtual m_Var   : 'a -> 'self t -> string -> 'b
+        method virtual m_Const : 'a -> 'self t -> int -> 'b
+        method virtual m_Binop : 'a -> 'self t -> (int -> int -> int) -> string -> ('a, 'self t, 'b) Generic.a -> ('a, 'self t, 'b) Generic.a -> 'b
       end
 
-    class eval =
+    class ['self] eval =
       object (this)
-        inherit [State.t, int] t_t
+        inherit ['self, State.t, int] t_t
         method m_Var   s _ x       = s x
         method m_Const _ _ n       = n
         method m_Binop s _ f _ x y = f (x.Generic.f s) (y.Generic.f s)
       end
 
-    class print =
+    class ['self] print =
       object (this)
-        inherit [unit, printer * int] t_t
-        method m_Var   _ e x = string x, prio e
+        inherit ['self, unit, printer * int] t_t 
+        method m_Var   _ e x = string x, prio e 
         method m_Const _ e x = int x, prio e
         method m_Binop _ e _ op x y = 
           let x, px = x.Generic.f () in
@@ -83,16 +84,16 @@ module Expr =
           let p = prio e in b [w p px x; string op; w p py y], p
       end
 
-    class code =
+    class ['self] code =
       object (this)
-        inherit [unit, string list] t_t
+        inherit ['self, unit, string list] t_t
         method m_Var   _ _ x       = ["x"; x]
         method m_Const _ _ x       = ["!"; string_of_int x] 
         method m_Binop _ _ _ o x y = ["@"; o] @ List.flatten [x.Generic.f (); y.Generic.f ()]
       end
 
     let rec parse s =  
-      let l = List.map (fun (s, t) -> ostap(- $(s)), fun x y -> Binop (t, s, x, y)) in
+      let l = List.map (fun (s, t) -> ostap(- $(s)), fun x y -> `Binop (t, s, x, y)) in
       let ior  x y = abs x + abs y in
       let iand x y = abs (x * y) in
       let b f = fun x y -> if f x y then 1 else 0 in
@@ -107,8 +108,8 @@ module Expr =
       s
     and ostap (
       primary: 
-        x:!(Lexer.ident)   {Var   x} 
-      | i:!(Lexer.literal) {Const i}
+        x:!(Lexer.ident)   {`Var   x} 
+      | i:!(Lexer.literal) {`Const i}
       | -"(" parse -")"
     )
 
@@ -117,29 +118,30 @@ module Expr =
 module Stmt =
   struct
 
-    generic 'e t =
-      Skip 
-    | Assign of [string] * 'e
-    | Read   of [string]
-    | Write  of 'e
-    | If     of 'e * 'e t * 'e t
-    | While  of 'e * 'e t  
-    | Seq    of 'e t * 'e t 
+    generic 'e t = [>
+        `Skip 
+      | `Assign of [string] * 'e
+      | `Read   of [string]
+      | `Write  of 'e
+      | `If     of 'e * 'e t * 'e t
+      | `While  of 'e * 'e t  
+      | `Seq    of 'e t * 'e t 
+    ]
 
-    class virtual ['e, 'f, 'b, 'c] t_t =
+    class virtual ['self, 'e, 'f, 'b, 'c] t_t =
       object (this)
-        method virtual m_Skip   : 'b -> 'e t -> 'c
-        method virtual m_Assign : 'b -> 'e t -> string -> ('b, 'e, 'f) Generic.a -> 'c
-        method virtual m_Read   : 'b -> 'e t -> string -> 'c
-        method virtual m_Write  : 'b -> 'e t -> ('b, 'e, 'f) Generic.a -> 'c
-        method virtual m_If     : 'b -> 'e t -> ('b, 'e, 'f) Generic.a -> ('b, 'e t, 'c) Generic.a -> ('b, 'e t, 'c) Generic.a -> 'c
-        method virtual m_While  : 'b -> 'e t -> ('b, 'e, 'f) Generic.a -> ('b, 'e t, 'c) Generic.a -> 'c
-        method virtual m_Seq    : 'b -> 'e t -> ('b, 'e t, 'c) Generic.a -> ('b, 'e t, 'c) Generic.a -> 'c
+        method virtual m_Skip   : 'b -> ('self, 'e) t -> 'c
+        method virtual m_Assign : 'b -> ('self, 'e) t -> string -> ('b, 'e, 'f) Generic.a -> 'c
+        method virtual m_Read   : 'b -> ('self, 'e) t -> string -> 'c
+        method virtual m_Write  : 'b -> ('self, 'e) t -> ('b, 'e, 'f) Generic.a -> 'c
+        method virtual m_If     : 'b -> ('self, 'e) t -> ('b, 'e, 'f) Generic.a -> ('b, ('self, 'e) t, 'c) Generic.a -> ('b, ('self, 'e) t, 'c) Generic.a -> 'c
+        method virtual m_While  : 'b -> ('self, 'e) t -> ('b, 'e, 'f) Generic.a -> ('b, ('self, 'e) t, 'c) Generic.a -> 'c
+        method virtual m_Seq    : 'b -> ('self, 'e) t -> ('b, ('self, 'e) t, 'c) Generic.a -> ('b, ('self, 'e) t, 'c) Generic.a -> 'c
       end
     
-    class interpret =
+    class ['self, 'e] interpret =
       object (this)
-        inherit [Expr.t, int, State.t, State.t] t_t         
+        inherit ['self, 'e Expr.t, int, State.t, State.t] t_t         
         method m_Skip s _ = s
         method m_Assign s _ x e = State.modify s x (e.Generic.f s)
         method m_Read s _ x = 
@@ -154,13 +156,13 @@ module Stmt =
         method m_If s _ e s1 s2 = (if e.Generic.f s = 0 then s2 else s1).Generic.f s
         method m_While s t e s1 = if e.Generic.f s = 0 
                                      then s 
-                                     else s1.Generic.g s (Seq (s1.Generic.x, t))
+                                     else s1.Generic.g s (`Seq (s1.Generic.x, t))
         method m_Seq s _ s1 s2 = s2.Generic.f (s1.Generic.f s)
       end
 
-    class print =
+    class ['self, 'e] print =
       object (this)
-        inherit [Expr.t, printer, unit, printer] t_t
+        inherit ['self, 'e Expr.t, printer, unit, printer] t_t
         method m_Skip   _ s       = string "skip"
         method m_Assign _ s x e   = v [string x; string ":="; e.Generic.f ()]
         method m_If     _ s c x y = v [string "if"; c.Generic.f (); v [string "then"; x.Generic.f (); string "else"; y.Generic.f ()]]
@@ -170,9 +172,9 @@ module Stmt =
         method m_Write  _ s e     = v [string "write"; rboxed (e.Generic.f ())]
       end
 
-    class code =
+    class ['self, 'e] code =
       object (this)
-        inherit [Expr.t, string list, unit, string list] t_t
+        inherit ['self, 'e Expr.t, string list, unit, string list] t_t
         method m_Skip   _ _       = ["s"]
         method m_Seq    _ _ x y   = ";" :: (x.Generic.f ()) @ (y.Generic.f ())
         method m_Assign _ _ x e   = "=" :: x :: (e.Generic.f ())
@@ -187,14 +189,14 @@ module Stmt =
       ident    : !(Lexer.ident);
       key[name]: @(name ^ "\\b" : name);
       parse: 
-        x:ident ":=" e:expr                                      {Assign (x, e)}
-      | key["skip"]                                              {Skip}
-      | key["read" ] "(" x:ident ")"                             {Read x}
-      | key["write"] "(" e:expr ")"                              {Write e}
-      | key["if"] c:expr key["then"] x:parse key["else"] y:parse {If (c, x, y)}
-      | key["while"] c:expr key["do"] s:parse                    {While (c, s)}
+        x:ident ":=" e:expr                                      {`Assign (x, e)}
+      | key["skip"]                                              {`Skip}
+      | key["read" ] "(" x:ident ")"                             {`Read x}
+      | key["write"] "(" e:expr ")"                              {`Write e}
+      | key["if"] c:expr key["then"] x:parse key["else"] y:parse {`If (c, x, y)}
+      | key["while"] c:expr key["do"] s:parse                    {`While (c, s)}
       | -"{" -s:parse -";" seqs[s] -"}";
-      seqs[acc]: s:parse t:(-";" seqs[Seq (acc, s)])? {match t with Some t -> t | None -> Seq (acc, s)}
+      seqs[acc]: s:parse t:(-";" seqs[`Seq (acc, s)])? {match t with Some t -> t | None -> `Seq (acc, s)}
     )
 
   end
@@ -211,9 +213,9 @@ module Compiler =
       struct
         include Expr
 
-        class compile =
+        class ['e] compile =
           object (this)
-            inherit [[`Yes of int | `No], string list] t_t
+            inherit ['e,[`Yes of int | `No], string list] t_t
             method m_Var   l _ x       = first l [Printf.sprintf "\tL %s\n" x]
             method m_Const l _ n       = first l [Printf.sprintf "\tC %d\n" n]
             method m_Binop l _ f o x y = (x.Generic.f l) @ (y.Generic.f `No) @ [Printf.sprintf "\tB %s\n" o]
@@ -227,9 +229,9 @@ module Compiler =
 
         type env = [`Yes of int | `No] * [`Yes of int | `Maybe of int] * int
 
-        class compile =
+        class ['self, 'e] compile =
           object (this)
-            inherit [Expr.t, string list, env, string list * int] t_t
+            inherit ['self, 'e Expr.t, string list, env, string list * int] t_t
             method m_Skip (this, next, last) _  = 
               (match this, next with 
                | `No   , `Maybe n            -> []
@@ -238,10 +240,10 @@ module Compiler =
               ), last
             method m_Seq ((this, next, last) as env) _ s1 s2 =
               match s1.Generic.x with
-              | Skip -> s2.Generic.f env
-              | _    -> match s2.Generic.x with
-                        | Skip -> s1.Generic.f env
-                        | _    ->
+              | `Skip -> s2.Generic.f env
+              | _     -> match s2.Generic.x with
+                         | `Skip -> s1.Generic.f env
+                         | _     ->
                              let s1', last'  = s1.Generic.f (this, `Maybe (last+1), last+1) in
                              let s2', last'' = s2.Generic.f (`Yes (last+1), next, last') in
                              s1' @ s2', last''
@@ -286,7 +288,7 @@ module Compiler =
 module Program =
   struct
 
-    type t = Expr.t Stmt.t
+    type ('e, 's) t = ('s, ('e Expr.t)) Stmt.t
     
     ostap (
       parse: !(Stmt.parse) -EOF
