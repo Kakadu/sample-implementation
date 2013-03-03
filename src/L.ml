@@ -45,7 +45,7 @@ module Expr =
     generic t = 
       Var   of [string] 
     | Const of [int] 
-    | Binop of [int -> int -> int] * [string] * t * t
+    | Binop of [int -> int -> int] * [string] * t * t 
 
     let prio = 
       let a = [
@@ -313,6 +313,6 @@ module Program =
         State.empty 
         p
 
-    let compile p = Compiler.compile p
+    let compile p = Compiler.compile p 
 
   end
