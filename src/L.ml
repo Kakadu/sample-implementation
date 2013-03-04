@@ -92,7 +92,7 @@ module Expr =
         method m_Binop _ _ _ o x y = ["@"; o] @ List.flatten [x.Generic.f (); y.Generic.f ()]
       end
 
-    let rec parse s =  
+    let rec parse primary s =  
       let l = List.map (fun (s, t) -> ostap(- $(s)), fun x y -> `Binop (t, s, x, y)) in
       let ior  x y = abs x + abs y in
       let iand x y = abs (x * y) in
@@ -104,14 +104,8 @@ module Expr =
         `Lefta, l ["+" , ( +  ); "-" , (-)];
         `Lefta, l ["*" , ( *  ); "/" , (/ ); "%" , (mod)];
       |]
-      primary
+      (primary (parse primary))
       s
-    and ostap (
-      primary: 
-        x:!(Lexer.ident)   {`Var   x} 
-      | i:!(Lexer.literal) {`Const i}
-      | -"(" parse -")"
-    )
 
   end
 
@@ -185,18 +179,22 @@ module Stmt =
       end
 
     ostap (
-      expr     : !(Expr.parse);
+      expr[primary] : !(Expr.parse)[primary];
       ident    : !(Lexer.ident);
       key[name]: @(name ^ "\\b" : name);
-      parse: 
-        x:ident ":=" e:expr                                      {`Assign (x, e)}
-      | key["skip"]                                              {`Skip}
-      | key["read" ] "(" x:ident ")"                             {`Read x}
-      | key["write"] "(" e:expr ")"                              {`Write e}
-      | key["if"] c:expr key["then"] x:parse key["else"] y:parse {`If (c, x, y)}
-      | key["while"] c:expr key["do"] s:parse                    {`While (c, s)}
-      | -"{" -s:parse -";" seqs[s] -"}";
-      seqs[acc]: s:parse t:(-";" seqs[`Seq (acc, s)])? {match t with Some t -> t | None -> `Seq (acc, s)}
+      parse[primary][stmt]: 
+        x:ident ":=" e:expr[primary]                                  {`Assign (x, e)}
+      | key["skip"]                                                   {`Skip}
+      | key["read" ] "(" x:ident ")"                                  {`Read x}
+      | key["write"] "(" e:expr[primary] ")"                          {`Write e}
+      | key["if"] c:expr[primary] key["then"] x:parse[primary][stmt] 
+                                  key["else"] y:parse[primary][stmt]  {`If (c, x, y)}
+      | key["while"] c:expr[primary] key["do"] s:parse[primary][stmt] {`While (c, s)}
+      | -"{" -s:parse[primary][stmt] -";" seqs[s][primary][stmt] -"}"
+      | stmt[parse primary stmt];                                                          
+      seqs[acc][primary][stmt]: s:parse[primary][stmt] t:(-";" seqs[`Seq (acc, s)][primary][stmt])? {
+        match t with Some t -> t | None -> `Seq (acc, s)
+      }
     )
 
   end
@@ -291,7 +289,11 @@ module Program =
     type ('e, 's) t = ('s, ('e Expr.t)) Stmt.t
     
     ostap (
-      parse: !(Stmt.parse) -EOF
+      parse: !(Stmt.parse)[primary][fun p -> p] -EOF;
+      primary[p]:
+        x:!(Lexer.ident)       {`Var   x}
+      | i:!(Lexer.literal)     {`Const i} 
+      | -"(" p -")"
     )
 
     let print p =
