@@ -2,7 +2,7 @@ PACKAGE := L
 SUBDIRS = 
 
 # type in sources here
-SOURCES = State.ml L.ml Mix.ml Driver.ml
+SOURCES = State.ml L.ml Extensions.ml Mix.ml Driver.ml
 MLI = 
 
 include $(top_srcdir)/m4/Makefile.am.vars
