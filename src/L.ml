@@ -41,11 +41,11 @@ module Lexer =
 
 module Expr =
   struct
-  
-    generic t = [>  
+
+    generic 'self t = 'self constraint [>  
         `Var   of [string] 
       | `Const of [int]
-      | `Binop of [int -> int -> int] * [string] * t * t 
+      | `Binop of [int -> int -> int] * [string] * 'self t * 'self t       
     ]
 
     let prio = 
@@ -112,14 +112,14 @@ module Expr =
 module Stmt =
   struct
 
-    generic 'e t = [>
+    generic ('self, 'e) t = 'self constraint [>
         `Skip 
       | `Assign of [string] * 'e
       | `Read   of [string]
       | `Write  of 'e
-      | `If     of 'e * 'e t * 'e t
-      | `While  of 'e * 'e t  
-      | `Seq    of 'e t * 'e t 
+      | `If     of 'e * ('self, 'e) t * ('self, 'e) t
+      | `While  of 'e * ('self, 'e) t  
+      | `Seq    of ('self, 'e) t * ('self, 'e) t 
     ]
 
     class virtual ['self, 'e, 'f, 'b, 'c] t_t =
@@ -292,7 +292,7 @@ module Program =
       parse: !(Stmt.parse)[primary][fun p -> p] -EOF;
       primary[p]:
         x:!(Lexer.ident)       {`Var   x}
-      | i:!(Lexer.literal)     {`Const i} 
+      | i:!(Lexer.literal)     {`Const i}
       | -"(" p -")"
     )
 
