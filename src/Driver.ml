@@ -35,7 +35,7 @@ let _ =
       (match conf.get "h" with Some _ -> printf "%s\n" (conf.help ()) | _ -> ());
       iter (fun file -> 
               let bf = match conf.get "b" with Some _ -> false | _ -> true in
-              match fromString L.Program.parse (read file) with
+              match fromString Extensions.Arrays.Stmt.parse (read file) with
               | Checked.Ok p -> 
                   (match conf.get "p" with                     
                    | None   -> ()
@@ -48,7 +48,7 @@ let _ =
                    | None -> ()
                    | Some f ->
                        let ch, cf = fileOps f in
-                       List.iter (fun s -> fprintf ch "%s\n" s) (L.Program.code p); 
+                       List.iter (fun s -> fprintf ch "%s\n" s) (Extensions.Arrays.Stmt.code p); 
                        cf ch
                   );
                   (match conf.get "c" with

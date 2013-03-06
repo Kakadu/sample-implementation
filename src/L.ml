@@ -42,6 +42,8 @@ module Lexer =
 module Expr =
   struct
 
+    type 'self bt = [ `Var of string | `Const of int | `Binop of (int -> int -> int) * string * 'self * 'self ]
+
     generic 'self t = 'self constraint [>  
         `Var   of [string] 
       | `Const of [int]
@@ -112,6 +114,16 @@ module Expr =
 module Stmt =
   struct
 
+    type 'e bt = [
+        `Skip 
+      | `Assign of string * 'e 
+      | `Read   of string
+      | `Write  of 'e
+      | `If     of 'e * 'e bt * 'e bt
+      | `While  of 'e * 'e bt
+      | `Seq    of 'e bt * 'e bt
+    ]
+
     generic ('self, 'e) t = 'self constraint [>
         `Skip 
       | `Assign of [string] * 'e
@@ -179,20 +191,18 @@ module Stmt =
       end
 
     ostap (
-      expr[primary] : !(Expr.parse)[primary];
       ident    : !(Lexer.ident);
       key[name]: @(name ^ "\\b" : name);
-      parse[primary][stmt]: 
-        x:ident ":=" e:expr[primary]                                  {`Assign (x, e)}
-      | key["skip"]                                                   {`Skip}
-      | key["read" ] "(" x:ident ")"                                  {`Read x}
-      | key["write"] "(" e:expr[primary] ")"                          {`Write e}
-      | key["if"] c:expr[primary] key["then"] x:parse[primary][stmt] 
-                                  key["else"] y:parse[primary][stmt]  {`If (c, x, y)}
-      | key["while"] c:expr[primary] key["do"] s:parse[primary][stmt] {`While (c, s)}
-      | -"{" -s:parse[primary][stmt] -";" seqs[s][primary][stmt] -"}"
-      | stmt[parse primary stmt];                                                          
-      seqs[acc][primary][stmt]: s:parse[primary][stmt] t:(-";" seqs[`Seq (acc, s)][primary][stmt])? {
+      parse[expr][stmt]: 
+        x:ident ":=" e:expr                                                               {`Assign (x, e)}
+      | key["skip"]                                                                       {`Skip}
+      | key["read" ] "(" x:ident ")"                                                      {`Read x}
+      | key["write"] "(" e:expr ")"                                                       {`Write e}
+      | key["if"] c:expr key["then"] x:parse[expr][stmt] key["else"] y:parse[expr][stmt]  {`If (c, x, y)}
+      | key["while"] c:expr key["do"] s:parse[expr][stmt]                                 {`While (c, s)}
+      | -"{" -s:parse[expr][stmt] -";" seqs[s][expr][stmt] -"}"
+      | stmt[parse expr stmt];                                                          
+      seqs[acc][expr][stmt]: s:parse[expr][stmt] t:(-";" seqs[`Seq (acc, s)][expr][stmt])? {
         match t with Some t -> t | None -> `Seq (acc, s)
       }
     )
@@ -289,7 +299,8 @@ module Program =
     type ('e, 's) t = ('s, ('e Expr.t)) Stmt.t
     
     ostap (
-      parse: !(Stmt.parse)[primary][fun p -> p] -EOF;
+      expr : !(Expr.parse)[primary];
+      parse: !(Stmt.parse)[expr][fun p -> p] -EOF;
       primary[p]:
         x:!(Lexer.ident)       {`Var   x}
       | i:!(Lexer.literal)     {`Const i}
