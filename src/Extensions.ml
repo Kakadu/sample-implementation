@@ -116,6 +116,15 @@ module Arrays =
              ) 
              tr fe () s 
 
+        let toplevel =
+          object
+            method parse     = parse
+            method code    p = code p
+            method run     _ = invalid_arg "Method \"run\" is not supported for this language level."
+            method compile _ = invalid_arg "Method \"compile\" is not supported for this language level."
+            method print   _ = invalid_arg "Method \"print\" is not supported for this language level."
+          end
+
       end
 
   end

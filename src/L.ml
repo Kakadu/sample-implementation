@@ -330,4 +330,13 @@ module Program =
 
     let compile p = Compiler.compile p 
 
+    let toplevel =
+      object (self)
+        method parse      = parse
+        method print   p  = print   p
+        method code    p  = code    p
+        method run     p  = run     p
+        method compile p  = compile p
+      end
+       
   end
