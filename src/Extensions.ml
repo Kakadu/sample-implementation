@@ -12,7 +12,7 @@ module Quotations =
       | quotation
       | -"(" p -")";      
       quotation: "@-" {`H} | "@|" {`V};
-      stmt[p]: quotation | p
+      stmt[p]: quotation
     )
     
   end
