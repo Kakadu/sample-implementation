@@ -23,14 +23,6 @@ let _ =
   | Str f when f <> "" -> open_out f, close_out 
   | _ -> stdout, fun _ -> () 
   in
-  let fromString p s =
-    Ostap.Combinators.unwrap (p (new L.Lexer.t s)) (fun x -> Checked.Ok x) 
-      (fun (Some err) ->
-         let [loc, m :: _] = err#retrieve (`First 1) (`Desc) in
-         let m =  match m with `Msg m -> m | `Comment (s, _) -> Ostap.Msg.make s [||] loc in
-         Checked.Fail [m]
-      )
-  in
   match options args with
   | Ok (conf, files) -> 
       (match conf.get "h" with Some _ -> printf "%s\n" (conf.help ()) | _ -> ());
@@ -51,32 +43,32 @@ let _ =
       (try 
       iter (fun file -> 
               let bf = match conf.get "b" with Some _ -> false | _ -> true in
-              match fromString toplevel#parse (read file) with
+              match toplevel (read file) with
               | Checked.Ok p -> 
                   (match conf.get "p" with                     
                    | None   -> ()
                    | Some f -> 
                        let ch, cf = fileOps f in
-                       fprintf ch "%s\n" (Ostap.Pretty.toString (toplevel#print p));
+                       fprintf ch "%s\n" (Ostap.Pretty.toString p#print);
                        cf ch;
                   );
                   (match conf.get "g" with
                    | None -> ()
                    | Some f ->
                        let ch, cf = fileOps f in
-                       List.iter (fun s -> fprintf ch "%s\n" s) (toplevel#code p); 
+                       List.iter (fun s -> fprintf ch "%s\n" s) p#code; 
                        cf ch
                   );
                   (match conf.get "c" with
                    | None -> ()
                    | Some f ->
                        let ch, cf = fileOps f in
-                       List.iter (fun s -> fprintf ch "%s" s) (toplevel#compile p); 
+                       List.iter (fun s -> fprintf ch "%s" s) p#compile; 
                        cf ch
                   );
                   (match conf.get "r" with
                    | None   -> ()
-                   | Some _ -> ignore (toplevel#run p)
+                   | Some _ -> ignore p#run
                   );
                   (match conf.get "m" with
                    | None   -> ()

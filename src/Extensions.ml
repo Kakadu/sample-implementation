@@ -51,9 +51,9 @@ module Arrays =
 
         let code e = 
           let tr = new gcode in 
-          L.Expr.t.Generic.gcata 
+          L.Expr.t.Generic.gcata_ext
              (fun self acc x -> 
-                t.Generic.gcata (fun _ acc x -> self acc x) tr acc x
+                t.Generic.gcata_ext (fun _ acc x -> self acc x) tr acc x
              ) 
              tr 
              () 
@@ -108,20 +108,21 @@ module Arrays =
         let code s = 
           let tr = new gcode in
           let fe acc e = Expr.code e in 
-          L.Stmt.t.Generic.gcata 
+          L.Stmt.t.Generic.gcata_ext 
              (fun self acc s ->
-                t.Generic.gcata (fun _ acc x -> self acc x) tr fe acc s
+                t.Generic.gcata_ext (fun _ acc x -> self acc x) tr fe acc s
              ) 
              tr fe () s 
 
-        let toplevel =
-          object
-            method parse     = parse
-            method code    p = code p
-            method run     _ = invalid_arg "Method \"run\" is not supported for this language level."
-            method compile _ = invalid_arg "Method \"compile\" is not supported for this language level."
-            method print   _ = invalid_arg "Method \"print\" is not supported for this language level."
-          end
+        let toplevel source =
+          match L.Lexer.fromString parse source with
+          | Checked.Ok p -> Checked.Ok (object 
+                                          method code    = code p
+                                          method run     = invalid_arg "Method \"run\" is not supported for this language level."
+                                          method compile = invalid_arg "Method \"compile\" is not supported for this language level."
+                                          method print   = invalid_arg "Method \"print\" is not supported for this language level."
+                                        end)
+          | Checked.Fail m -> Checked.Fail m
 
       end
 

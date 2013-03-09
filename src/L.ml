@@ -37,6 +37,14 @@ module Lexer =
         method getLITERAL   = self#get "literal"    literal         
       end
 
+    let fromString p s =
+      Ostap.Combinators.unwrap (p (new t s)) (fun x -> Checked.Ok x) 
+        (fun (Some err) ->
+           let [loc, m :: _] = err#retrieve (`First 1) (`Desc) in
+           let m =  match m with `Msg m -> m | `Comment (s, _) -> Ostap.Msg.make s [||] loc in
+           Checked.Fail [m]
+        )
+  
   end
 
 module Expr =
@@ -271,9 +279,9 @@ module Compiler =
 
     let compile p =
       let code, _ =
-        Stmt.t.Generic.gcata Generic.apply
+        Stmt.t.Generic.gcata 
           (new Stmt.compile)
-          (fun (this, _, _) expr -> Expr.t.Generic.gcata Generic.apply (new Expr.compile) this expr)
+          (fun (this, _, _) expr -> Expr.t.Generic.gcata (new Expr.compile) this expr)
           (`No, `Maybe 0, 0)
           p
       in
@@ -296,35 +304,36 @@ module Program =
     )
 
     let print p =
-      Stmt.t.Generic.gcata Generic.apply
+      Stmt.t.Generic.gcata
         (new Stmt.print)
-        (fun _ e -> fst (Expr.t.Generic.gcata Generic.apply (new Expr.print) () e))
+        (fun _ e -> fst (Expr.t.Generic.gcata (new Expr.print) () e))
         ()
         p
 
     let code p =
-      Stmt.t.Generic.gcata Generic.apply
+      Stmt.t.Generic.gcata
         (new Stmt.code)
-        (Expr.t.Generic.gcata Generic.apply (new Expr.code))
+        (Expr.t.Generic.gcata (new Expr.code))
         ()
         p
 
     let run p =       
-      Stmt.t.Generic.gcata Generic.apply 
+      Stmt.t.Generic.gcata 
         (new Stmt.interpret) 
-        (Expr.t.Generic.gcata Generic.apply (new Expr.eval)) 
+        (Expr.t.Generic.gcata (new Expr.eval)) 
         State.empty 
         p
 
     let compile p = Compiler.compile p 
 
-    let toplevel =
-      object (self)
-        method parse      = parse
-        method print   p  = print   p
-        method code    p  = code    p
-        method run     p  = run     p
-        method compile p  = compile p
-      end
+    let toplevel source =
+      match Lexer.fromString parse source with
+      | Checked.Ok p -> Checked.Ok (object 
+                                      method print   = print   p
+                                      method code    = code    p
+                                      method run     = run     p
+                                      method compile = compile p
+                                    end)
+      | Checked.Fail m -> Checked.Fail m
        
   end
