@@ -1,7 +1,7 @@
 module Quotations =
   struct
     
-    generic 'self t = 'sefl constraint [> `H | `V]
+    generic 'self t = 'self as [> `H | `V]
  
     ostap (
       parse: !(L.Stmt.parse)[expr][stmt] -EOF;
@@ -25,9 +25,7 @@ module Arrays =
 
         open List
 
-        type 'self bt = [ `Array of 'self * 'self list | `Elem of 'self * 'self ]
-
-        generic 'self t = 'self constraint [>
+        generic 'self t = 'self as [>
           | `Array of 'self t * ['self t list] 
           | `Elem  of 'self t * 'self t
         ]
@@ -61,14 +59,14 @@ module Arrays =
              () 
              e
 
-         type p = [ 'self L.Expr.bt | 'self bt ] as 'self
+         type p = [ 'self L.Expr.closed_t | 'self closed_t ] as 'self
 
       end
 
     module Stmt =
       struct
 
-        generic ('self, 'e) t = 'self constraint [>
+        generic ('self, 'e) t = 'self as [>
           `ArrayAssn of 'e * 'e * 'e
         ]
 

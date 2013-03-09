@@ -42,9 +42,7 @@ module Lexer =
 module Expr =
   struct
 
-    type 'self bt = [ `Var of string | `Const of int | `Binop of (int -> int -> int) * string * 'self * 'self ]
-
-    generic 'self t = 'self constraint [>  
+    generic 'self t = 'self as [>  
         `Var   of [string] 
       | `Const of [int]
       | `Binop of [int -> int -> int] * [string] * 'self t * 'self t       
@@ -114,17 +112,7 @@ module Expr =
 module Stmt =
   struct
 
-    type 'e bt = [
-        `Skip 
-      | `Assign of string * 'e 
-      | `Read   of string
-      | `Write  of 'e
-      | `If     of 'e * 'e bt * 'e bt
-      | `While  of 'e * 'e bt
-      | `Seq    of 'e bt * 'e bt
-    ]
-
-    generic ('self, 'e) t = 'self constraint [>
+    generic ('self, 'e) t = 'self as [>
         `Skip 
       | `Assign of [string] * 'e
       | `Read   of [string]
