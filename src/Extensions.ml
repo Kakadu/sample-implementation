@@ -61,7 +61,7 @@ module Breaks =
 
             method m_If env t e s1 s2 = 
               let k, b, s = env in 
-              (if e.Generic.f env = 0 then s2 else s1).Generic.f (k, k, s)
+              (if e.Generic.f env = 0 then s2 else s1).Generic.f (k, b, s)
 
             method m_While env t e s1 = 
               let k, b, s = env in 
