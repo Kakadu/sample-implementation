@@ -15,7 +15,7 @@ CMO := $(SORTED:.ml=.cmo)
 # OCaml parser call with flags
 AM_P5FLAGS := -pp "$(CAMLP5O) $(PARSER_INCLUDES) pr_o.cmo pa_checked.cmo pa_ostap.cmo pa_log.cmo pa_got.cmo $(LOG) $(DOC)"
 AM_BFLAGS += -rectypes -annot
-AM_OFLAGS += -rectypes -annot
+AM_OFLAGS += -rectypes -annot -cclib "-static"
 
 # overwrite some variables
 PXFLAGS = $(P5FLAGS)

@@ -28,7 +28,8 @@ let _ =
       (match conf.get "h" with Some _ -> printf "%s\n" (conf.help ()) | _ -> ());
       let toplevels = [|
         L.Program.toplevel;
-        Extensions.Arrays.Stmt.toplevel
+        Extensions.Arrays.Stmt.toplevel;
+        Extensions.Breaks.toplevel
       |]
       in
       let level = 

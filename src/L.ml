@@ -68,9 +68,9 @@ module Expr =
 
     class virtual ['self, 'a, 'b] t_t =
       object (this)
-        method virtual m_Var   : 'a -> 'self t -> string -> 'b
-        method virtual m_Const : 'a -> 'self t -> int -> 'b
-        method virtual m_Binop : 'a -> 'self t -> (int -> int -> int) -> string -> ('a, 'self t, 'b) Generic.a -> ('a, 'self t, 'b) Generic.a -> 'b
+        method virtual m_Var   : 'a -> ('a, 'self t, 'b) Generic.a -> string -> 'b
+        method virtual m_Const : 'a -> ('a, 'self t, 'b) Generic.a -> int -> 'b
+        method virtual m_Binop : 'a -> ('a, 'self t, 'b) Generic.a -> (int -> int -> int) -> string -> ('a, 'self t, 'b) Generic.a -> ('a, 'self t, 'b) Generic.a -> 'b
       end
 
     class ['self] eval =
@@ -84,12 +84,12 @@ module Expr =
     class ['self] print =
       object (this)
         inherit ['self, unit, printer * int] t_t 
-        method m_Var   _ e x = string x, prio e 
-        method m_Const _ e x = int x, prio e
+        method m_Var   _ e x = string x, prio e.Generic.x
+        method m_Const _ e x = int x, prio e.Generic.x
         method m_Binop _ e _ op x y = 
           let x, px = x.Generic.f () in
           let y, py = y.Generic.f () in 
-          let p = prio e in b [w p px x; string op; w p py y], p
+          let p = prio e.Generic.x in b [w p px x; string op; w p py y], p
       end
 
     class ['self] code =
@@ -132,13 +132,13 @@ module Stmt =
 
     class virtual ['self, 'e, 'f, 'b, 'c] t_t =
       object (this)
-        method virtual m_Skip   : 'b -> ('self, 'e) t -> 'c
-        method virtual m_Assign : 'b -> ('self, 'e) t -> string -> ('b, 'e, 'f) Generic.a -> 'c
-        method virtual m_Read   : 'b -> ('self, 'e) t -> string -> 'c
-        method virtual m_Write  : 'b -> ('self, 'e) t -> ('b, 'e, 'f) Generic.a -> 'c
-        method virtual m_If     : 'b -> ('self, 'e) t -> ('b, 'e, 'f) Generic.a -> ('b, ('self, 'e) t, 'c) Generic.a -> ('b, ('self, 'e) t, 'c) Generic.a -> 'c
-        method virtual m_While  : 'b -> ('self, 'e) t -> ('b, 'e, 'f) Generic.a -> ('b, ('self, 'e) t, 'c) Generic.a -> 'c
-        method virtual m_Seq    : 'b -> ('self, 'e) t -> ('b, ('self, 'e) t, 'c) Generic.a -> ('b, ('self, 'e) t, 'c) Generic.a -> 'c
+        method virtual m_Skip   : 'b -> ('b, ('self, 'e) t, 'c) Generic.a -> 'c
+        method virtual m_Assign : 'b -> ('b, ('self, 'e) t, 'c) Generic.a -> string -> ('b, 'e, 'f) Generic.a -> 'c
+        method virtual m_Read   : 'b -> ('b, ('self, 'e) t, 'c) Generic.a -> string -> 'c
+        method virtual m_Write  : 'b -> ('b, ('self, 'e) t, 'c) Generic.a -> ('b, 'e, 'f) Generic.a -> 'c
+        method virtual m_If     : 'b -> ('b, ('self, 'e) t, 'c) Generic.a -> ('b, 'e, 'f) Generic.a -> ('b, ('self, 'e) t, 'c) Generic.a -> ('b, ('self, 'e) t, 'c) Generic.a -> 'c
+        method virtual m_While  : 'b -> ('b, ('self, 'e) t, 'c) Generic.a -> ('b, 'e, 'f) Generic.a -> ('b, ('self, 'e) t, 'c) Generic.a -> 'c
+        method virtual m_Seq    : 'b -> ('b, ('self, 'e) t, 'c) Generic.a -> ('b, ('self, 'e) t, 'c) Generic.a -> ('b, ('self, 'e) t, 'c) Generic.a -> 'c
       end
     
     class ['self, 'e] interpret =
@@ -158,20 +158,20 @@ module Stmt =
         method m_If s _ e s1 s2 = (if e.Generic.f s = 0 then s2 else s1).Generic.f s
         method m_While s t e s1 = if e.Generic.f s = 0 
                                      then s 
-                                     else s1.Generic.g s (`Seq (s1.Generic.x, t))
+                                     else s1.Generic.g s (`Seq (s1.Generic.x, t.Generic.x))
         method m_Seq s _ s1 s2 = s2.Generic.f (s1.Generic.f s)
       end
 
     class ['self, 'e] print =
       object (this)
         inherit ['self, 'e Expr.t, printer, unit, printer] t_t
-        method m_Skip   _ s       = string "skip"
-        method m_Assign _ s x e   = v [string x; string ":="; e.Generic.f ()]
-        method m_If     _ s c x y = v [string "if"; c.Generic.f (); v [string "then"; x.Generic.f (); string "else"; y.Generic.f ()]]
-        method m_While  _ s c x   = v [v [string "while"; c.Generic.f ()]; v [string "do"; x.Generic.f ()]]
-        method m_Seq    _ s x y   = c [seq [x.Generic.f (); string ";"]; y.Generic.f ()]
-        method m_Read   _ s x     = v [string "read"; rboxed (string x)]
-        method m_Write  _ s e     = v [string "write"; rboxed (e.Generic.f ())]
+        method m_Skip   _ _       = string "skip"
+        method m_Assign _ _ x e   = v [string x; string ":="; e.Generic.f ()]
+        method m_If     _ _ c x y = v [string "if"; c.Generic.f (); v [string "then"; x.Generic.f (); string "else"; y.Generic.f ()]]
+        method m_While  _ _ c x   = v [v [string "while"; c.Generic.f ()]; v [string "do"; x.Generic.f ()]]
+        method m_Seq    _ _ x y   = c [seq [x.Generic.f (); string ";"]; y.Generic.f ()]
+        method m_Read   _ _ x     = v [string "read"; rboxed (string x)]
+        method m_Write  _ _ e     = v [string "write"; rboxed (e.Generic.f ())]
       end
 
     class ['self, 'e] code =
