@@ -66,13 +66,6 @@ module Expr =
       ] in
       function `Binop (_, s, _, _) -> List.assoc s a | _ -> 8
 
-    class virtual ['self, 'a, 'b] t_t =
-      object (this)
-        method virtual m_Var   : 'a -> ('a, 'self t, 'b) Generic.a -> string -> 'b
-        method virtual m_Const : 'a -> ('a, 'self t, 'b) Generic.a -> int -> 'b
-        method virtual m_Binop : 'a -> ('a, 'self t, 'b) Generic.a -> (int -> int -> int) -> string -> ('a, 'self t, 'b) Generic.a -> ('a, 'self t, 'b) Generic.a -> 'b
-      end
-
     class ['self] eval =
       object (this)
         inherit ['self, State.t, int] t_t
@@ -130,17 +123,6 @@ module Stmt =
       | `Seq    of ('self, 'e) t * ('self, 'e) t 
     ]
 
-    class virtual ['self, 'e, 'f, 'b, 'c] t_t =
-      object (this)
-        method virtual m_Skip   : 'b -> ('b, ('self, 'e) t, 'c) Generic.a -> 'c
-        method virtual m_Assign : 'b -> ('b, ('self, 'e) t, 'c) Generic.a -> string -> ('b, 'e, 'f) Generic.a -> 'c
-        method virtual m_Read   : 'b -> ('b, ('self, 'e) t, 'c) Generic.a -> string -> 'c
-        method virtual m_Write  : 'b -> ('b, ('self, 'e) t, 'c) Generic.a -> ('b, 'e, 'f) Generic.a -> 'c
-        method virtual m_If     : 'b -> ('b, ('self, 'e) t, 'c) Generic.a -> ('b, 'e, 'f) Generic.a -> ('b, ('self, 'e) t, 'c) Generic.a -> ('b, ('self, 'e) t, 'c) Generic.a -> 'c
-        method virtual m_While  : 'b -> ('b, ('self, 'e) t, 'c) Generic.a -> ('b, 'e, 'f) Generic.a -> ('b, ('self, 'e) t, 'c) Generic.a -> 'c
-        method virtual m_Seq    : 'b -> ('b, ('self, 'e) t, 'c) Generic.a -> ('b, ('self, 'e) t, 'c) Generic.a -> ('b, ('self, 'e) t, 'c) Generic.a -> 'c
-      end
-    
     class ['self, 'e] interpret =
       object (this)
         inherit ['self, 'e Expr.t, int, State.t, State.t] t_t         

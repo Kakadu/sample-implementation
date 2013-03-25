@@ -30,12 +30,6 @@ module Breaks =
 
         let (++) s = function `Lambda -> s | s' -> `Seq (s, s')
 
-        class virtual ['self, 'a, 'b] t_t =
-          object (self)
-            method virtual m_Lambda : 'a -> ('a, 'self t, 'b) Generic.a -> 'b
-            method virtual m_Break  : 'a -> ('a, 'self t, 'b) Generic.a -> 'b
-          end
-
         class ['self, 'e] interpret =
           object (this)
             inherit ['self, ('self * 'self * State.t), State.t] t_t
@@ -117,12 +111,6 @@ module Arrays =
           | `Array of ['self t list] 
           | `Elem  of 'self t * 'self t
         ]
-  
-        class virtual ['self, 'a, 'b] t_t =
-          object (self)
-            method virtual m_Array : 'a -> ('a, 'self t, 'b) Generic.a -> 'self t list -> 'b
-            method virtual m_Elem  : 'a -> ('a, 'self t, 'b) Generic.a -> ('a, 'self t, 'b) Generic.a -> ('a,'self t, 'b) Generic.a -> 'b
-          end
 
         class ['self] code =
           object (self)
@@ -157,11 +145,6 @@ module Arrays =
         generic ('self, 'e) t = 'self as [>
           `ArrayAssn of 'e * 'e * 'e
         ]
-
-        class virtual ['self, 'e, 'f, 'a, 'b] t_t =
-          object (self)
-            method virtual m_ArrayAssn : 'a -> ('a, ('self, 'e) t, 'b) Generic.a -> ('a, 'e, 'b) Generic.a -> ('a, 'e, 'b) Generic.a -> ('a, 'e, 'b) Generic.a -> 'b  
-          end
 
         class ['self, 'e] code =
           object (self)
