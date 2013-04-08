@@ -30,11 +30,15 @@ module Breaks =
 
         let (++) s = function `Lambda -> s | s' -> `Seq (s, s')
 
+        class virtual ['self, 'e, 'f, 'a, 'b] ttt =
+          object
+            inherit ['self, 'a, 'b] t_t
+            inherit ['self, 'e, 'f, 'a, 'b] L.Stmt.t_t
+          end
+
         class ['self, 'e] interpret =
           object (this)
-            inherit ['self, ('self * 'self * State.t), State.t] t_t
-            inherit ['self, 'e L.Expr.t, int, ('self * 'self * State.t), State.t] L.Stmt.t_t
-
+            inherit ['self, 'e L.Expr.t, int, ('self * 'self * State.t), State.t] ttt
             method m_Skip (k, b, s) t = t.Generic.g (`Lambda, b, s) k
 
             method m_Assign env t x e = 
@@ -78,14 +82,13 @@ module Breaks =
       break[p]: "break" {`Break}
     )
 
+    open Generic
+
     let interpret s = 
       let tr = new Stmt.interpret in
       let fe (_, _, s) e = L.Expr.t.Generic.gcata (new L.Expr.eval) s e in 
-      L.Stmt.t.Generic.gcata_ext 
-         (fun self acc s ->
-            Stmt.t.Generic.gcata_ext (fun _ acc x -> self acc x) tr acc s
-         ) 
-         tr fe (`Lambda, `Lambda, State.empty) s 
+      (L.Stmt.t.Generic.gcata_ext fe tr ++ Stmt.t.Generic.gcata_ext tr) 
+         (`Lambda, `Lambda, State.empty) s
 
     let toplevel source =
       match L.Lexer.fromString parse source with
@@ -99,6 +102,73 @@ module Breaks =
 
   end
 
+module Procedures =
+  struct
+
+    module Expr =
+      struct
+
+        open List
+
+        generic 'self t = 'self as [>
+        | `Call of [string] *  ['self t list]
+        ]
+
+        class ['self] code =
+          object
+            inherit ['self, unit, string list] t_t
+            method m_Call _ expr name args = ["call"; name; string_of_int (length args)] @ flatten (map (expr.Generic.g ()) args)
+          end
+
+        open L.Lexer
+        open Ostap.Util
+
+        ostap (
+          parse[expr]: f:ident "(" a:list[expr] ")" {`Call (f, a)}
+        )
+
+      end
+
+    module Stmt =
+      struct
+
+        open List
+
+        generic ('self, 'e) t = 'self as [>
+        | `Proc of [string] * [string list] * [string list] * ('self, 'e) t
+        | `Call of [string] * 'e * ['e list]
+        | `Ret  of 'e
+        ]
+
+        class ['self, 'e] code =
+          object
+            inherit ['self, 'e L.Expr.t, string list, unit, string list] t_t
+            method m_Proc _ stmt name args locals body = 
+              let sl l = string_of_int (length l) :: l in
+              ["proc"; name] @ (sl args) @ (sl locals) @ (body.Generic.f ())
+            method m_Call _ stmt name phony args = ["call"; name; string_of_int (length args)] @ flatten (map (phony.Generic.g ()) args)
+            method m_Ret  _ _ e = "ret" :: (e.Generic.f ())
+          end
+
+        open L.Lexer
+        open Ostap.Util
+
+        ostap (
+          parse[expr][stmt]:
+            "proc" name:ident 
+                  "(" args:list[ident] ")" 
+                  locals:(-"local" list[ident] -";")? 
+                  body:stmt {
+              `Proc (name, args, (match locals with Some l -> l | None -> []), body)
+            }
+          | "return" e:expr                           {`Ret e}
+          | "call" name:ident "(" args:list[expr] ")" {`Call (name, hd args, args)}   
+        )
+
+      end
+
+  end
+
 module Arrays =
   struct
 
@@ -108,8 +178,8 @@ module Arrays =
         open List
 
         generic 'self t = 'self as [>
-          | `Array of ['self t list] 
-          | `Elem  of 'self t * 'self t
+        | `Array of ['self t list] 
+        | `Elem  of 'self t * 'self t
         ]
 
         class ['self] code =
@@ -125,15 +195,11 @@ module Arrays =
             inherit ['self] code
           end
 
+        open Generic 
+
         let code e = 
           let tr = new gcode in 
-          L.Expr.t.Generic.gcata_ext
-             (fun self acc x -> 
-                t.Generic.gcata_ext (fun _ acc x -> self acc x) tr acc x
-             ) 
-             tr 
-             () 
-             e
+          (L.Expr.t.Generic.gcata_ext tr ++ t.Generic.gcata_ext tr) () e
 
          type p = [ 'self L.Expr.closed_t | 'self closed_t ] as 'self
 
@@ -176,14 +242,12 @@ module Arrays =
           xboct[x][p]: -"[" -i:p -"]" xboct[`Elem(x, i)][p] | !(Ostap.Combinators.empty) {x}
         )
 
+        open Generic
+
         let code s = 
           let tr = new gcode in
-          let fe acc e = Expr.code e in 
-          L.Stmt.t.Generic.gcata_ext 
-             (fun self acc s ->
-                t.Generic.gcata_ext (fun _ acc x -> self acc x) tr fe acc s
-             ) 
-             tr fe () s 
+          let fe acc e = Expr.code e in
+          (L.Stmt.t.Generic.gcata_ext fe tr ++ t.Generic.gcata_ext fe tr) () s 
 
         let toplevel source =
           match L.Lexer.fromString parse source with

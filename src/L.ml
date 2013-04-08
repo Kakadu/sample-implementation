@@ -262,8 +262,8 @@ module Compiler =
     let compile p =
       let code, _ =
         Stmt.t.Generic.gcata 
-          (new Stmt.compile)
           (fun (this, _, _) expr -> Expr.t.Generic.gcata (new Expr.compile) this expr)
+          (new Stmt.compile)
           (`No, `Maybe 0, 0)
           p
       in
@@ -286,23 +286,23 @@ module Program =
     )
 
     let print p =
-      Stmt.t.Generic.gcata
-        (new Stmt.print)
+      Stmt.t.Generic.gcata        
         (fun _ e -> fst (Expr.t.Generic.gcata (new Expr.print) () e))
+        (new Stmt.print)
         ()
         p
 
     let code p =
       Stmt.t.Generic.gcata
-        (new Stmt.code)
         (Expr.t.Generic.gcata (new Expr.code))
+        (new Stmt.code)
         ()
         p
 
     let run p =       
       Stmt.t.Generic.gcata 
-        (new Stmt.interpret) 
         (Expr.t.Generic.gcata (new Expr.eval)) 
+        (new Stmt.interpret) 
         State.empty 
         p
 
