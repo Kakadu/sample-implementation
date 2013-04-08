@@ -192,6 +192,7 @@ module Arrays =
         class ['self] gcode =
           object (self)
             inherit ['self] L.Expr.code
+            inherit ['self] Procedures.Expr.code
             inherit ['self] code
           end
 
@@ -199,9 +200,9 @@ module Arrays =
 
         let code e = 
           let tr = new gcode in 
-          (L.Expr.t.Generic.gcata_ext tr ++ t.Generic.gcata_ext tr) apply () e
+          (L.Expr.t.Generic.gcata_ext tr ++ t.Generic.gcata_ext tr ++ Procedures.Expr.t.Generic.gcata_ext tr) apply () e
 
-         type p = [ 'self L.Expr.closed_t | 'self closed_t ] as 'self
+         type p = [ 'self L.Expr.closed_t | 'self closed_t | 'self Procedures.Expr.closed_t] as 'self
 
       end
 
@@ -221,13 +222,15 @@ module Arrays =
         class ['self] gcode =
           object (self)
             inherit ['self, Expr.p] L.Stmt.code
+            inherit ['self, Expr.p] Procedures.Stmt.code
             inherit ['self, Expr.p] code
           end
 
         ostap (
           parse: !(L.Stmt.parse)[expr][fun p -> arrassn expr p] -EOF;
           arrassn[expr][p]: 
-            x:!(L.Lexer.ident) e:xboct[`Var x][expr] ":=" e3:expr { 
+            !(Procedures.Stmt.parse)[expr][p]
+          | x:!(L.Lexer.ident) e:xboct[`Var x][expr] ":=" e3:expr { 
               match e with 
               | `Elem (e1, e2) -> `ArrayAssn (e1, e2, e3) 
               | `Var x -> `Assign (x, e3)
@@ -235,7 +238,8 @@ module Arrays =
           };
           expr : !(L.Expr.parse) [primary];
           primary[p]:
-            -x:!(L.Lexer.ident) xboct[`Var x][p]
+            !(Procedures.Expr.parse)[expr]
+          |  -x:!(L.Lexer.ident) xboct[`Var x][p]
           | i:!(L.Lexer.literal) {`Const i}
           | -"{" -h:p -t:(-"," p)* -"}" xboct[`Array (h::t)][p]
           | -"(" -x:p -")" xboct[x][p];
@@ -247,7 +251,7 @@ module Arrays =
         let code s = 
           let tr = new gcode in
           let fe acc e = Expr.code e in
-          (L.Stmt.t.Generic.gcata_ext fe tr ++ t.Generic.gcata_ext fe tr) apply () s 
+          (L.Stmt.t.Generic.gcata_ext fe tr ++ t.Generic.gcata_ext fe tr ++ Procedures.Stmt.t.Generic.gcata_ext fe tr) apply () s 
 
         let toplevel source =
           match L.Lexer.fromString parse source with
