@@ -88,7 +88,7 @@ module Breaks =
       let tr = new Stmt.interpret in
       let fe (_, _, s) e = L.Expr.t.Generic.gcata (new L.Expr.eval) s e in 
       (L.Stmt.t.Generic.gcata_ext fe tr ++ Stmt.t.Generic.gcata_ext tr) 
-         (`Lambda, `Lambda, State.empty) s
+         apply (`Lambda, `Lambda, State.empty) s
 
     let toplevel source =
       match L.Lexer.fromString parse source with
@@ -199,7 +199,7 @@ module Arrays =
 
         let code e = 
           let tr = new gcode in 
-          (L.Expr.t.Generic.gcata_ext tr ++ t.Generic.gcata_ext tr) () e
+          (L.Expr.t.Generic.gcata_ext tr ++ t.Generic.gcata_ext tr) apply () e
 
          type p = [ 'self L.Expr.closed_t | 'self closed_t ] as 'self
 
@@ -247,7 +247,7 @@ module Arrays =
         let code s = 
           let tr = new gcode in
           let fe acc e = Expr.code e in
-          (L.Stmt.t.Generic.gcata_ext fe tr ++ t.Generic.gcata_ext fe tr) () s 
+          (L.Stmt.t.Generic.gcata_ext fe tr ++ t.Generic.gcata_ext fe tr) apply () s 
 
         let toplevel source =
           match L.Lexer.fromString parse source with
