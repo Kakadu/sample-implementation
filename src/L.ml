@@ -125,7 +125,7 @@ module Stmt =
 
     class ['self, 'e] interpret =
       object (this)
-        inherit ['self, 'e Expr.t, int, State.t, State.t] t_t         
+        inherit ['self, 'e Expr.t', int, State.t, State.t] t_t         
         method m_Skip s _ = s
         method m_Assign s _ x e = State.modify s x (e.Generic.f s)
         method m_Read s _ x = 
@@ -146,7 +146,7 @@ module Stmt =
 
     class ['self, 'e] print =
       object (this)
-        inherit ['self, 'e Expr.t, printer, unit, printer] t_t
+        inherit ['self, 'e Expr.t', printer, unit, printer] t_t
         method m_Skip   _ _       = string "skip"
         method m_Assign _ _ x e   = v [string x; string ":="; e.Generic.f ()]
         method m_If     _ _ c x y = v [string "if"; c.Generic.f (); v [string "then"; x.Generic.f (); string "else"; y.Generic.f ()]]
@@ -158,7 +158,7 @@ module Stmt =
 
     class ['self, 'e] code =
       object (this)
-        inherit ['self, 'e Expr.t, string list, unit, string list] t_t
+        inherit ['self, 'e Expr.t', string list, unit, string list] t_t
         method m_Skip   _ _       = ["s"]
         method m_Seq    _ _ x y   = ";" :: (x.Generic.f ()) @ (y.Generic.f ())
         method m_Assign _ _ x e   = "=" :: x :: (e.Generic.f ())
@@ -217,7 +217,7 @@ module Compiler =
 
         class ['self, 'e] compile =
           object (this)
-            inherit ['self, 'e Expr.t, string list, env, string list * int] t_t
+            inherit ['self, 'e Expr.t', string list, env, string list * int] t_t
             method m_Skip (this, next, last) _  = 
               (match this, next with 
                | `No   , `Maybe n            -> []
@@ -274,7 +274,7 @@ module Compiler =
 module Program =
   struct
 
-    type ('e, 's) t = ('s, ('e Expr.t)) Stmt.t
+    type ('e, 's) t = ('s, ('e Expr.t')) Stmt.t'
     
     ostap (
       expr : !(Expr.parse)[primary];

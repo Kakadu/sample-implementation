@@ -38,7 +38,7 @@ module Breaks =
 
         class ['self, 'e] interpret =
           object (this)
-            inherit ['self, 'e L.Expr.t, int, ('self * 'self * State.t), State.t] ttt
+            inherit ['self, 'e L.Expr.t', int, ('self * 'self * State.t), State.t] ttt
             method m_Skip (k, b, s) t = t.Generic.g (`Lambda, b, s) k
 
             method m_Assign env t x e = 
@@ -142,7 +142,7 @@ module Procedures =
 
         class ['self, 'e] code =
           object
-            inherit ['self, 'e L.Expr.t, string list, unit, string list] t_t
+            inherit ['self, 'e L.Expr.t', string list, unit, string list] t_t
             method m_Proc _ stmt name args locals body = 
               let sl l = string_of_int (length l) :: l in
               ["proc"; name] @ (sl args) @ (sl locals) @ (body.Generic.f ())
@@ -182,6 +182,8 @@ module Arrays =
         | `Elem  of 'self t * 'self t
         ]
 
+        type p = [ 'self L.Expr.t | 'self t | 'self Procedures.Expr.t] as 'self
+
         class ['self] code =
           object (self)
             inherit ['self, unit, string list] t_t
@@ -202,10 +204,8 @@ module Arrays =
           let tr = new gcode in 
           (L.Expr.t.Generic.gcata_ext tr ++ t.Generic.gcata_ext tr ++ Procedures.Expr.t.Generic.gcata_ext tr) apply () e
 
-         type p = [ 'self L.Expr.closed_t | 'self closed_t | 'self Procedures.Expr.closed_t] as 'self
-
       end
-
+   
     module Stmt =
       struct
 
