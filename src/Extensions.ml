@@ -182,7 +182,7 @@ module Arrays =
         | `Elem  of 'self t * 'self t
         ]
 
-        type p = [ 'self L.Expr.t | 'self t | 'self Procedures.Expr.t] as 'self
+        generic 'self p = ['self L.Expr.t | 'self t | 'self Procedures.Expr.t]  
 
         class ['self] code =
           object (self)
@@ -219,11 +219,11 @@ module Arrays =
             method m_ArrayAssn _ _ x i y = ["[]="] @ x.Generic.f () @ i.Generic.f () @ y.Generic.f ()
           end
 
-        class ['self] gcode =
+        class ['self, 'e] gcode =
           object (self)
-            inherit ['self, Expr.p] L.Stmt.code
-            inherit ['self, Expr.p] Procedures.Stmt.code
-            inherit ['self, Expr.p] code
+            inherit ['self, 'e Expr.p] L.Stmt.code
+            inherit ['self, 'e Expr.p] Procedures.Stmt.code
+            inherit ['self, 'e Expr.p] code
           end
 
         ostap (

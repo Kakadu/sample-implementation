@@ -63,7 +63,8 @@ module Expr =
         "==", 5; "!=", 5; "<=", 5; "<", 5; ">=", 5; ">", 5; 
         "+", 6; "-", 6; 
         "*", 7; "/", 7; "%", 7
-      ] in
+      ] 
+      in
       function `Binop (_, s, _, _) -> List.assoc s a | _ -> 8
 
     class ['self] eval =
