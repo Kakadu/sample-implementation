@@ -32,8 +32,8 @@ module Breaks =
 
         class virtual ['self, 'e, 'f, 'a, 'b] ttt =
           object
-            inherit ['self, 'a, 'b] t_t
-            inherit ['self, 'e, 'f, 'a, 'b] L.Stmt.t_t
+            inherit ['self, 'a, 'b] @t
+            inherit ['self, 'e, 'f, 'a, 'b] @L.Stmt.t
           end
 
         class ['self, 'e] interpret =
@@ -114,7 +114,7 @@ module Procedures =
 
         class ['self] code =
           object
-            inherit ['self, unit, string list] t_t
+            inherit ['self, unit, string list] @t
             method m_Call _ expr name args = ["call"; name; string_of_int (length args)] @ flatten (map (expr.Generic.g ()) args)
           end
 
@@ -140,7 +140,7 @@ module Procedures =
 
         class ['self, 'e] code =
           object
-            inherit ['self, > 'e L.Expr.t, string list, unit, string list] t_t
+            inherit ['self, > 'e L.Expr.t, string list, unit, string list] @t
             method m_Proc _ stmt name args locals body = 
               let sl l = string_of_int (length l) :: l in
               ["proc"; name] @ (sl args) @ (sl locals) @ (body.Generic.f ())
@@ -184,7 +184,7 @@ module Arrays =
 
         class ['self] code =
           object (self)
-            inherit ['self, unit, string list] t_t
+            inherit ['self, unit, string list] @t
             method m_Array _ t l = ["{}"; string_of_int (length l)] @ flatten (map (t.Generic.g ()) l) 
             method m_Elem  _ _ a i = ["[]"] @ a.Generic.f () @ i.Generic.f ()
           end
@@ -209,7 +209,7 @@ module Arrays =
 
         class ['self, 'e] code =
           object (self)
-            inherit ['self, 'e, string list, unit, string list] t_t
+            inherit ['self, 'e, string list, unit, string list] @t
             method m_ArrayAssn _ _ x i y = ["[]="] @ x.Generic.f () @ i.Generic.f () @ y.Generic.f ()
           end
 

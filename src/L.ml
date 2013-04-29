@@ -69,7 +69,7 @@ module Expr =
 
     class ['self] eval =
       object (this)
-        inherit ['self, State.t, int] t_t
+        inherit ['self, State.t, int] @t
         method m_Var   s _ x       = s x
         method m_Const _ _ n       = n
         method m_Binop s _ f _ x y = f (x.Generic.f s) (y.Generic.f s)
@@ -77,7 +77,7 @@ module Expr =
 
     class ['self] print =
       object (this)
-        inherit ['self, unit, printer * int] t_t 
+        inherit ['self, unit, printer * int] @t 
         method m_Var   _ e x = string x, prio e.Generic.x
         method m_Const _ e x = int x, prio e.Generic.x
         method m_Binop _ e _ op x y = 
@@ -88,7 +88,7 @@ module Expr =
 
     class ['self] code =
       object (this)
-        inherit ['self, unit, string list] t_t
+        inherit ['self, unit, string list] @t
         method m_Var   _ _ x       = ["x"; x]
         method m_Const _ _ x       = ["!"; string_of_int x] 
         method m_Binop _ _ _ o x y = ["@"; o] @ List.flatten [x.Generic.f (); y.Generic.f ()]
@@ -126,7 +126,7 @@ module Stmt =
 
     class ['self, 'e] interpret =
       object (this)
-        inherit ['self, > 'e Expr.t, int, State.t, State.t] t_t         
+        inherit ['self, > 'e Expr.t, int, State.t, State.t] @t         
         method m_Skip s _ = s
         method m_Assign s _ x e = State.modify s x (e.Generic.f s)
         method m_Read s _ x = 
@@ -147,7 +147,7 @@ module Stmt =
 
     class ['self, 'e] print =
       object (this)
-        inherit ['self, > 'e Expr.t, printer, unit, printer] t_t
+        inherit ['self, > 'e Expr.t, printer, unit, printer] @t
         method m_Skip   _ _       = string "skip"
         method m_Assign _ _ x e   = v [string x; string ":="; e.Generic.f ()]
         method m_If     _ _ c x y = v [string "if"; c.Generic.f (); v [string "then"; x.Generic.f (); string "else"; y.Generic.f ()]]
@@ -159,7 +159,7 @@ module Stmt =
 
     class ['self, 'e] code =
       object (this)
-        inherit ['self, > 'e Expr.t, string list, unit, string list] t_t
+        inherit ['self, > 'e Expr.t, string list, unit, string list] @t
         method m_Skip   _ _       = ["s"]
         method m_Seq    _ _ x y   = ";" :: (x.Generic.f ()) @ (y.Generic.f ())
         method m_Assign _ _ x e   = "=" :: x :: (e.Generic.f ())
@@ -202,7 +202,7 @@ module Compiler =
 
         class ['e] compile =
           object (this)
-            inherit ['e,[`Yes of int | `No], string list] t_t
+            inherit ['e,[`Yes of int | `No], string list] @t
             method m_Var   l _ x       = first l [Printf.sprintf "\tL %s\n" x]
             method m_Const l _ n       = first l [Printf.sprintf "\tC %d\n" n]
             method m_Binop l _ f o x y = (x.Generic.f l) @ (y.Generic.f `No) @ [Printf.sprintf "\tB %s\n" o]
@@ -218,7 +218,7 @@ module Compiler =
 
         class ['self, 'e] compile =
           object (this)
-            inherit ['self, > 'e Expr.t, string list, env, string list * int] t_t
+            inherit ['self, > 'e Expr.t, string list, env, string list * int] @t
             method m_Skip (this, next, last) _  = 
               (match this, next with 
                | `No   , `Maybe n            -> []
