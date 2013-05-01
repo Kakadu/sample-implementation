@@ -202,7 +202,7 @@ module Compiler =
 
         class ['e] compile =
           object (this)
-            inherit ['e,[`Yes of int | `No], string list] @t
+            inherit ['e, [`Yes of int | `No], string list] @t
             method m_Var   l _ x       = first l [Printf.sprintf "\tL %s\n" x]
             method m_Const l _ n       = first l [Printf.sprintf "\tC %d\n" n]
             method m_Binop l _ f o x y = (x.Generic.f l) @ (y.Generic.f `No) @ [Printf.sprintf "\tB %s\n" o]
