@@ -73,7 +73,7 @@ module Expr =
         inherit ['self, State.t, int] @t
         method m_Var   s _ x       = s ~:x
         method m_Const _ _ n       = ~:n
-        method m_Binop s _ f _ x y = ~:f (x.f s) (y.f s)
+        method m_Binop s _ f _ x y = ~:f (x.fx s) (y.fx s)
       end
 
     class ['self] print =
@@ -82,8 +82,8 @@ module Expr =
         method m_Var   _ e x = string ~:x, prio ~:e
         method m_Const _ e x = int ~:x, prio ~:e
         method m_Binop _ e _ op x y = 
-          let x, px = x.f () in
-          let y, py = y.f () in 
+          let x, px = x.fx () in
+          let y, py = y.fx () in 
           let p = prio ~:e in b [w p px x; string ~:op; w p py y], p
       end
 
@@ -92,7 +92,7 @@ module Expr =
         inherit ['self, unit, string list] @t
         method m_Var   _ _ x       = ["x"; ~:x]
         method m_Const _ _ x       = ["!"; string_of_int ~:x] 
-        method m_Binop _ _ _ o x y = ["@"; ~:o] @ List.flatten [x.f (); y.f ()]
+        method m_Binop _ _ _ o x y = ["@"; ~:o] @ List.flatten [x.fx (); y.fx ()]
       end
 
     let rec parse primary s =  
@@ -129,45 +129,45 @@ module Stmt =
       object (this)
         inherit ['self, > 'e Expr.t, int, State.t, State.t] @t         
         method m_Skip s _ = s
-        method m_Assign s _ x e = State.modify s ~:x (e.f s)
+        method m_Assign s _ x e = State.modify s ~:x (e.fx s)
         method m_Read s _ x = 
           Printf.printf "%s < " ~:x; 
           flush stdout;
           let y = int_of_string (input_line stdin) in
           State.modify s ~:x y
         method m_Write s _ e = 
-          Printf.printf "> %d\n" (e.f s); 
+          Printf.printf "> %d\n" (e.fx s); 
           flush stdout;
           s
-        method m_If s _ e s1 s2 = (if e.f s = 0 then s2 else s1).f s
-        method m_While s t e s1 = if e.f s = 0 
+        method m_If s _ e s1 s2 = (if e.fx s = 0 then s2 else s1).fx s
+        method m_While s t e s1 = if e.fx s = 0 
                                      then s 
-                                     else s1.g s (`Seq (~:s1, ~:t))
-        method m_Seq s _ s1 s2 = s2.f (s1.f s)
+                                     else s1.f s (`Seq (~:s1, ~:t))
+        method m_Seq s _ s1 s2 = s2.fx (s1.fx s)
       end
 
     class ['self, 'e] print =
       object (this)
         inherit ['self, > 'e Expr.t, printer, unit, printer] @t
         method m_Skip   _ _       = string "skip"
-        method m_Assign _ _ x e   = v [string ~:x; string ":="; e.f ()]
-        method m_If     _ _ c x y = v [string "if"; c.f (); v [string "then"; x.f (); string "else"; y.f ()]]
-        method m_While  _ _ c x   = v [v [string "while"; c.f ()]; v [string "do"; x.f ()]]
-        method m_Seq    _ _ x y   = c [seq [x.f (); string ";"]; y.f ()]
+        method m_Assign _ _ x e   = v [string ~:x; string ":="; e.fx ()]
+        method m_If     _ _ c x y = v [string "if"; c.fx (); v [string "then"; x.fx (); string "else"; y.fx ()]]
+        method m_While  _ _ c x   = v [v [string "while"; c.fx ()]; v [string "do"; x.fx ()]]
+        method m_Seq    _ _ x y   = c [seq [x.fx (); string ";"]; y.fx ()]
         method m_Read   _ _ x     = v [string "read"; rboxed (string ~:x)]
-        method m_Write  _ _ e     = v [string "write"; rboxed (e.f ())]
+        method m_Write  _ _ e     = v [string "write"; rboxed (e.fx ())]
       end
 
     class ['self, 'e] code =
       object (this)
         inherit ['self, > 'e Expr.t, string list, unit, string list] @t
         method m_Skip   _ _       = ["s"]
-        method m_Seq    _ _ x y   = ";" :: (x.f ()) @ (y.f ())
-        method m_Assign _ _ x e   = "=" :: ~:x :: (e.f ())
-        method m_While  _ _ c s   = "l" :: (c.f ()) @ (s.f ())
-        method m_If     _ _ c x y = "i" :: (c.f ()) @ (x.f ()) @ (y.f ())
+        method m_Seq    _ _ x y   = ";" :: (x.fx ()) @ (y.fx ())
+        method m_Assign _ _ x e   = "=" :: ~:x :: (e.fx ())
+        method m_While  _ _ c s   = "l" :: (c.fx ()) @ (s.fx ())
+        method m_If     _ _ c x y = "i" :: (c.fx ()) @ (x.fx ()) @ (y.fx ())
         method m_Read   _ _ x     = ["r"; ~:x]
-        method m_Write  _ _ e     = "w" :: (e.f ())
+        method m_Write  _ _ e     = "w" :: (e.fx ())
       end
 
     ostap (
@@ -206,7 +206,7 @@ module Compiler =
             inherit ['e, [`Yes of int | `No], string list] @t
             method m_Var   l _ x       = first l [Printf.sprintf "\tL %s\n" ~:x]
             method m_Const l _ n       = first l [Printf.sprintf "\tC %d\n" ~:n]
-            method m_Binop l _ f o x y = (x.f l) @ (y.f `No) @ [Printf.sprintf "\tB %s\n" ~:o]
+            method m_Binop l _ f o x y = (x.fx l) @ (y.fx `No) @ [Printf.sprintf "\tB %s\n" ~:o]
           end
      
       end
@@ -228,33 +228,33 @@ module Compiler =
               ), last
             method m_Seq ((this, next, last) as env) _ s1 s2 =
               match ~:s1 with
-              | `Skip -> s2.f env
+              | `Skip -> s2.fx env
               | _     -> match ~:s2 with
-                         | `Skip -> s1.f env
+                         | `Skip -> s1.fx env
                          | _     ->
-                             let s1', last'  = s1.f (this, `Maybe (last+1), last+1) in
-                             let s2', last'' = s2.f (`Yes (last+1), next, last') in
+                             let s1', last'  = s1.fx (this, `Maybe (last+1), last+1) in
+                             let s2', last'' = s2.fx (`Yes (last+1), next, last') in
                              s1' @ s2', last''
             method m_Assign ((this, next, l) as env) _ x e = 
-              last next ((e.f env) @ [Printf.sprintf "\tS %s\n" ~:x]), l
+              last next ((e.fx env) @ [Printf.sprintf "\tS %s\n" ~:x]), l
             method m_Read (this, next, last) _ x = 
               frame this next ["\tR\n"; Printf.sprintf "\tS %s\n" ~:x], last
             method m_Write ((this, next, l) as env) _ e = 
-              last next ((e.f env) @ ["\tW\n"]), l
+              last next ((e.fx env) @ ["\tW\n"]), l
             method m_If ((this, next, last) as env) _ e s1 s2 =
-              let s2', last'  = s2.f (`No, force next, last+1) in
-              let s1', last'' = s1.f (`Yes (last+1), next, last') in
+              let s2', last'  = s2.fx (`No, force next, last+1) in
+              let s1', last'' = s1.fx (`Yes (last+1), next, last') in
               List.flatten [
-                e.f env; 
+                e.fx env; 
                 [Printf.sprintf "\tJT $%d\n" (last+1)];
                 s2';
                 s1'
               ], last''
             method m_While ((this, next, last) as env) _ e s =
-              let s', last' = s.f (`Yes (last+2), `Maybe (last+1), last+2) in
+              let s', last' = s.fx (`Yes (last+2), `Maybe (last+1), last+2) in
               frame this next (List.flatten [[Printf.sprintf "\tJ $%d\n" (last+1)];
                                              s';
-                                             e.f (`Yes (last+1), next, last);
+                                             e.fx (`Yes (last+1), next, last);
                                              [Printf.sprintf "\tJT $%d\n" (last+2)]
                                             ]), last'
           end

@@ -41,38 +41,38 @@ module Breaks =
         class ['self, 'e] interpret =
           object (this)
             inherit ['self, > 'e L.Expr.t, int, ('self * 'self * State.t), State.t] ttt
-            method m_Skip (k, b, s) t = t.g (`Lambda, b, s) k
+            method m_Skip (k, b, s) t = t.f (`Lambda, b, s) k
 
             method m_Assign env t x e = 
               let k, b, s = env in 
-              t.g (`Lambda, b, State.modify s ~:x (e.f env)) k
+              t.f (`Lambda, b, State.modify s ~:x (e.fx env)) k
 
             method m_Read (k, b, s) t x = 
               Printf.printf "%s < " ~:x; 
               flush stdout;
               let y = int_of_string (input_line stdin) in
-              t.g (`Lambda, b, State.modify s ~:x y) k
+              t.f (`Lambda, b, State.modify s ~:x y) k
 
             method m_Write env t e = 
               let k, b, s = env in
-              Printf.printf "> %d\n" (e.f env); 
+              Printf.printf "> %d\n" (e.fx env); 
               flush stdout;
-              t.g (`Lambda, b, s) k
+              t.f (`Lambda, b, s) k
 
             method m_If env t e s1 s2 = 
               let k, b, s = env in 
-              (if e.f env = 0 then s2 else s1).f (k, b, s)
+              (if e.fx env = 0 then s2 else s1).fx (k, b, s)
 
             method m_While env t e s1 = 
               let k, b, s = env in 
-              if e.f env = 0 
-              then t.g (`Lambda, b, s) k
-              else s1.f (t.x ++ k, k, s) 
+              if e.fx env = 0 
+              then t.f (`Lambda, b, s) k
+              else s1.fx (t.x ++ k, k, s) 
 
             method m_Seq (k, b, s) t s1 s2 =               
-              s1.f (s2.x ++ k, b, s) 
+              s1.fx (s2.x ++ k, b, s) 
 
-            method m_Break (k, b, s) t = t.g (`Lambda, `Lambda, s) b
+            method m_Break (k, b, s) t = t.f (`Lambda, `Lambda, s) b
 
             method m_Lambda (k, b, s) t = s 
           end
@@ -117,7 +117,7 @@ module Procedures =
         class ['self] code =
           object
             inherit ['self, unit, string list] @t
-            method m_Call _ expr name args = ["call"; ~:name; string_of_int (length ~:args)] @ flatten (map (expr.g ()) ~:args)
+            method m_Call _ expr name args = ["call"; ~:name; string_of_int (length ~:args)] @ flatten (map (expr.f ()) ~:args)
           end
 
         open L.Lexer
@@ -145,9 +145,9 @@ module Procedures =
             inherit ['self, > 'e L.Expr.t, string list, unit, string list] @t
             method m_Proc _ stmt name args locals body = 
               let sl l = string_of_int (length l) :: l in
-              ["proc"; ~:name] @ (sl ~:args) @ (sl ~:locals) @ (body.f ())
-            method m_Call _ stmt name phony args = ["call"; ~:name; string_of_int (length ~:args)] @ flatten (map (phony.g ()) ~:args)
-            method m_Ret  _ _ e = "ret" :: (e.f ())
+              ["proc"; ~:name] @ (sl ~:args) @ (sl ~:locals) @ (body.fx ())
+            method m_Call _ stmt name phony args = ["call"; ~:name; string_of_int (length ~:args)] @ flatten (map (phony.f ()) ~:args)
+            method m_Ret  _ _ e = "ret" :: (e.fx ())
           end
 
         open L.Lexer
@@ -185,8 +185,8 @@ module Arrays =
         class ['self] code =
           object (self)
             inherit ['self, unit, string list] @t
-            method m_Array _ t l = ["{}"; string_of_int (length ~:l)] @ flatten (map (t.g ()) ~:l) 
-            method m_Elem  _ _ a i = ["[]"] @ a.f () @ i.f ()
+            method m_Array _ t l = ["{}"; string_of_int (length ~:l)] @ flatten (map (t.f ()) ~:l) 
+            method m_Elem  _ _ a i = ["[]"] @ a.fx () @ i.fx ()
           end
 
         class ['self] gcode =
@@ -212,7 +212,7 @@ module Arrays =
         class ['self, 'e] code =
           object (self)
             inherit ['self, 'e, string list, unit, string list] @t
-            method m_ArrayAssn _ _ x i y = ["[]="] @ x.f () @ i.f () @ y.f ()
+            method m_ArrayAssn _ _ x i y = ["[]="] @ x.fx () @ i.fx () @ y.fx ()
           end
 
         class ['self, 'e] gcode =
