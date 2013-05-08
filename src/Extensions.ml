@@ -1,3 +1,5 @@
+open Generic
+
 module Quotations =
   struct
     
@@ -39,38 +41,38 @@ module Breaks =
         class ['self, 'e] interpret =
           object (this)
             inherit ['self, > 'e L.Expr.t, int, ('self * 'self * State.t), State.t] ttt
-            method m_Skip (k, b, s) t = t.Generic.g (`Lambda, b, s) k
+            method m_Skip (k, b, s) t = t.g (`Lambda, b, s) k
 
             method m_Assign env t x e = 
               let k, b, s = env in 
-              t.Generic.g (`Lambda, b, State.modify s x (e.Generic.f env)) k
+              t.g (`Lambda, b, State.modify s ~:x (e.f env)) k
 
             method m_Read (k, b, s) t x = 
-              Printf.printf "%s < " x; 
+              Printf.printf "%s < " ~:x; 
               flush stdout;
               let y = int_of_string (input_line stdin) in
-              t.Generic.g (`Lambda, b, State.modify s x y) k
+              t.g (`Lambda, b, State.modify s ~:x y) k
 
             method m_Write env t e = 
               let k, b, s = env in
-              Printf.printf "> %d\n" (e.Generic.f env); 
+              Printf.printf "> %d\n" (e.f env); 
               flush stdout;
-              t.Generic.g (`Lambda, b, s) k
+              t.g (`Lambda, b, s) k
 
             method m_If env t e s1 s2 = 
               let k, b, s = env in 
-              (if e.Generic.f env = 0 then s2 else s1).Generic.f (k, b, s)
+              (if e.f env = 0 then s2 else s1).f (k, b, s)
 
             method m_While env t e s1 = 
               let k, b, s = env in 
-              if e.Generic.f env = 0 
-              then t.Generic.g (`Lambda, b, s) k
-              else s1.Generic.f (t.Generic.x ++ k, k, s) 
+              if e.f env = 0 
+              then t.g (`Lambda, b, s) k
+              else s1.f (t.x ++ k, k, s) 
 
             method m_Seq (k, b, s) t s1 s2 =               
-              s1.Generic.f (s2.Generic.x ++ k, b, s) 
+              s1.f (s2.x ++ k, b, s) 
 
-            method m_Break (k, b, s) t = t.Generic.g (`Lambda, `Lambda, s) b
+            method m_Break (k, b, s) t = t.g (`Lambda, `Lambda, s) b
 
             method m_Lambda (k, b, s) t = s 
           end
@@ -85,8 +87,8 @@ module Breaks =
     generic ('self, 'e) stmt = [('self, 'e) L.Stmt.t | 'self Stmt.t]
     
     let interpret s = 
-      let fe (_, _, s) e = L.Expr.t.Generic.gcata (new L.Expr.eval) s e in 
-      stmt.Generic.gcata fe (new Stmt.interpret) (`Lambda, `Lambda, State.empty) s
+      let fe (_, _, s) e = L.Expr.t.gcata (new L.Expr.eval) s e in 
+      stmt.gcata fe (new Stmt.interpret) (`Lambda, `Lambda, State.empty) s
 
     let toplevel source =
       match L.Lexer.fromString parse source with
@@ -115,7 +117,7 @@ module Procedures =
         class ['self] code =
           object
             inherit ['self, unit, string list] @t
-            method m_Call _ expr name args = ["call"; name; string_of_int (length args)] @ flatten (map (expr.Generic.g ()) args)
+            method m_Call _ expr name args = ["call"; ~:name; string_of_int (length ~:args)] @ flatten (map (expr.g ()) ~:args)
           end
 
         open L.Lexer
@@ -143,9 +145,9 @@ module Procedures =
             inherit ['self, > 'e L.Expr.t, string list, unit, string list] @t
             method m_Proc _ stmt name args locals body = 
               let sl l = string_of_int (length l) :: l in
-              ["proc"; name] @ (sl args) @ (sl locals) @ (body.Generic.f ())
-            method m_Call _ stmt name phony args = ["call"; name; string_of_int (length args)] @ flatten (map (phony.Generic.g ()) args)
-            method m_Ret  _ _ e = "ret" :: (e.Generic.f ())
+              ["proc"; ~:name] @ (sl ~:args) @ (sl ~:locals) @ (body.f ())
+            method m_Call _ stmt name phony args = ["call"; ~:name; string_of_int (length ~:args)] @ flatten (map (phony.g ()) ~:args)
+            method m_Ret  _ _ e = "ret" :: (e.f ())
           end
 
         open L.Lexer
@@ -180,13 +182,11 @@ module Arrays =
         | `Elem  of 'self t * 'self t
         ]
 
-        generic 'self p = ['self L.Expr.t | 'self t | 'self Procedures.Expr.t]  
-
         class ['self] code =
           object (self)
             inherit ['self, unit, string list] @t
-            method m_Array _ t l = ["{}"; string_of_int (length l)] @ flatten (map (t.Generic.g ()) l) 
-            method m_Elem  _ _ a i = ["[]"] @ a.Generic.f () @ i.Generic.f ()
+            method m_Array _ t l = ["{}"; string_of_int (length ~:l)] @ flatten (map (t.g ()) ~:l) 
+            method m_Elem  _ _ a i = ["[]"] @ a.f () @ i.f ()
           end
 
         class ['self] gcode =
@@ -196,7 +196,9 @@ module Arrays =
             inherit ['self] code
           end
 
-        let code e = p.Generic.gcata (new gcode) () e
+        generic 'self p = ['self L.Expr.t | 'self t | 'self Procedures.Expr.t]  
+
+        let code e = p.gcata (new gcode) () e
 
       end
    
@@ -210,7 +212,7 @@ module Arrays =
         class ['self, 'e] code =
           object (self)
             inherit ['self, 'e, string list, unit, string list] @t
-            method m_ArrayAssn _ _ x i y = ["[]="] @ x.Generic.f () @ i.Generic.f () @ y.Generic.f ()
+            method m_ArrayAssn _ _ x i y = ["[]="] @ x.f () @ i.f () @ y.f ()
           end
 
         class ['self, 'e] gcode =
@@ -243,7 +245,7 @@ module Arrays =
         generic ('self, 'e) stmt = [ ('self, 'e) L.Stmt.t | ('self, 'e) t | ('self, 'e) Procedures.Stmt.t ]
 
         let code s = 
-          stmt.Generic.gcata (fun _ e -> Expr.code e) (new gcode) () s
+          stmt.gcata (fun _ e -> Expr.code e) (new gcode) () s
 
         let toplevel source =
           match L.Lexer.fromString parse source with
