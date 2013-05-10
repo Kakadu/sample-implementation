@@ -71,28 +71,28 @@ module Expr =
     class ['self] eval =
       object (this)
         inherit ['self, State.t, int] @t
-        method m_Var   s _ x       = s ~:x
-        method m_Const _ _ n       = ~:n
-        method m_Binop s _ f _ x y = ~:f (x.fx s) (y.fx s)
+        method m_Var   s _ x       = s x
+        method m_Const _ _ n       = n
+        method m_Binop s _ f _ x y = f (x.fx s) (y.fx s)
       end
 
     class ['self] print =
       object (this)
         inherit ['self, unit, printer * int] @t 
-        method m_Var   _ e x = string ~:x, prio ~:e
-        method m_Const _ e x = int ~:x, prio ~:e
+        method m_Var   _ e x = string x, prio ~:e
+        method m_Const _ e x = int x, prio ~:e
         method m_Binop _ e _ op x y = 
           let x, px = x.fx () in
           let y, py = y.fx () in 
-          let p = prio ~:e in b [w p px x; string ~:op; w p py y], p
+          let p = prio ~:e in b [w p px x; string op; w p py y], p
       end
 
     class ['self] code =
       object (this)
         inherit ['self, unit, string list] @t
-        method m_Var   _ _ x       = ["x"; ~:x]
-        method m_Const _ _ x       = ["!"; string_of_int ~:x] 
-        method m_Binop _ _ _ o x y = ["@"; ~:o] @ List.flatten [x.fx (); y.fx ()]
+        method m_Var   _ _ x       = ["x"; x]
+        method m_Const _ _ x       = ["!"; string_of_int x] 
+        method m_Binop _ _ _ o x y = ["@"; o] @ List.flatten [x.fx (); y.fx ()]
       end
 
     let rec parse primary s =  
@@ -129,12 +129,12 @@ module Stmt =
       object (this)
         inherit ['self, > 'e Expr.t, int, State.t, State.t] @t         
         method m_Skip s _ = s
-        method m_Assign s _ x e = State.modify s ~:x (e.fx s)
+        method m_Assign s _ x e = State.modify s x (e.fx s)
         method m_Read s _ x = 
-          Printf.printf "%s < " ~:x; 
+          Printf.printf "%s < " x; 
           flush stdout;
           let y = int_of_string (input_line stdin) in
-          State.modify s ~:x y
+          State.modify s x y
         method m_Write s _ e = 
           Printf.printf "> %d\n" (e.fx s); 
           flush stdout;
@@ -150,11 +150,11 @@ module Stmt =
       object (this)
         inherit ['self, > 'e Expr.t, printer, unit, printer] @t
         method m_Skip   _ _       = string "skip"
-        method m_Assign _ _ x e   = v [string ~:x; string ":="; e.fx ()]
+        method m_Assign _ _ x e   = v [string x; string ":="; e.fx ()]
         method m_If     _ _ c x y = v [string "if"; c.fx (); v [string "then"; x.fx (); string "else"; y.fx ()]]
         method m_While  _ _ c x   = v [v [string "while"; c.fx ()]; v [string "do"; x.fx ()]]
         method m_Seq    _ _ x y   = c [seq [x.fx (); string ";"]; y.fx ()]
-        method m_Read   _ _ x     = v [string "read"; rboxed (string ~:x)]
+        method m_Read   _ _ x     = v [string "read"; rboxed (string x)]
         method m_Write  _ _ e     = v [string "write"; rboxed (e.fx ())]
       end
 
@@ -163,10 +163,10 @@ module Stmt =
         inherit ['self, > 'e Expr.t, string list, unit, string list] @t
         method m_Skip   _ _       = ["s"]
         method m_Seq    _ _ x y   = ";" :: (x.fx ()) @ (y.fx ())
-        method m_Assign _ _ x e   = "=" :: ~:x :: (e.fx ())
+        method m_Assign _ _ x e   = "=" :: x :: (e.fx ())
         method m_While  _ _ c s   = "l" :: (c.fx ()) @ (s.fx ())
         method m_If     _ _ c x y = "i" :: (c.fx ()) @ (x.fx ()) @ (y.fx ())
-        method m_Read   _ _ x     = ["r"; ~:x]
+        method m_Read   _ _ x     = ["r"; x]
         method m_Write  _ _ e     = "w" :: (e.fx ())
       end
 
@@ -204,9 +204,9 @@ module Compiler =
         class ['e] compile =
           object (this)
             inherit ['e, [`Yes of int | `No], string list] @t
-            method m_Var   l _ x       = first l [Printf.sprintf "\tL %s\n" ~:x]
-            method m_Const l _ n       = first l [Printf.sprintf "\tC %d\n" ~:n]
-            method m_Binop l _ f o x y = (x.fx l) @ (y.fx `No) @ [Printf.sprintf "\tB %s\n" ~:o]
+            method m_Var   l _ x       = first l [Printf.sprintf "\tL %s\n" x]
+            method m_Const l _ n       = first l [Printf.sprintf "\tC %d\n" n]
+            method m_Binop l _ f o x y = (x.fx l) @ (y.fx `No) @ [Printf.sprintf "\tB %s\n" o]
           end
      
       end
@@ -236,9 +236,9 @@ module Compiler =
                              let s2', last'' = s2.fx (`Yes (last+1), next, last') in
                              s1' @ s2', last''
             method m_Assign ((this, next, l) as env) _ x e = 
-              last next ((e.fx env) @ [Printf.sprintf "\tS %s\n" ~:x]), l
+              last next ((e.fx env) @ [Printf.sprintf "\tS %s\n" x]), l
             method m_Read (this, next, last) _ x = 
-              frame this next ["\tR\n"; Printf.sprintf "\tS %s\n" ~:x], last
+              frame this next ["\tR\n"; Printf.sprintf "\tS %s\n" x], last
             method m_Write ((this, next, l) as env) _ e = 
               last next ((e.fx env) @ ["\tW\n"]), l
             method m_If ((this, next, last) as env) _ e s1 s2 =
@@ -263,8 +263,8 @@ module Compiler =
 
     let compile p =
       let code, _ =
-        Stmt.t.gcata 
-          (fun (this, _, _) expr -> Expr.t.gcata (new Expr.compile) this expr)
+        Generic.transform(Stmt.t)
+          (fun (this, _, _) expr -> Generic.transform(Expr.t) (new Expr.compile) this expr)
           (new Stmt.compile)
           (`No, `Maybe 0, 0)
           p
@@ -288,22 +288,22 @@ module Program =
     )
 
     let print p =
-      Stmt.t.gcata        
-        (fun _ e -> fst (Expr.t.gcata (new Expr.print) () e))
+      Generic.transform(Stmt.t)
+        (fun _ e -> fst (Generic.transform(Expr.t) (new Expr.print) () e))
         (new Stmt.print)
         ()
         p
 
     let code p =
-      Stmt.t.gcata
-        (Expr.t.gcata (new Expr.code))
+      Generic.transform(Stmt.t)
+        (Generic.transform(Expr.t) (new Expr.code))
         (new Stmt.code)
         ()
         p
 
     let run p =       
-      Stmt.t.gcata 
-        (Expr.t.gcata (new Expr.eval)) 
+      Generic.transform(Stmt.t)
+        (Generic.transform(Expr.t) (new Expr.eval)) 
         (new Stmt.interpret) 
         State.empty 
         p

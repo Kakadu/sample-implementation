@@ -45,13 +45,13 @@ module Breaks =
 
             method m_Assign env t x e = 
               let k, b, s = env in 
-              t.f (`Lambda, b, State.modify s ~:x (e.fx env)) k
+              t.f (`Lambda, b, State.modify s x (e.fx env)) k
 
             method m_Read (k, b, s) t x = 
-              Printf.printf "%s < " ~:x; 
+              Printf.printf "%s < " x; 
               flush stdout;
               let y = int_of_string (input_line stdin) in
-              t.f (`Lambda, b, State.modify s ~:x y) k
+              t.f (`Lambda, b, State.modify s x y) k
 
             method m_Write env t e = 
               let k, b, s = env in
@@ -87,8 +87,8 @@ module Breaks =
     generic ('self, 'e) stmt = [('self, 'e) L.Stmt.t | 'self Stmt.t]
     
     let interpret s = 
-      let fe (_, _, s) e = L.Expr.t.gcata (new L.Expr.eval) s e in 
-      stmt.gcata fe (new Stmt.interpret) (`Lambda, `Lambda, State.empty) s
+      let fe (_, _, s) e = Generic.transform(L.Expr.t) (new L.Expr.eval) s e in 
+      Generic.transform(stmt) fe (new Stmt.interpret) (`Lambda, `Lambda, State.empty) s
 
     let toplevel source =
       match L.Lexer.fromString parse source with
@@ -117,7 +117,7 @@ module Procedures =
         class ['self] code =
           object
             inherit ['self, unit, string list] @t
-            method m_Call _ expr name args = ["call"; ~:name; string_of_int (length ~:args)] @ flatten (map (expr.f ()) ~:args)
+            method m_Call _ expr name args = ["call"; name; string_of_int (length args)] @ flatten (map (expr.f ()) args)
           end
 
         open L.Lexer
@@ -145,8 +145,8 @@ module Procedures =
             inherit ['self, > 'e L.Expr.t, string list, unit, string list] @t
             method m_Proc _ stmt name args locals body = 
               let sl l = string_of_int (length l) :: l in
-              ["proc"; ~:name] @ (sl ~:args) @ (sl ~:locals) @ (body.fx ())
-            method m_Call _ stmt name phony args = ["call"; ~:name; string_of_int (length ~:args)] @ flatten (map (phony.f ()) ~:args)
+              ["proc"; name] @ (sl args) @ (sl locals) @ (body.fx ())
+            method m_Call _ stmt name phony args = ["call"; name; string_of_int (length args)] @ flatten (map (phony.f ()) args)
             method m_Ret  _ _ e = "ret" :: (e.fx ())
           end
 
@@ -185,7 +185,7 @@ module Arrays =
         class ['self] code =
           object (self)
             inherit ['self, unit, string list] @t
-            method m_Array _ t l = ["{}"; string_of_int (length ~:l)] @ flatten (map (t.f ()) ~:l) 
+            method m_Array _ t l = ["{}"; string_of_int (length l)] @ flatten (map (t.f ()) l) 
             method m_Elem  _ _ a i = ["[]"] @ a.fx () @ i.fx ()
           end
 
@@ -198,7 +198,7 @@ module Arrays =
 
         generic 'self p = ['self L.Expr.t | 'self t | 'self Procedures.Expr.t]  
 
-        let code e = p.gcata (new gcode) () e
+        let code e = Generic.transform(p) (new gcode) () e
 
       end
    
@@ -245,7 +245,7 @@ module Arrays =
         generic ('self, 'e) stmt = [ ('self, 'e) L.Stmt.t | ('self, 'e) t | ('self, 'e) Procedures.Stmt.t ]
 
         let code s = 
-          stmt.gcata (fun _ e -> Expr.code e) (new gcode) () s
+          Generic.transform(stmt) (fun _ e -> Expr.code e) (new gcode) () s
 
         let toplevel source =
           match L.Lexer.fromString parse source with
