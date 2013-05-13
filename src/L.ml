@@ -51,11 +51,11 @@ module Lexer =
 module Expr =
   struct
 
-    generic 'self t = 'self as [>  
+    generic 'self t = [>  
         `Var   of [string] 
       | `Const of [int]
       | `Binop of [int -> int -> int] * [string] * 'self t * 'self t       
-    ]
+    ] as 'self
 
     let prio = 
       let a = [
@@ -115,7 +115,7 @@ module Expr =
 module Stmt =
   struct
 
-    generic ('self, 'e) t = 'self as [>
+    generic ('self, 'e) t = [>
         `Skip 
       | `Assign of [string] * 'e
       | `Read   of [string]
@@ -123,7 +123,7 @@ module Stmt =
       | `If     of 'e * ('self, 'e) t * ('self, 'e) t
       | `While  of 'e * ('self, 'e) t  
       | `Seq    of ('self, 'e) t * ('self, 'e) t 
-    ]
+    ] as 'self
 
     class ['self, 'e] interpret =
       object (this)

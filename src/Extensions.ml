@@ -3,7 +3,7 @@ open Generic
 module Quotations =
   struct
     
-    generic 'self t = 'self as [> `H | `V]
+    generic 'self t = [> `H | `V] as 'self
  
     ostap (
       parse: !(L.Stmt.parse)[expr][stmt] -EOF;
@@ -25,10 +25,10 @@ module Breaks =
     module Stmt =
       struct
         
-        generic 'self t = 'self as [>
+        generic 'self t = [>
         | `Lambda
         | `Break 
-        ]
+        ] as 'self
 
         let (++) s = function `Lambda -> s | s' -> `Seq (s, s')
 
@@ -110,9 +110,9 @@ module Procedures =
 
         open List
 
-        generic 'self t = 'self as [>
+        generic 'self t = [>
         | `Call of [string] *  ['self t list]
-        ]
+        ] as 'self
 
         class ['self] code =
           object
@@ -134,11 +134,11 @@ module Procedures =
 
         open List
 
-        generic ('self, 'e) t = 'self as [>
+        generic ('self, 'e) t = [>
         | `Proc of [string] * [string list] * [string list] * ('self, 'e) t
         | `Call of [string] * 'e * ['e list]
         | `Ret  of 'e
-        ]
+        ] as 'self
 
         class ['self, 'e] code =
           object
@@ -177,10 +177,10 @@ module Arrays =
 
         open List
 
-        generic 'self t = 'self as [>
+        generic 'self t = [>
         | `Array of ['self t list] 
         | `Elem  of 'self t * 'self t
-        ]
+        ] as 'self
 
         class ['self] code =
           object (self)
@@ -205,9 +205,9 @@ module Arrays =
     module Stmt =
       struct
 
-        generic ('self, 'e) t = 'self as [>
+        generic ('self, 'e) t = [>
           `ArrayAssn of 'e * 'e * 'e
-        ]
+        ] as 'self
 
         class ['self, 'e] code =
           object (self)

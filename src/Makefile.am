@@ -3,7 +3,7 @@ SUBDIRS =
 
 # type in sources here
 SOURCES = State.ml L.ml Extensions.ml Mix.ml Driver.ml
-MLI = 
+MLI =
 
 include $(top_srcdir)/m4/Makefile.am.vars
 
