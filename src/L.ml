@@ -52,9 +52,9 @@ module Expr =
   struct
 
     generic 'self t = [>  
-        `Var   of [string] 
-      | `Const of [int]
-      | `Binop of [int -> int -> int] * [string] * 'self t * 'self t       
+        `Var   of string 
+      | `Const of int
+      | `Binop of (int -> int -> int) * string * ['self t] * ['self t]       
     ] as 'self
 
     let prio = 
@@ -117,12 +117,12 @@ module Stmt =
 
     generic ('self, 'e) t = [>
         `Skip 
-      | `Assign of [string] * 'e
-      | `Read   of [string]
-      | `Write  of 'e
-      | `If     of 'e * ('self, 'e) t * ('self, 'e) t
-      | `While  of 'e * ('self, 'e) t  
-      | `Seq    of ('self, 'e) t * ('self, 'e) t 
+      | `Assign of string * ['e]
+      | `Read   of string
+      | `Write  of ['e]
+      | `If     of ['e] * [('self, 'e) t] * [('self, 'e) t]
+      | `While  of ['e] * [('self, 'e) t]  
+      | `Seq    of [('self, 'e) t] * [('self, 'e) t] 
     ] as 'self
 
     class ['self, 'e] interpret =

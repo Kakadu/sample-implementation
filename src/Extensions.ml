@@ -111,7 +111,7 @@ module Procedures =
         open List
 
         generic 'self t = [>
-        | `Call of [string] * ['self t list]
+        | `Call of string * 'self t list
         ] as 'self
 
         class ['self] code =
@@ -135,9 +135,9 @@ module Procedures =
         open List
 
         generic ('self, 'e) t = [>
-        | `Proc of [string] * [string list] * [string list] * ('self, 'e) t
-        | `Call of [string] * 'e * ['e list]
-        | `Ret  of 'e
+        | `Proc of string * string list * string list * [('self, 'e) t]
+        | `Call of string * ['e] * 'e list
+        | `Ret  of ['e]
         ] as 'self
 
         class ['self, 'e] code =
@@ -178,8 +178,8 @@ module Arrays =
         open List
 
         generic 'self t = [>
-        | `Array of ['self t list] 
-        | `Elem  of 'self t * 'self t
+        | `Array of 'self t list 
+        | `Elem  of ['self t] * ['self t]
         ] as 'self
 
         class ['self] code =
@@ -206,7 +206,7 @@ module Arrays =
       struct
 
         generic ('self, 'e) t = [>
-          `ArrayAssn of 'e * 'e * 'e
+          `ArrayAssn of ['e] * ['e] * ['e]
         ] as 'self
 
         class ['self, 'e] code =
