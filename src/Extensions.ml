@@ -40,7 +40,7 @@ module Breaks =
 
         class ['self, 'e] interpret =
           object (this)
-            inherit ['self, > 'e L.Expr.t, int, ('self * 'self * State.t), State.t] ttt
+            inherit ['self, 'e L.Expr.t, int, ('self * 'self * State.t), State.t] ttt
             method m_Skip (k, b, s) t = t.f (`Lambda, b, s) k
 
             method m_Assign env t x e = 
@@ -111,7 +111,7 @@ module Procedures =
         open List
 
         generic 'self t = [>
-        | `Call of [string] *  ['self t list]
+        | `Call of [string] * ['self t list]
         ] as 'self
 
         class ['self] code =
@@ -142,7 +142,7 @@ module Procedures =
 
         class ['self, 'e] code =
           object
-            inherit ['self, > 'e L.Expr.t, string list, unit, string list] @t
+            inherit ['self, 'e L.Expr.t, string list, unit, string list] @t
             method m_Proc _ stmt name args locals body = 
               let sl l = string_of_int (length l) :: l in
               ["proc"; name] @ (sl args) @ (sl locals) @ (body.fx ())
@@ -242,7 +242,7 @@ module Arrays =
           xboct[x][p]: -"[" -i:p -"]" xboct[`Elem(x, i)][p] | !(Ostap.Combinators.empty) {x}
         )
 
-        generic ('self, 'e) stmt = [ ('self, 'e) L.Stmt.t | ('self, 'e) t | ('self, 'e) Procedures.Stmt.t ]
+        generic ('self, 'e) stmt = [('self, 'e) L.Stmt.t | ('self, 'e) t | ('self, 'e) Procedures.Stmt.t ]
 
         let code s = 
           Generic.transform(stmt) (fun _ e -> Expr.code e) (new gcode) () s

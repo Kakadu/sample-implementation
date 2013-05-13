@@ -127,7 +127,7 @@ module Stmt =
 
     class ['self, 'e] interpret =
       object (this)
-        inherit ['self, > 'e Expr.t, int, State.t, State.t] @t         
+        inherit ['self, 'e Expr.t, int, State.t, State.t] @t         
         method m_Skip s _ = s
         method m_Assign s _ x e = State.modify s x (e.fx s)
         method m_Read s _ x = 
@@ -148,7 +148,7 @@ module Stmt =
 
     class ['self, 'e] print =
       object (this)
-        inherit ['self, > 'e Expr.t, printer, unit, printer] @t
+        inherit ['self, 'e Expr.t, printer, unit, printer] @t
         method m_Skip   _ _       = string "skip"
         method m_Assign _ _ x e   = v [string x; string ":="; e.fx ()]
         method m_If     _ _ c x y = v [string "if"; c.fx (); v [string "then"; x.fx (); string "else"; y.fx ()]]
@@ -160,7 +160,7 @@ module Stmt =
 
     class ['self, 'e] code =
       object (this)
-        inherit ['self, > 'e Expr.t, string list, unit, string list] @t
+        inherit ['self, 'e Expr.t, string list, unit, string list] @t
         method m_Skip   _ _       = ["s"]
         method m_Seq    _ _ x y   = ";" :: (x.fx ()) @ (y.fx ())
         method m_Assign _ _ x e   = "=" :: x :: (e.fx ())
@@ -219,7 +219,7 @@ module Compiler =
 
         class ['self, 'e] compile =
           object (this)
-            inherit ['self, > 'e Expr.t, string list, env, string list * int] @t
+            inherit ['self, 'e Expr.t, string list, env, string list * int] @t
             method m_Skip (this, next, last) _  = 
               (match this, next with 
                | `No   , `Maybe n            -> []
@@ -276,7 +276,7 @@ module Compiler =
 module Program =
   struct
 
-    type ('e, 's) t = > ('s, (> 'e Expr.t)) Stmt.t
+    type ('e, 's) t = ('s, ('e Expr.t)) Stmt.t
     
     ostap (
       expr : !(Expr.parse)[primary];
