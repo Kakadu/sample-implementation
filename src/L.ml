@@ -1,4 +1,4 @@
-open Generic
+open GT
 open Ostap.Pretty
 
 let w p px x = if px < p then rboxed x else x 
@@ -111,6 +111,7 @@ module Expr =
       s
 
   end
+
 
 module Stmt =
   struct
@@ -263,8 +264,8 @@ module Compiler =
 
     let compile p =
       let code, _ =
-        Generic.transform(Stmt.t)
-          (fun (this, _, _) expr -> Generic.transform(Expr.t) (new Expr.compile) this expr)
+        transform(Stmt.t)
+          (fun (this, _, _) expr -> transform(Expr.t) (new Expr.compile) this expr)
           (new Stmt.compile)
           (`No, `Maybe 0, 0)
           p
@@ -288,22 +289,22 @@ module Program =
     )
 
     let print p =
-      Generic.transform(Stmt.t)
-        (fun _ e -> fst (Generic.transform(Expr.t) (new Expr.print) () e))
+      transform(Stmt.t)
+        (fun _ e -> fst (transform(Expr.t) (new Expr.print) () e))
         (new Stmt.print)
         ()
         p
 
     let code p =
-      Generic.transform(Stmt.t)
-        (Generic.transform(Expr.t) (new Expr.code))
+      transform(Stmt.t)
+        (transform(Expr.t) (new Expr.code))
         (new Stmt.code)
         ()
         p
 
     let run p =       
-      Generic.transform(Stmt.t)
-        (Generic.transform(Expr.t) (new Expr.eval)) 
+      transform(Stmt.t)
+        (transform(Expr.t) (new Expr.eval)) 
         (new Stmt.interpret) 
         State.empty 
         p

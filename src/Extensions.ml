@@ -1,4 +1,4 @@
-open Generic
+open GT
 
 module Quotations =
   struct
@@ -87,8 +87,8 @@ module Breaks =
     generic ('self, 'e) stmt = [('self, 'e) L.Stmt.t | 'self Stmt.t]
     
     let interpret s = 
-      let fe (_, _, s) e = Generic.transform(L.Expr.t) (new L.Expr.eval) s e in 
-      Generic.transform(stmt) fe (new Stmt.interpret) (`Lambda, `Lambda, State.empty) s
+      let fe (_, _, s) e = transform(L.Expr.t) (new L.Expr.eval) s e in 
+      transform(stmt) fe (new Stmt.interpret) (`Lambda, `Lambda, State.empty) s
 
     let toplevel source =
       match L.Lexer.fromString parse source with
@@ -198,7 +198,7 @@ module Arrays =
 
         generic 'self p = ['self L.Expr.t | 'self t | 'self Procedures.Expr.t]  
 
-        let code e = Generic.transform(p) (new gcode) () e
+        let code e = transform(p) (new gcode) () e
 
       end
    
@@ -245,7 +245,7 @@ module Arrays =
         generic ('self, 'e) stmt = [('self, 'e) L.Stmt.t | ('self, 'e) t | ('self, 'e) Procedures.Stmt.t ]
 
         let code s = 
-          Generic.transform(stmt) (fun _ e -> Expr.code e) (new gcode) () s
+          transform(stmt) (fun _ e -> Expr.code e) (new gcode) () s
 
         let toplevel source =
           match L.Lexer.fromString parse source with
