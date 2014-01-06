@@ -3,7 +3,7 @@ open GT
 module Quotations =
   struct
     
-    generic 'self t = [> `H | `V] as 'self
+    generic t = [ `H | `V] 
  
     ostap (
       parse: !(L.Stmt.parse)[expr][stmt] -EOF;
@@ -25,56 +25,47 @@ module Breaks =
     module Stmt =
       struct
         
-        generic 'self t = [>
-        | `Lambda
-        | `Break 
-        ] as 'self
+        generic ('self, 'e) t = [`Lambda | `Break | ('self, 'e) L.Stmt.t] 
 
         let (++) s = function `Lambda -> s | s' -> `Seq (s, s')
 
-        class virtual ['self, 'e, 'f, 'a, 'b] ttt =
-          object
-            inherit ['self, 'a, 'b] @t
-            inherit ['self, 'e, 'f, 'a, 'b] @L.Stmt.t
-          end
-
         class ['self, 'e] interpret =
           object (this)
-            inherit ['self, 'e L.Expr.t, int, ('self * 'self * State.t), State.t] ttt
-            method m_Skip (k, b, s) t = t.f (`Lambda, b, s) k
+            inherit ['self, State.t, 'e L.Expr.t, int, ('self * 'self * State.t), State.t] @t
+            method c_Skip (k, b, s) t = t.t#self (`Lambda, b, s) k
 
-            method m_Assign env t x e = 
+            method c_Assign env t x e = 
               let k, b, s = env in 
-              t.f (`Lambda, b, State.modify s x (e.fx env)) k
+              t.t#self (`Lambda, b, State.modify s x (e.fx env)) k
 
-            method m_Read (k, b, s) t x = 
+            method c_Read (k, b, s) t x = 
               Printf.printf "%s < " x; 
               flush stdout;
               let y = int_of_string (input_line stdin) in
-              t.f (`Lambda, b, State.modify s x y) k
+              t.t#self (`Lambda, b, State.modify s x y) k
 
-            method m_Write env t e = 
+            method c_Write env t e = 
               let k, b, s = env in
               Printf.printf "> %d\n" (e.fx env); 
               flush stdout;
-              t.f (`Lambda, b, s) k
+              t.t#self (`Lambda, b, s) k
 
-            method m_If env t e s1 s2 = 
+            method c_If env t e s1 s2 = 
               let k, b, s = env in 
               (if e.fx env = 0 then s2 else s1).fx (k, b, s)
 
-            method m_While env t e s1 = 
+            method c_While env t e s1 = 
               let k, b, s = env in 
               if e.fx env = 0 
-              then t.f (`Lambda, b, s) k
-              else s1.fx (t.x ++ k, k, s) 
+              then t.t#self (`Lambda, b, s) k
+              else s1.fx ((`While (e.x, s1.x)) ++ k, k, s) 
 
-            method m_Seq (k, b, s) t s1 s2 =               
+            method c_Seq (k, b, s) t s1 s2 =               
               s1.fx (s2.x ++ k, b, s) 
 
-            method m_Break (k, b, s) t = t.f (`Lambda, `Lambda, s) b
+            method c_Break (k, b, s) t = t.f (`Lambda, `Lambda, s) b
 
-            method m_Lambda (k, b, s) t = s 
+            method c_Lambda (k, b, s) t = s 
           end
 
       end
@@ -83,12 +74,14 @@ module Breaks =
       parse: !(L.Stmt.parse)[L.Program.expr][fun p -> break p] -EOF;
       break[p]: "break" {`Break}
     )
-
-    generic ('self, 'e) stmt = [('self, 'e) L.Stmt.t | 'self Stmt.t]
     
     let interpret s = 
-      let fe (_, _, s) e = transform(L.Expr.t) (new L.Expr.eval) s e in 
-      transform(stmt) fe (new Stmt.interpret) (`Lambda, `Lambda, State.empty) s
+      let fe (_, _, s) e = 
+        let rec eval i e = transform(L.Expr.t) eval (new L.Expr.eval) i e in
+        eval s e
+      in 
+      let rec self i s = transform(Stmt.t) self fe (new Stmt.interpret) i s in
+      self (`Lambda, `Lambda, State.empty) s
 
     let toplevel source =
       match L.Lexer.fromString parse source with
@@ -110,14 +103,12 @@ module Procedures =
 
         open List
 
-        generic 'self t = [>
-        | `Call of string * 'self t list
-        ] as 'self
+        generic 'self t = [`Call of [string] * ['self list]]
 
         class ['self] code =
           object
-            inherit ['self, unit, string list] @t
-            method m_Call _ expr name args = ["call"; name; string_of_int (length args)] @ flatten (map (expr.f ()) args)
+            inherit ['self, string list, unit, string list] @t
+            method c_Call _ expr name args = ["call"; name; string_of_int (length args)] @ flatten (map (expr.t#self ()) args)
           end
 
         open L.Lexer
@@ -134,20 +125,20 @@ module Procedures =
 
         open List
 
-        generic ('self, 'e) t = [>
-        | `Proc of string * string list * string list * [('self, 'e) t]
-        | `Call of string * ['e] * 'e list
-        | `Ret  of ['e]
-        ] as 'self
+        generic ('self, 'e) t = [
+          `Proc of [string] * [string list] * [string list] * 'self
+        | `Call of [string] * 'e * ['e list]
+        | `Ret  of 'e
+        ] 
 
         class ['self, 'e] code =
           object
-            inherit ['self, 'e L.Expr.t, string list, unit, string list] @t
-            method m_Proc _ stmt name args locals body = 
+            inherit ['self, string list, 'e, string list, unit, string list] @t
+            method c_Proc _ stmt name args locals body = 
               let sl l = string_of_int (length l) :: l in
               ["proc"; name] @ (sl args) @ (sl locals) @ (body.fx ())
-            method m_Call _ stmt name phony args = ["call"; name; string_of_int (length args)] @ flatten (map (phony.f ()) args)
-            method m_Ret  _ _ e = "ret" :: (e.fx ())
+            method c_Call _ stmt name phony args = ["call"; name; string_of_int (length args)] @ flatten (map (phony.f ()) args)
+            method c_Ret  _ _ e = "ret" :: (e.fx ())
           end
 
         open L.Lexer
@@ -177,16 +168,16 @@ module Arrays =
 
         open List
 
-        generic 'self t = [>
-        | `Array of 'self t list 
-        | `Elem  of ['self t] * ['self t]
-        ] as 'self
+        generic 'self t = [
+        | `Array of ['self list] 
+        | `Elem  of 'self * 'self 
+        ]
 
         class ['self] code =
           object (self)
-            inherit ['self, unit, string list] @t
-            method m_Array _ t l = ["{}"; string_of_int (length l)] @ flatten (map (t.f ()) l) 
-            method m_Elem  _ _ a i = ["[]"] @ a.fx () @ i.fx ()
+            inherit ['self, string list, unit, string list] @t
+            method c_Array _ t l = ["{}"; string_of_int (length l)] @ flatten (map (t.t#self ()) l) 
+            method c_Elem  _ _ a i = ["[]"] @ a.fx () @ i.fx ()
           end
 
         class ['self] gcode =
@@ -196,30 +187,23 @@ module Arrays =
             inherit ['self] code
           end
 
-        generic 'self p = ['self L.Expr.t | 'self t | 'self Procedures.Expr.t]  
+        generic 'self p = ['self L.Expr.t | 'self t | 'self Procedures.Expr.t] 
 
-        let code e = transform(p) (new gcode) () e
+        let code e = 
+          let rec self i s = transform(p) self (new gcode) i s in
+          self () e
 
       end
    
     module Stmt =
       struct
 
-        generic ('self, 'e) t = [>
-          `ArrayAssn of ['e] * ['e] * ['e]
-        ] as 'self
+        generic 'e t = [`ArrayAssn of 'e * 'e * 'e]
 
-        class ['self, 'e] code =
+        class ['e] code =
           object (self)
-            inherit ['self, 'e, string list, unit, string list] @t
-            method m_ArrayAssn _ _ x i y = ["[]="] @ x.fx () @ i.fx () @ y.fx ()
-          end
-
-        class ['self, 'e] gcode =
-          object (self)
-            inherit ['self, 'e Expr.p] L.Stmt.code
-            inherit ['self, 'e Expr.p] Procedures.Stmt.code
-            inherit ['self, 'e Expr.p] code
+            inherit ['e, string list, unit, string list] @t
+            method c_ArrayAssn _ _ x i y = ["[]="] @ x.fx () @ i.fx () @ y.fx ()
           end
 
         ostap (
@@ -242,10 +226,19 @@ module Arrays =
           xboct[x][p]: -"[" -i:p -"]" xboct[`Elem(x, i)][p] | !(Ostap.Combinators.empty) {x}
         )
 
-        generic ('self, 'e) stmt = [('self, 'e) L.Stmt.t | ('self, 'e) t | ('self, 'e) Procedures.Stmt.t ]
+        generic ('self, 'e) stmt = [('self, 'e) L.Stmt.t | 'e t | ('self, 'e) Procedures.Stmt.t ] 
+
+        class ['self, 'e] gcode =
+          object (self)
+            inherit ['self, string list, 'e, string list, unit, string list] @stmt
+            inherit ['self, 'e] L.Stmt.code
+            inherit ['self, 'e] Procedures.Stmt.code
+            inherit ['e] code
+          end
 
         let code s = 
-          transform(stmt) (fun _ e -> Expr.code e) (new gcode) () s
+          let rec self i s = transform(stmt) self (fun _ e -> Expr.code e) (new gcode) i s in
+          self () s
 
         let toplevel source =
           match L.Lexer.fromString parse source with
@@ -260,3 +253,4 @@ module Arrays =
       end
 
   end
+
