@@ -51,7 +51,7 @@ module Lexer =
 module Expr =
   struct
 
-    generic 'self t = [  
+    @type 'self t = [  
         `Var   of [string] 
       | `Const of [int]
       | `Binop of [int -> int -> int] * [string] * 'self * 'self
@@ -115,7 +115,7 @@ module Expr =
 module Stmt =
   struct
 
-    generic ('self, 'e) t = [
+    @type ('self, 'e) t = [
         `Skip 
       | `Assign of [string] * 'e
       | `Read   of [string]

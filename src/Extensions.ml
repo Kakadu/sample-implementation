@@ -3,7 +3,7 @@ open GT
 module Quotations =
   struct
     
-    generic t = [ `H | `V] 
+    @type t = [ `H | `V] 
  
     ostap (
       parse: !(L.Stmt.parse)[expr][stmt] -EOF;
@@ -25,7 +25,7 @@ module Breaks =
     module Stmt =
       struct
         
-        generic ('self, 'e) t = [`Lambda | `Break | ('self, 'e) L.Stmt.t] 
+        @type ('self, 'e) t = [`Lambda | `Break | ('self, 'e) L.Stmt.t] 
 
         let (++) s = function `Lambda -> s | s' -> `Seq (s, s')
 
@@ -103,7 +103,7 @@ module Procedures =
 
         open List
 
-        generic 'self t = [`Call of [string] * ['self list]]
+        @type 'self t = [`Call of [string] * ['self list]]
 
         class ['self] code =
           object
@@ -125,7 +125,7 @@ module Procedures =
 
         open List
 
-        generic ('self, 'e) t = [
+        @type ('self, 'e) t = [
           `Proc of [string] * [string list] * [string list] * 'self
         | `Call of [string] * 'e * ['e list]
         | `Ret  of 'e
@@ -168,7 +168,7 @@ module Arrays =
 
         open List
 
-        generic 'self t = [
+        @type 'self t = [
         | `Array of ['self list] 
         | `Elem  of 'self * 'self 
         ]
@@ -187,7 +187,7 @@ module Arrays =
             inherit ['self] code
           end
 
-        generic 'self p = ['self L.Expr.t | 'self t | 'self Procedures.Expr.t] 
+        @type 'self p = ['self L.Expr.t | 'self t | 'self Procedures.Expr.t] 
 
         let code e = 
           let rec self i s = transform(p) self (new gcode) i s in
@@ -198,7 +198,7 @@ module Arrays =
     module Stmt =
       struct
 
-        generic 'e t = [`ArrayAssn of 'e * 'e * 'e]
+        @type 'e t = [`ArrayAssn of 'e * 'e * 'e]
 
         class ['e] code =
           object (self)
@@ -226,7 +226,7 @@ module Arrays =
           xboct[x][p]: -"[" -i:p -"]" xboct[`Elem(x, i)][p] | !(Ostap.Combinators.empty) {x}
         )
 
-        generic ('self, 'e) stmt = [('self, 'e) L.Stmt.t | 'e t | ('self, 'e) Procedures.Stmt.t ] 
+        @type ('self, 'e) stmt = [('self, 'e) L.Stmt.t | 'e t | ('self, 'e) Procedures.Stmt.t ] 
 
         class ['self, 'e] gcode =
           object (self)
