@@ -25,13 +25,13 @@ module Breaks =
     module Stmt =
       struct
         
-        @type ('self, 'e) t = [`Lambda | `Break | ('self, 'e) L.Stmt.t] 
+        @type ('self, 'e) st = [`Lambda | `Break | ('self, 'e) L.Stmt.t] 
 
         let (++) s = function `Lambda -> s | s' -> `Seq (s, s')
 
         class ['self, 'e] interpret =
           object (this)
-            inherit ['self, State.t, 'e L.Expr.t, int, ('self * 'self * State.t), State.t] @t
+            inherit ['self, State.t, 'e L.Expr.t, int, ('self * 'self * State.t), State.t] @st
             method c_Skip (k, b, s) t = t.t#self (`Lambda, b, s) k
 
             method c_Assign env t x e = 
@@ -80,7 +80,7 @@ module Breaks =
         let rec eval i e = transform(L.Expr.t) eval (new L.Expr.eval) i e in
         eval s e
       in 
-      let rec self i s = transform(Stmt.t) self fe (new Stmt.interpret) i s in
+      let rec self i s = transform(Stmt.st) self fe (new Stmt.interpret) i s in
       self (`Lambda, `Lambda, State.empty) s
 
     let toplevel source =
@@ -103,11 +103,11 @@ module Procedures =
 
         open List
 
-        @type 'self t = [`Call of string * 'self list]
+        @type 'self et = [`Call of string * 'self list]
 
         class ['self] code =
           object
-            inherit ['self, string list, unit, string list] @t
+            inherit ['self, string list, unit, string list] @et
             method c_Call _ expr name args = ["call"; name; string_of_int (length args)] @ flatten (map (expr.t#self ()) args)
           end
 
@@ -125,7 +125,7 @@ module Procedures =
 
         open List
 
-        @type ('self, 'e) t = [
+        @type ('self, 'e) st = [
           `Proc of string * string list * string list * ['self]
         | `Call of string * ['e] * 'e list
         | `Ret  of ['e]
@@ -133,7 +133,7 @@ module Procedures =
 
         class ['self, 'e] code =
           object
-            inherit ['self, string list, 'e, string list, unit, string list] @t
+            inherit ['self, string list, 'e, string list, unit, string list] @st
             method c_Proc _ stmt name args locals body = 
               let sl l = string_of_int (length l) :: l in
               ["proc"; name] @ (sl args) @ (sl locals) @ (body.fx ())
@@ -168,26 +168,27 @@ module Arrays =
 
         open List
 
-        @type 'self t = [
+        @type 'self aet = [
         | `Array of 'self list 
         | `Elem  of ['self] * ['self] 
         ]
 
         class ['self] code =
           object (self)
-            inherit ['self, string list, unit, string list] @t
+            inherit ['self, string list, unit, string list] @aet
             method c_Array _ t l = ["{}"; string_of_int (length l)] @ flatten (map (t.t#self ()) l) 
             method c_Elem  _ _ a i = ["[]"] @ a.fx () @ i.fx ()
           end
 
+        @type 'self p = ['self L.Expr.t | 'self aet | 'self Procedures.Expr.et] 
+
         class ['self] gcode =
           object (self)
+            inherit ['self, string list, unit, string list] @p
             inherit ['self] L.Expr.code
             inherit ['self] Procedures.Expr.code
             inherit ['self] code
           end
-
-        @type 'self p = ['self L.Expr.t | 'self t | 'self Procedures.Expr.t] 
 
         let code e = 
           let rec self i s = transform(p) self (new gcode) i s in
@@ -198,11 +199,11 @@ module Arrays =
     module Stmt =
       struct
 
-        @type 'e t = [`ArrayAssn of ['e] * ['e] * ['e]]
+        @type 'e ast = [`ArrayAssn of ['e] * ['e] * ['e]]
 
         class ['e] code =
           object (self)
-            inherit ['e, string list, unit, string list] @t
+            inherit ['e, string list, unit, string list] @ast
             method c_ArrayAssn _ _ x i y = ["[]="] @ x.fx () @ i.fx () @ y.fx ()
           end
 
@@ -226,7 +227,7 @@ module Arrays =
           xboct[x][p]: -"[" -i:p -"]" xboct[`Elem(x, i)][p] | !(Ostap.Combinators.empty) {x}
         )
 
-        @type ('self, 'e) stmt = [('self, 'e) L.Stmt.t | 'e t | ('self, 'e) Procedures.Stmt.t ] 
+        @type ('self, 'e) stmt = [('self, 'e) L.Stmt.t | 'e ast | ('self, 'e) Procedures.Stmt.st ] 
 
         class ['self, 'e] gcode =
           object (self)
