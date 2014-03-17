@@ -126,9 +126,9 @@ module Procedures =
         open List
 
         @type ('self, 'e) st = [
-          `Proc of string * string list * string list * ['self]
-        | `Call of string * ['e] * 'e list
-        | `Ret  of ['e]
+          `Proc of string * string list * string list * 'self
+        | `Call of string * 'e * 'e list
+        | `Ret  of 'e
         ] 
 
         class ['self, 'e] code =
@@ -170,7 +170,7 @@ module Arrays =
 
         @type 'self aet = [
         | `Array of 'self list 
-        | `Elem  of ['self] * ['self] 
+        | `Elem  of 'self * 'self 
         ]
 
         class ['self] code =
@@ -199,7 +199,7 @@ module Arrays =
     module Stmt =
       struct
 
-        @type 'e ast = [`ArrayAssn of ['e] * ['e] * ['e]]
+        @type 'e ast = [`ArrayAssn of 'e * 'e * 'e]
 
         class ['e] code =
           object (self)

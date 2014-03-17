@@ -54,7 +54,7 @@ module Expr =
     @type 'self t = [  
         `Var   of string 
       | `Const of int
-      | `Binop of (int -> int -> int) * string * ['self] * ['self]
+      | `Binop of [int -> int -> int] * string * 'self * 'self
     ]
 
     let prio = 
@@ -117,12 +117,12 @@ module Stmt =
 
     @type ('self, 'e) t = [
         `Skip 
-      | `Assign of string * ['e]
+      | `Assign of string * 'e
       | `Read   of string
-      | `Write  of ['e]
-      | `If     of ['e] * ['self] * ['self]
-      | `While  of ['e] * ['self]  
-      | `Seq    of ['self] * ['self] 
+      | `Write  of 'e
+      | `If     of 'e * 'self * 'self
+      | `While  of 'e * 'self  
+      | `Seq    of 'self * 'self 
     ] 
 
     class ['self, 'e] interpret =
