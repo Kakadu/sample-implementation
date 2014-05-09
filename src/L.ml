@@ -54,7 +54,7 @@ module Expr =
     @type 'self t = [  
         `Var   of string 
       | `Const of int
-      | `Binop of [int -> int -> int] * string * 'self * 'self
+      | `Binop of (int -> int -> int) * string * 'self * 'self
     ]
 
     let prio = 
@@ -341,4 +341,3 @@ module Program =
       | Checked.Fail m -> Checked.Fail m
        
   end
-
