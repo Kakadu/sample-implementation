@@ -1,4 +1,4 @@
-SUBDIRS = src doc regression
+SUBDIRS = E SM
 
 .PHONY: doc
 doc:

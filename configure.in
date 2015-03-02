@@ -87,8 +87,7 @@ AC_SUBST(ac_aux_dir)
 dnl produce output files
 AC_CONFIG_FILES([
 Makefile
-src/Makefile
-doc/Makefile
-regression/Makefile
+E/Makefile
+SM/Makefile
 ])
 AC_OUTPUT
