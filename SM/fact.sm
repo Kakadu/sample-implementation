@@ -1,0 +1,21 @@
+	R
+	S n
+	C 1
+	S f
+$loop:	L n
+	C 1
+	B <=
+	JF $step
+	L f
+	W
+	E
+$step:	L n
+	L f
+	B *
+	S f
+	L n
+	C 1
+	B -
+	S n
+	J $loop
+	

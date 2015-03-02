@@ -1,0 +1,18 @@
+	C 0
+	S s
+	R
+	S n
+$loop:	L n
+	JF $end
+	L n
+        C 1
+	B -
+	S n
+	L s
+	R
+	B +
+	S s
+	J $loop
+$end: 	L s
+      	W
+      	E
