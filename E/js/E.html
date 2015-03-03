@@ -1,0 +1,15 @@
+<html>
+<body>
+  <script src="Frontend.js"></script>
+  <script type="text/javascript">
+    function do_parse () {
+       document.getElementById ("result").innerHTML = window.parse (document.getElementById ("expr").value);
+    }
+  </script>
+  <table>
+    <tr><td align="left"></td><input type="text" id="expr"></input></tr>
+    <tr><td align="center"><button type="button" onclick="do_parse()">Parse</button></td></tr>
+    <tr><td id="result"></td></tr>
+  </table>
+</body>
+</html>

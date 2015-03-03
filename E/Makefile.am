@@ -2,7 +2,7 @@ PACKAGE := E
 SUBDIRS = base js 
 
 # type in sources here
-SOURCES = Driver.ml
+SOURCES = base/E.ml Driver.ml
 MLI = 
 
 include $(top_srcdir)/m4/Makefile.am.vars
@@ -10,7 +10,7 @@ include $(top_srcdir)/m4/Makefile.am.vars
 # overwrite some variables
 
 # CMO - all compiled objects
-CMO := $(SORTED:.ml=.cmo) E.cmo
+CMO := $(SORTED:.ml=.cmo) 
 
 # OCaml parser call with flags
 AM_P5FLAGS := -pp "$(CAMLP5O) $(PARSER_INCLUDES) pr_o.cmo pa_checked.cmo pa_ostap.cmo pa_log.cmo pa_gt.cmo -L `camlp5o -where` $(LOG) $(DOC)"
@@ -24,11 +24,11 @@ MODULE_INCLUDES += -I $(CAMLP5LIB) -I base
 
 
 # add extra compiled libraries used for linking
-# EXTRA_CMA += $(addsuffix .cma, str)
-# EXTRA_CMXA += $(addsuffix .cmxa, str)
+#EXTRA_CMA += $(addsuffix .cma, str)
+#EXTRA_CMXA += $(addsuffix .cmxa, str)
 
-TARGET := $(MLI) $(CMO) $(CMA) $(CMXA) META $(BYTE) $(NATIVE)
-CLEAN_EXTRA += $(BYTE) $(NATIVE)
+TARGET := $(MLI) $(CMO) $(CMA) META $(BYTE) 
+CLEAN_EXTRA += $(BYTE)
 
 include $(top_srcdir)/m4/Makefile.am.targets
 

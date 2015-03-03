@@ -23,8 +23,8 @@ module Lexer =
                    Ostap.Matcher.Skip.lineComment "--"
                  ] 
       in
-      let ident   = Str.regexp "[a-zA-Z_]\([a-zA-Z_0-9]\)*\\b" in 
-      let literal = Str.regexp "[0-9]+" in
+      let ident   = Re_str.regexp "[a-zA-Z_]\([a-zA-Z_0-9]\)*\\b" in 
+      let literal = Re_str.regexp "[0-9]+" in
       object (self)
         inherit Ostap.Matcher.t s 
         method skip p coord = skip s p coord
@@ -81,6 +81,11 @@ module Expr =
         method c_Binop s _ f _ x y = f (x.fx s) (y.fx s)
       end
 
+    class ['a] html' =
+      object (this)
+        inherit ['a] @html[t]
+      end
+
     let primary p = ostap (
         x:!(Lexer.ident)   {`Var   x}
       | i:!(Lexer.literal) {`Const i}
@@ -100,8 +105,8 @@ module Expr =
       |]
       (primary parse)
       s
-
-    let rec html e = transform(t) (fun _ -> html) (new @html[t]) () e
+    
+    let rec html e = transform(t) (fun _ -> html) (new html') () e
   end
 
 let toplevel source =

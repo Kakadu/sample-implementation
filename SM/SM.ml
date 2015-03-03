@@ -30,10 +30,10 @@ module Lexer =
                    Ostap.Matcher.Skip.lineComment "--"
                  ] 
       in
-      let ident   = Str.regexp "[a-zA-Z_]\([a-zA-Z_0-9]\)*\\b"    in 
-      let label   = Str.regexp "\\$\([a-zA-Z_0-9]\)+\\b" in
-      let literal = Str.regexp "[0-9]+"                           in
-      let newline = Str.regexp "[\n\r]+"                          in
+      let ident   = Re_str.regexp "[a-zA-Z_]\([a-zA-Z_0-9]\)*\\b"    in 
+      let label   = Re_str.regexp "\\$\([a-zA-Z_0-9]\)+\\b" in
+      let literal = Re_str.regexp "[0-9]+"                           in
+      let newline = Re_str.regexp "[\n\r]+"                          in
       object (self)
         inherit Ostap.Matcher.t s 
         method skip p coord = skip s p coord
