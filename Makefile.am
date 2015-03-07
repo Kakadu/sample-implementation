@@ -1,4 +1,4 @@
-SUBDIRS = E SM
+SUBDIRS = common E SM
 
 .PHONY: doc
 doc:

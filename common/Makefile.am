@@ -1,8 +1,8 @@
-PACKAGE := E
+PACKAGE := Common
 SUBDIRS =
 
 # type in sources here
-SOURCES = E.ml 
+SOURCES = Lexer.ml State.ml
 MLI = 
 
 include $(top_srcdir)/m4/Makefile.am.vars
@@ -20,15 +20,15 @@ AM_OFLAGS += -rectypes -annot -cclib "-static"
 # overwrite some variables
 PXFLAGS = $(P5FLAGS)
 CAMLPXLIB = $(CAMLP5LIB)
-MODULE_INCLUDES += -I $(CAMLP5LIB) -I ../../common
+MODULE_INCLUDES += -I $(CAMLP5LIB)
 
 
 # add extra compiled libraries used for linking
 # EXTRA_CMA += $(addsuffix .cma, str)
 # EXTRA_CMXA += $(addsuffix .cmxa, str)
 
-TARGET := $(MLI) $(CMO) $(CMA) $(CMXA) META 
-CLEAN_EXTRA += $(BYTE) $(NATIVE)
+TARGET := $(MLI) $(CMO) $(CMA)  META 
+CLEAN_EXTRA += 
 
 include $(top_srcdir)/m4/Makefile.am.targets
 

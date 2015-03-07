@@ -10,7 +10,7 @@ include $(top_srcdir)/m4/Makefile.am.vars
 # overwrite some variables
 
 # CMO - all compiled objects
-CMO := $(SORTED:.ml=.cmo) ../base/E.cmo
+CMO := $(SORTED:.ml=.cmo) 
 
 # OCaml parser call with flags
 AM_P4FLAGS := -pp "$(CAMLP4O) $(PARSER_INCLUDES) pa_js.cmo"
@@ -20,11 +20,11 @@ AM_OFLAGS += -rectypes -annot -cclib "-static"
 # overwrite some variables
 PXFLAGS = $(P4FLAGS)
 CAMLPXLIB = $(CAMLP4LIB)
-MODULE_INCLUDES += -I $(CAMLP4LIB) -I ../base
+MODULE_INCLUDES += -I $(CAMLP4LIB) -I ../../common -I ../base
 
 
 # add extra compiled libraries used for linking
-EXTRA_CMA += E.cma
+EXTRA_CMA += Common.cma E.cma 
 
 TARGET := $(MLI) $(CMO) META $(BYTE) Frontend.js
 CLEAN_EXTRA += $(BYTE) $(NATIVE)

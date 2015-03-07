@@ -2,7 +2,7 @@ PACKAGE := E
 SUBDIRS = base js 
 
 # type in sources here
-SOURCES = base/E.ml Driver.ml
+SOURCES = Driver.ml
 MLI = 
 
 include $(top_srcdir)/m4/Makefile.am.vars
@@ -20,12 +20,11 @@ AM_OFLAGS += -rectypes -annot -cclib "-static"
 # overwrite some variables
 PXFLAGS = $(P5FLAGS)
 CAMLPXLIB = $(CAMLP5LIB)
-MODULE_INCLUDES += -I $(CAMLP5LIB) -I base
+MODULE_INCLUDES += -I $(CAMLP5LIB) -I ../common -I base
 
 
 # add extra compiled libraries used for linking
-#EXTRA_CMA += $(addsuffix .cma, str)
-#EXTRA_CMXA += $(addsuffix .cmxa, str)
+EXTRA_CMA += Common.cma E.cma
 
 TARGET := $(MLI) $(CMO) $(CMA) META $(BYTE) 
 CLEAN_EXTRA += $(BYTE)

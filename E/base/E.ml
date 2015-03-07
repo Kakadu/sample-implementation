@@ -6,56 +6,12 @@ let b l = hboxed  (listBySpaceBreak l)
 let v l = hvboxed (listBySpaceBreak l)
 let c l = cboxed  (vboxed (listByBreak l))
 
-module Lexer =
-  struct
-
-    let r = Ostap.Matcher.Token.repr
-
-    ostap (
-      ident: x:IDENT {r x};
-      literal: x:LITERAL {int_of_string (r x)} 
-    )
-
-    class t s = 
-      let skip = Ostap.Matcher.Skip.create [
-                   Ostap.Matcher.Skip.whitespaces " \n\t\r"; 
-                   Ostap.Matcher.Skip.nestedComment "(*" "*)";
-                   Ostap.Matcher.Skip.lineComment "--"
-                 ] 
-      in
-      let ident   = Re_str.regexp "[a-zA-Z_]\([a-zA-Z_0-9]\)*\\b" in 
-      let literal = Re_str.regexp "[0-9]+" in
-      object (self)
-        inherit Ostap.Matcher.t s 
-        method skip p coord = skip s p coord
-        method getIDENT     = self#get "identifier" ident
-        method getLITERAL   = self#get "literal"    literal         
-      end
-
-    let fromString p s =
-      Ostap.Combinators.unwrap (p (new t s)) (fun x -> Checked.Ok x) 
-        (fun (Some err) ->
-           let [loc, m :: _] = err#retrieve (`First 1) (`Desc) in
-           let m =  match m with `Msg m -> m | `Comment (s, _) -> Ostap.Msg.make s [||] loc in
-           Checked.Fail [m]
-        )
-  
-  end
-
-module State =
-  struct
-
-    type t = string -> int
-
-    let empty = fun x-> invalid_arg (Printf.sprintf "variable \"%s\" undefined" x)
-    let modify s name x = fun name' -> if name = name' then x else s name'
-
-  end
-
 open GT
 
 module Expr =
   struct
+
+    module L = Lexer.Make (struct let keywords = [] end) 
 
     @type 'a t = [  
         `Var   of string 
@@ -75,8 +31,8 @@ module Expr =
 
     class ['a] eval =
       object (this)
-        inherit ['a, State.t, int, State.t, int] @t
-        method c_Var   s _ x       = s x
+        inherit ['a, int State.t, int, int State.t, int] @t
+        method c_Var   s _ x       = State.get s x
         method c_Const _ _ n       = n
         method c_Binop s _ f _ x y = f (x.fx s) (y.fx s)
       end
@@ -86,9 +42,17 @@ module Expr =
         inherit ['a] @html[t]
       end
 
+    class ['a] vertical =
+      object (this)
+        inherit ['a] @show[t]
+        method c_Var _ _ x         = Printf.sprintf "x\n%s\n" x
+        method c_Binop _ _ _ s x y = Printf.sprintf "*\n%s\n%s%s" s (x.GT.fx ()) (y.GT.fx ())
+        method c_Const _ _ i       = Printf.sprintf "c\n%d\n" i
+      end
+
     let primary p = ostap (
-        x:!(Lexer.ident)   {`Var   x}
-      | i:!(Lexer.literal) {`Const i}
+        x:!(L.ident)   {`Var   x}
+      | i:!(L.literal) {`Const i}
       | -"(" p -")"
     ) 
 
@@ -107,14 +71,16 @@ module Expr =
       s
     
     let rec html e = transform(t) (fun _ -> html) (new html') () e
+    let rec vertical e = transform(t) (fun _ -> vertical) (new vertical) () e
 
     let parse = ostap (parse -EOF)
   end
 
-let toplevel source =
-  match Lexer.fromString Expr.parse source with
+let toplevel source =  
+  match Expr.L.fromString Expr.parse source with
   | Checked.Ok p -> Checked.Ok (object 
-                                  method print   = Expr.html p
+                                  method ast     = Expr.html p 
+                                  method print   = View.string (Expr.vertical p)
                                   method code    = invalid_arg ""
                                   method run     = invalid_arg ""
                                   method compile = invalid_arg ""
