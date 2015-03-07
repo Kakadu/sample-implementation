@@ -107,6 +107,8 @@ module Expr =
       s
     
     let rec html e = transform(t) (fun _ -> html) (new html') () e
+
+    let parse = ostap (parse -EOF)
   end
 
 let toplevel source =
