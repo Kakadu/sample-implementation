@@ -27,8 +27,8 @@ MODULE_INCLUDES += -I $(CAMLP5LIB)
 # EXTRA_CMA += $(addsuffix .cma, str)
 # EXTRA_CMXA += $(addsuffix .cmxa, str)
 
-TARGET := $(MLI) $(CMO) $(CMA) $(CMXA) META $(BYTE) $(NATIVE)
-CLEAN_EXTRA += $(BYTE) $(NATIVE)
+TARGET := $(MLI) $(CMO) $(CMA) META $(BYTE)
+CLEAN_EXTRA += $(BYTE) 
 
 include $(top_srcdir)/m4/Makefile.am.targets
 
