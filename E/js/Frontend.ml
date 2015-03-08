@@ -10,32 +10,8 @@ let parse source =
       let info = 
          match Ostap.Msg.loc msg with
          | Ostap.Msg.Locator.Point (line, col) ->
-            let decorated = Buffer.create 256 in
-            let l, c, newline, newcol, mark, marked =
-              let l, c, f = ref 1, ref 1, ref false in
-              (fun _ -> !l),
-              (fun _ -> !c),
-              (fun _ -> incr l; c := 1),
-              (fun _ -> incr c),
-              (fun _ -> f := true),
-              (fun _ -> !f)
-            in
-            String.iter 
-              (function 
-	       | '\n' -> newline ()
-               | x -> if l () = line then 
-                      begin
-                        if c () = col then Buffer.add_string decorated "<font color=red>";
-                        Buffer.add_string decorated (HTMLView.escape (String.make 1 x));
-                        if c () = col then begin
-                          Buffer.add_string decorated "</font>";
-                          mark ()
-                        end
-                      end;
-                      newcol ()               
-              ) source;            
+            let source = View.string (HTMLHighlighting.perform [((line, col), (line, col)), "<font color=red>", "</font>"] source) in
             let string = HTMLView.string (Ostap.Msg.string msg) in
-            let source = View.string (Buffer.contents decorated ^ if marked () then "" else "<font color=red>|</font>") in
             HTMLView.seq [source; HTMLView.br; string]
          | _ -> default
       in
