@@ -51,7 +51,10 @@ module Expr =
         method c_Const _ _ i       = Printf.sprintf "c\n%d\n" i
       end
     
-    let rec html cb e = transform(t) (fun _ -> html cb) (new html' cb) () e
+    let rec html cb e = 
+      HTMLView.li ~attrs:(cb e)
+        (transform(t) (fun _ -> html cb) (new html' cb) () e)
+
     let rec vertical e = transform(t) (fun _ -> vertical) (new vertical) () e
 
     let parse s = 
@@ -63,11 +66,19 @@ module Expr =
       ) 
       in
       let rec parse s =  
-        let l = List.map (fun (s, t) -> ostap(- $(s)), fun x y -> `Binop (t, s, x, y)) in
+        let l = List.map 
+          (fun (s, t) -> 
+             ostap(- $(s)), 
+             (fun x y -> 
+                let (l, _), (_, r) = h#retrieve x, h#retrieve y in
+                h#reassign (`Binop (t, s, x, y)) l r
+             )
+          ) 
+        in
         let ior  x y = abs x + abs y in
         let iand x y = abs (x * y) in
         let b f = fun x y -> if f x y then 1 else 0 in
-        Ostap.Util.expr (fun x -> x) [|
+        Ostap.Util.expr (Helpers.loc h#register) [|
           `Lefta, l ["&&", iand];
           `Nona , l ["==", b(=)];
           `Lefta, l ["+" , ( +  )];
@@ -94,9 +105,9 @@ let toplevel source =
         object 
           method ast cb =             
             HTMLView.ul ~attrs:"id=\"ast\" class=\"mktree\"" 
-              (HTMLView.li ~attrs:(interval cb p) 
+              (*HTMLView.li ~attrs:(interval cb p*) 
                  (Expr.html (interval cb) p)
-              )
+             (* *)
           method print    = View.string (Expr.vertical p)
           method code     = invalid_arg ""
           method run      = invalid_arg ""

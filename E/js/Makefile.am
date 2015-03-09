@@ -30,7 +30,7 @@ TARGET := $(MLI) $(CMO) META $(BYTE) Frontend.js
 CLEAN_EXTRA += $(BYTE) $(NATIVE)
 
 %.js: %.byte
-	js_of_ocaml -debug Frontend $<
+	js_of_ocaml $<
 
 include $(top_srcdir)/m4/Makefile.am.targets
 

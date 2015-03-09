@@ -5,14 +5,14 @@
   <script src="Frontend.js"></script>
   <script type="text/javascript">
     function do_parse () {
-       var tree = window.parse (document.getElementById ("expr").value);
-       document.getElementById ("parsed").innerHTML = tree;/* window.parse (document.getElementById ("expr").value); */
+       document.getElementById ("parsed").innerHTML = window.parse (document.getElementById ("expr").value);
        convertTrees ();
        expandTree ("ast");
-       do_highlighting ();
+       do_highlighting (0, 0, 0, 0);
     }
     function do_highlighting (x, y, z, t) {
        document.getElementById ("highlighted").innerHTML = window.highlight (x, y, z, t);
+       event.cancelBubble = true;
     }
   </script>
   <link rel="stylesheet" href="mktree.css" type="text/css">
@@ -69,7 +69,6 @@ Header
 
 <section>
 <div class="scrollable" style="height:850px; width:1200px"id="highlighted">
-Here we will show the highlighted text!
 </div>
 </section>
 

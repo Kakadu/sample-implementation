@@ -6,7 +6,7 @@ let parse source =
   match E.toplevel source with
   | Checked.Ok p ->
       (Js.Unsafe.coerce Dom_html.window)##highlight <- Js.wrap_callback (
-         fun (x, y, z, t) -> 
+         fun x y z t -> 
            let to_int x = int_of_string (Js.to_string x) in
            let x, y, z, t = to_int x, to_int y, to_int z, to_int t in
            Js.string (HTMLHighlighting.perform [HTMLHighlighting.subtree_item (x, y) (z, t)] source)
