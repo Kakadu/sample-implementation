@@ -11,6 +11,9 @@ let parse source =
            let x, y, z, t = to_int x, to_int y, to_int z, to_int t in
            Js.string (HTMLHighlighting.perform [HTMLHighlighting.subtree_item (x, y) (z, t)] source)
       );
+      (Js.Unsafe.coerce Dom_html.window)##vertical <- Js.wrap_callback (
+         fun () -> Js.string (View.toString p#print)
+      );
       Js.string (View.toString (p#ast "do_highlighting"))
       
   | Checked.Fail [msg] -> 

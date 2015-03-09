@@ -10,6 +10,7 @@
        expandTree ("ast");
        do_highlighting (0, 0, 0, 0);
     }
+
     function do_highlighting (x, y, z, t) {
        document.getElementById ("highlighted").innerHTML = window.highlight (x, y, z, t);
        event.cancelBubble = true;
@@ -33,7 +34,7 @@
     }
 
     function convert () {
-      var blob = new Blob(["sample"], {type: 'text/plain'});
+      var blob = new Blob([window.vertical ? window.vertical () : ""], {type: 'text/plain'});
 
       window.URL = window.webkitURL || window.URL;
 

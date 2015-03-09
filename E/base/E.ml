@@ -112,12 +112,11 @@ let toplevel source =
         in
         object 
           method ast cb =             
-            HTMLView.ul ~attrs:"id=\"ast\" class=\"mktree\"" 
-                 (SimpleExpr.html (interval cb) p)             
-          method print    = View.string (SimpleExpr.vertical p)
-          method code     = invalid_arg ""
-          method run      = invalid_arg ""
-          method compile  = invalid_arg ""
+            HTMLView.ul ~attrs:"id=\"ast\" class=\"mktree\"" (SimpleExpr.html (interval cb) p)             
+          method print   = View.string (SimpleExpr.vertical p)
+          method code    = invalid_arg ""
+          method run     = invalid_arg ""
+          method compile = invalid_arg ""
         end
       )
   | Checked.Fail m -> Checked.Fail m
