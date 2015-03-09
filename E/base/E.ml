@@ -37,14 +37,18 @@ module Expr =
         method c_Binop s _ f _ x y = f (x.fx s) (y.fx s)
       end
 
-    class ['a] html' =
+    class ['a] html' cb =
       object (this)
-        inherit ['a] @html[t]
+        inherit ['a] @t[html]
+        method attribute (t : 'a t) = 
+          if cb = "" 
+          then "" 
+          else Printf.sprintf " onclick=\"%s ()\"" cb
       end
 
     class ['a] vertical =
       object (this)
-        inherit ['a] @show[t]
+        inherit ['a] @t[show]
         method c_Var _ _ x         = Printf.sprintf "x\n%s\n" x
         method c_Binop _ _ _ s x y = Printf.sprintf "*\n%s\n%s%s" s (x.GT.fx ()) (y.GT.fx ())
         method c_Const _ _ i       = Printf.sprintf "c\n%d\n" i
@@ -70,7 +74,7 @@ module Expr =
       (primary parse)
       s
     
-    let rec html e = transform(t) (fun _ -> html) (new html') () e
+    let rec html cb e = transform(t) (fun _ -> html cb) (new html' cb) () e
     let rec vertical e = transform(t) (fun _ -> vertical) (new vertical) () e
 
     let parse = ostap (parse -EOF)
@@ -79,10 +83,12 @@ module Expr =
 let toplevel source =  
   match Expr.L.fromString Expr.parse source with
   | Checked.Ok p -> Checked.Ok (object 
-                                  method ast     = Expr.html p 
-                                  method print   = View.string (Expr.vertical p)
-                                  method code    = invalid_arg ""
-                                  method run     = invalid_arg ""
-                                  method compile = invalid_arg ""
+                                  method ast   cb = 
+                                    let a = if cb = "" then "" else Printf.sprintf "onclick=\"%s ()\""  cb in
+                                    HTMLView.ul ~attrs:"id=\"ast\" class=\"mktree\"" (HTMLView.li ~attrs:a (Expr.html cb p))
+                                  method print    = View.string (Expr.vertical p)
+                                  method code     = invalid_arg ""
+                                  method run      = invalid_arg ""
+                                  method compile  = invalid_arg ""
                                 end)
   | Checked.Fail m -> Checked.Fail m

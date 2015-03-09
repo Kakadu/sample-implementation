@@ -9,7 +9,7 @@ module Make (K : sig val keywords : string list end) =
       (fun i -> S.mem i s)     
 
     ostap (
-      ident  : x:IDENT =>{is_keyword (r x)}=> {r x};
+      ident  : x:IDENT =>{not (is_keyword (r x))}=> {r x};
       literal: x:LITERAL {int_of_string (r x)} 
     )
 

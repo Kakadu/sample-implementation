@@ -6,6 +6,9 @@ type request  = item list
 let empty        = []
 let add_item i r = i :: r
 
+let error_item p = (p, p), "<font color=red>", "</font>"
+let subtree_item p1 p2 = (p1, p2), "<div style=\"background-color:lavender; display:inline\">", "</div>"
+
 let perform r source =
   let decorated = Buffer.create 1024 in
   Buffer.add_string decorated "<pre>";

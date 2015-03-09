@@ -1,15 +1,54 @@
 <html>
-<body>
+<head>
+  <script type="text/javascript" src="mktree.js"></script>
   <script src="Frontend.js"></script>
   <script type="text/javascript">
     function do_parse () {
        document.getElementById ("result").innerHTML = window.parse (document.getElementById ("expr").value);
+       convertTrees ();
+       expandTree ("ast");
     }
   </script>
-  <table>
-    <tr><td align="left"></td><input type="text" id="expr"></input></tr>
+  <link rel="stylesheet" href="mktree.css" type="text/css">
+<style>
+  #header {
+      background-color:black;
+      color:white;
+      text-align:center;
+      padding:5px;
+  }
+  #nav {
+      line-height:30px;
+      background-color:#eeeeee;
+      height:800px;
+      width:400px;
+      float:left;
+      padding:5px;	      
+  }
+  #section {
+      width:800px;
+      float:left;
+      padding:10px;	 	 
+  }
+  #footer {
+      background-color:black;
+      color:white;
+      clear:both;
+      text-align:center;
+      padding:5px;	 	 
+  }
+  </style>
+</head>
+<body>
+<div id="nav">
+  <table width="100%">
+    <tr><td align="left"></td><input type="text" id="expr" length="100%"></input></tr>
     <tr><td align="center"><button type="button" onclick="do_parse()">Parse</button></td></tr>
     <tr><td id="result"></td></tr>
   </table>
+</div>
+<div id="section">
+Here we will show the highlited text!
+</div>
 </body>
 </html>
