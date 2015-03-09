@@ -43,7 +43,7 @@ module Expr =
         method attribute (t : 'a t) = 
           if cb = "" 
           then "" 
-          else Printf.sprintf " onclick=\"%s ()\"" cb
+          else Printf.sprintf "onclick=\"%s ()\"" cb
       end
 
     class ['a] vertical =
@@ -53,42 +53,45 @@ module Expr =
         method c_Binop _ _ _ s x y = Printf.sprintf "*\n%s\n%s%s" s (x.GT.fx ()) (y.GT.fx ())
         method c_Const _ _ i       = Printf.sprintf "c\n%d\n" i
       end
-
-    let primary p = ostap (
-        x:!(L.ident)   {`Var   x}
-      | i:!(L.literal) {`Const i}
-      | -"(" p -")"
-    ) 
-
-    let rec parse s =  
-      let l = List.map (fun (s, t) -> ostap(- $(s)), fun x y -> `Binop (t, s, x, y)) in
-      let ior  x y = abs x + abs y in
-      let iand x y = abs (x * y) in
-      let b f = fun x y -> if f x y then 1 else 0 in
-      Ostap.Util.expr (fun x -> x) [|
-        `Lefta, l ["&&", iand];
-        `Nona , l ["==", b(=)];
-        `Lefta, l ["+" , ( +  )];
-        `Lefta, l ["/" , (/ )];
-      |]
-      (primary parse)
-      s
     
     let rec html cb e = transform(t) (fun _ -> html cb) (new html' cb) () e
     let rec vertical e = transform(t) (fun _ -> vertical) (new vertical) () e
 
-    let parse = ostap (parse -EOF)
+    let parse s = 
+      let h = Helpers.highlighting () in
+      let primary p = ostap (
+          l:($) x:!(L.ident)   r:($) {h#register (`Var x) l r}
+        | l:($) i:!(L.literal) r:($) {h#register (`Const i) l r}
+        | l:($) "(" x:p ")"    r:($) {h#register x l r}
+      ) 
+      in
+      let rec parse s =  
+        let l = List.map (fun (s, t) -> ostap(- $(s)), fun x y -> `Binop (t, s, x, y)) in
+        let ior  x y = abs x + abs y in
+        let iand x y = abs (x * y) in
+        let b f = fun x y -> if f x y then 1 else 0 in
+        Ostap.Util.expr (fun x -> x) [|
+          `Lefta, l ["&&", iand];
+          `Nona , l ["==", b(=)];
+          `Lefta, l ["+" , ( +  )];
+          `Lefta, l ["/" , (/ )];
+        |]
+        (primary parse)
+        s
+      in
+      ostap (t:parse EOF {t, h#retrieve}) s
+
   end
 
 let toplevel source =  
   match Expr.L.fromString Expr.parse source with
-  | Checked.Ok p -> Checked.Ok (object 
-                                  method ast   cb = 
-                                    let a = if cb = "" then "" else Printf.sprintf "onclick=\"%s ()\""  cb in
-                                    HTMLView.ul ~attrs:"id=\"ast\" class=\"mktree\"" (HTMLView.li ~attrs:a (Expr.html cb p))
-                                  method print    = View.string (Expr.vertical p)
-                                  method code     = invalid_arg ""
-                                  method run      = invalid_arg ""
-                                  method compile  = invalid_arg ""
-                                end)
+  | Checked.Ok (p, h) -> Checked.Ok (object 
+                                       method ast   cb = 
+                                         let a = if cb = "" then "" else Printf.sprintf "onclick=\"%s ()\""  cb in
+                                         HTMLView.ul ~attrs:"id=\"ast\" class=\"mktree\"" (HTMLView.li ~attrs:a (Expr.html cb p))
+                                       method print    = View.string (Expr.vertical p)
+                                       method code     = invalid_arg ""
+                                       method run      = invalid_arg ""
+                                       method compile  = invalid_arg ""
+                                     end)
   | Checked.Fail m -> Checked.Fail m

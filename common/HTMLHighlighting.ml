@@ -3,10 +3,13 @@ type interval = pos * pos
 type item     = interval * string * string
 type request  = item list
 
+let nop          = (0, 0)
+let none         = (nop, nop)
+
 let empty        = []
 let add_item i r = i :: r
 
-let error_item p = (p, p), "<font color=red>", "</font>"
+let error_item p = (p, p), "<span style=\"background-color:red\">", "</span>"
 let subtree_item p1 p2 = (p1, p2), "<div style=\"background-color:lavender; display:inline\">", "</div>"
 
 let perform r source =

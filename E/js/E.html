@@ -8,6 +8,10 @@
        document.getElementById ("parsed").innerHTML = window.parse (document.getElementById ("expr").value);
        convertTrees ();
        expandTree ("ast");
+       do_highlighting ();
+    }
+    function do_highlighting () {
+       document.getElementById ("highlighted").innerHTML = window.highlight ();
     }
   </script>
   <link rel="stylesheet" href="mktree.css" type="text/css">
