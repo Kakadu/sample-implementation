@@ -30,7 +30,19 @@
         }                     
       } 
       else alert('The File APIs are not fully supported by your browser.');
-  }
+    }
+
+    function convert () {
+      var blob = new Blob(["sample"], {type: 'text/plain'});
+
+      window.URL = window.webkitURL || window.URL;
+
+      var href = window.URL.createObjectURL(blob);
+
+      document.getElementById ("save").href = href;
+      document.getElementById ("save").textContent = "Download";
+      document.getElementById ("save").download = "vertical.t";
+    }
   </script>
   <link rel="stylesheet" href="mktree.css" type="text/css">
   <style>
@@ -82,7 +94,8 @@ Header
     <tr>
       <td align="center">
         <button type="button" onclick="do_parse()">Parse</button>&nbsp;&nbsp;
-        <input type="file" id="loadFile" name="file">
+        <input type="file" id="loadFile" name="file">&nbsp;&nbsp;
+        <button type="button" onclick="convert()">Export</button>&nbsp;&nbsp;<a href="" id=save></a>
       </td>
     </tr>    
   </table>
