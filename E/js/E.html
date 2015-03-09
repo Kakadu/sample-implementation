@@ -1,54 +1,76 @@
+<!DOCTYPE html>
 <html>
 <head>
   <script type="text/javascript" src="mktree.js"></script>
   <script src="Frontend.js"></script>
   <script type="text/javascript">
     function do_parse () {
-       document.getElementById ("result").innerHTML = window.parse (document.getElementById ("expr").value);
+       document.getElementById ("parsed").innerHTML = window.parse (document.getElementById ("expr").value);
        convertTrees ();
        expandTree ("ast");
     }
   </script>
   <link rel="stylesheet" href="mktree.css" type="text/css">
 <style>
-  #header {
-      background-color:black;
-      color:white;
-      text-align:center;
-      padding:5px;
+  textarea {
+    width:98%;
   }
-  #nav {
-      line-height:30px;
-      background-color:#eeeeee;
-      height:800px;
-      width:400px;
-      float:left;
-      padding:5px;	      
+  header {
+    background-color:black;
+    color:white;
+    text-align:center;
+    padding:5px; 
   }
-  #section {
-      width:800px;
-      float:left;
-      padding:10px;	 	 
+  nav {
+    line-height:30px;
+    background-color:#eeeeee;
+    width:600px;
+    float:left;
+    padding:5px; 
   }
-  #footer {
-      background-color:black;
-      color:white;
-      clear:both;
-      text-align:center;
-      padding:5px;	 	 
+  section {
+    width:600px;
+    float:left;
+    padding:10px; 
   }
-  </style>
+  footer {
+    background-color:black;
+    color:white;
+    clear:both;
+    text-align:center;
+    padding:5px; 
+  }
+  .scrollable {
+    width: 600px;
+    height: 500px;
+    overflow-y: scroll;
+    overflow-x: scroll;
+  }
+</style>
 </head>
 <body>
-<div id="nav">
+
+<header>
+Header
+</header>
+
+<nav>
   <table width="100%">
-    <tr><td align="left"></td><input type="text" id="expr" length="100%"></input></tr>
-    <tr><td align="center"><button type="button" onclick="do_parse()">Parse</button></td></tr>
-    <tr><td id="result"></td></tr>
+    <tr><td align="left" width="100%"></td><textarea rows="20" id="expr"></textarea></tr>
+    <tr><td align="center"><button type="button" onclick="do_parse()">Parse</button></td></tr>    
   </table>
+  <div class="scrollable" id="parsed"></div>
+</nav>
+
+<section>
+<div class="scrollable" style="height:850px; width:1200px"id="highlighted">
+Here we will show the highlighted text!
 </div>
-<div id="section">
-Here we will show the highlited text!
-</div>
+</section>
+
+<footer>
+Footer
+</footer>
+
 </body>
 </html>
