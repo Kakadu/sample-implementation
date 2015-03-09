@@ -5,7 +5,7 @@
   <script src="Frontend.js"></script>
   <script type="text/javascript">
     function do_parse () {
-       document.getElementById ("parsed").innerHTML = window.parse (document.getElementById ("expr").value);
+       document.getElementById ("parsed").innerHTML = window.parse (document.getElementById ("text").value);
        convertTrees ();
        expandTree ("ast");
        do_highlighting (0, 0, 0, 0);
@@ -14,43 +14,60 @@
        document.getElementById ("highlighted").innerHTML = window.highlight (x, y, z, t);
        event.cancelBubble = true;
     }
+
+    function handleFile (evt) {
+      var files = evt.target.files; 
+         
+      if (window.File && window.FileReader && window.FileList && window.Blob) {
+        var fr = new FileReader ();
+
+        for (var i = 0, f; f = files[i]; i++) {
+          fr.onload = function (e) {
+            document.getElementById("text").value = e.target.result;
+          };
+
+          fr.readAsText (f);
+        }                     
+      } 
+      else alert('The File APIs are not fully supported by your browser.');
+  }
   </script>
   <link rel="stylesheet" href="mktree.css" type="text/css">
-<style>
-  textarea {
-    width:98%;
-  }
-  header {
-    background-color:black;
-    color:white;
-    text-align:center;
-    padding:5px; 
-  }
-  nav {
-    line-height:30px;
-    background-color:#eeeeee;
-    width:600px;
-    float:left;
-    padding:5px; 
-  }
-  section {
-    width:600px;
-    float:left;
-    padding:10px; 
-  }
-  footer {
-    background-color:black;
-    color:white;
-    clear:both;
-    text-align:center;
-    padding:5px; 
-  }
-  .scrollable {
-    width: 600px;
-    height: 500px;
-    overflow-y: scroll;
-    overflow-x: scroll;
-  }
+  <style>
+    textarea {
+      width:98%;
+    }
+    header {
+      background-color:black;
+      color:white;
+      text-align:center;
+      padding:5px; 
+    }
+    nav {
+      line-height:30px;
+      background-color:#eeeeee;
+      width:600px;
+      float:left;
+      padding:5px; 
+    }
+    section {
+      width:600px;
+      float:left;
+      padding:10px; 
+    }
+    footer {
+      background-color:black;
+      color:white;
+      clear:both;
+      text-align:center;
+      padding:5px; 
+    }
+    .scrollable {
+      width: 600px;
+      height: 500px;
+      overflow-y: scroll;
+      overflow-x: scroll;
+    }
 </style>
 </head>
 <body>
@@ -61,8 +78,13 @@ Header
 
 <nav>
   <table width="100%">
-    <tr><td align="left" width="100%"></td><textarea rows="20" id="expr"></textarea></tr>
-    <tr><td align="center"><button type="button" onclick="do_parse()">Parse</button></td></tr>    
+    <tr><td align="left" width="100%"></td><textarea rows="20" id="text"></textarea></tr>
+    <tr>
+      <td align="center">
+        <button type="button" onclick="do_parse()">Parse</button>&nbsp;&nbsp;
+        <input type="file" id="loadFile" name="file">
+      </td>
+    </tr>    
   </table>
   <div class="scrollable" id="parsed"></div>
 </nav>
@@ -77,4 +99,7 @@ Footer
 </footer>
 
 </body>
+<script type="text/javascript">
+  document.getElementById ("loadFile").addEventListener("change", handleFile, false);      
+</script>
 </html>
