@@ -5,13 +5,14 @@
   <script src="Frontend.js"></script>
   <script type="text/javascript">
     function do_parse () {
-       document.getElementById ("parsed").innerHTML = window.parse (document.getElementById ("expr").value);
+       var tree = window.parse (document.getElementById ("expr").value);
+       document.getElementById ("parsed").innerHTML = tree;/* window.parse (document.getElementById ("expr").value); */
        convertTrees ();
        expandTree ("ast");
        do_highlighting ();
     }
-    function do_highlighting () {
-       document.getElementById ("highlighted").innerHTML = window.highlight ();
+    function do_highlighting (x, y, z, t) {
+       document.getElementById ("highlighted").innerHTML = window.highlight (x, y, z, t);
     }
   </script>
   <link rel="stylesheet" href="mktree.css" type="text/css">

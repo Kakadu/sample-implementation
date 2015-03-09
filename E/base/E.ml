@@ -40,10 +40,7 @@ module Expr =
     class ['a] html' cb =
       object (this)
         inherit ['a] @t[html]
-        method attribute (t : 'a t) = 
-          if cb = "" 
-          then "" 
-          else Printf.sprintf "onclick=\"%s ()\"" cb
+        method attribute (t : 'a t) = cb t
       end
 
     class ['a] vertical =
@@ -85,13 +82,25 @@ module Expr =
 
 let toplevel source =  
   match Expr.L.fromString Expr.parse source with
-  | Checked.Ok (p, h) -> Checked.Ok (object 
-                                       method ast   cb = 
-                                         let a = if cb = "" then "" else Printf.sprintf "onclick=\"%s ()\""  cb in
-                                         HTMLView.ul ~attrs:"id=\"ast\" class=\"mktree\"" (HTMLView.li ~attrs:a (Expr.html cb p))
-                                       method print    = View.string (Expr.vertical p)
-                                       method code     = invalid_arg ""
-                                       method run      = invalid_arg ""
-                                       method compile  = invalid_arg ""
-                                     end)
+  | Checked.Ok (p, h) -> 
+      Checked.Ok (
+        let interval cb t = 
+          if cb = "" 
+          then ""
+          else 
+            let ((x, y), (z, t)) = h t in
+            Printf.sprintf "onclick=\"%s ('%d', '%d', '%d', '%d')\"" cb x y z t 
+        in
+        object 
+          method ast cb =             
+            HTMLView.ul ~attrs:"id=\"ast\" class=\"mktree\"" 
+              (HTMLView.li ~attrs:(interval cb p) 
+                 (Expr.html (interval cb) p)
+              )
+          method print    = View.string (Expr.vertical p)
+          method code     = invalid_arg ""
+          method run      = invalid_arg ""
+          method compile  = invalid_arg ""
+        end
+      )
   | Checked.Fail m -> Checked.Fail m
