@@ -1,4 +1,4 @@
-SUBDIRS = common E SM
+SUBDIRS = common js E L SM
 
 .PHONY: doc
 doc:

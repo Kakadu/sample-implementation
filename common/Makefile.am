@@ -2,7 +2,7 @@ PACKAGE := Common
 SUBDIRS =
 
 # type in sources here
-SOURCES = Lexer.ml State.ml HTMLHighlighting.ml Trap.ml Helpers.ml Toplevel.ml
+SOURCES = Lexer.ml State.ml HTMLHighlighting.ml Trap.ml Helpers.ml Toplevel.ml 
 MLI = 
 
 include $(top_srcdir)/m4/Makefile.am.vars

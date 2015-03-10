@@ -93,6 +93,7 @@ dnl produce output files
 AC_CONFIG_FILES([
 Makefile
 common/Makefile
+js/Makefile
 E/Makefile
 E/js/Makefile
 E/base/Makefile

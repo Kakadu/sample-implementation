@@ -1,8 +1,8 @@
-PACKAGE := Frontend
+PACKAGE := Js_frontend
 SUBDIRS = 
 
 # type in sources here
-SOURCES = Frontend.ml
+SOURCES = Js_frontend.ml
 MLI = 
 
 include $(top_srcdir)/m4/Makefile.am.vars
@@ -20,17 +20,14 @@ AM_OFLAGS += -rectypes -annot -cclib "-static"
 # overwrite some variables
 PXFLAGS = $(P4FLAGS)
 CAMLPXLIB = $(CAMLP4LIB)
-MODULE_INCLUDES += -I $(CAMLP4LIB) -I ../../common -I ../../E/base -I ../base -I ../../js
+MODULE_INCLUDES += -I $(CAMLP4LIB) -I ../common 
 
 
 # add extra compiled libraries used for linking
-EXTRA_CMA += Common.cma E.cma L.cma Js_frontend.cma
+EXTRA_CMA += Common.cma 
 
-TARGET := $(MLI) $(CMO) META $(BYTE) Frontend.js
+TARGET := $(MLI) $(CMO) $(CMA) META $(BYTE) 
 CLEAN_EXTRA += $(BYTE) $(NATIVE)
-
-%.js: %.byte
-	js_of_ocaml -o L.js $<
 
 include $(top_srcdir)/m4/Makefile.am.targets
 
