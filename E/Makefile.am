@@ -1,4 +1,4 @@
-PACKAGE := E
+PACKAGE := Driver
 SUBDIRS = base js 
 
 # type in sources here
