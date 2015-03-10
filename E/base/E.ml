@@ -102,24 +102,20 @@ module SimpleExpr =
 
   end
 
-let toplevel source =  
-  match SimpleExpr.L.fromString SimpleExpr.parse source with
-  | Checked.Ok (p, h) -> 
-      Checked.Ok (
-        let interval cb t = 
-          if cb = "" 
-          then ""
-          else 
-            let ((x, y), (z, t)) = h t in
-            Printf.sprintf "onclick=\"%s ('%d', '%d', '%d', '%d')\"" cb x y z t 
-        in
-        object 
-          method ast cb =             
-            HTMLView.ul ~attrs:"id=\"ast\" class=\"mktree\"" (SimpleExpr.html (interval cb) p)             
-          method print   = View.string (SimpleExpr.vertical p)
-          method code    = invalid_arg ""
-          method run     = invalid_arg ""
-          method compile = invalid_arg ""
-        end
-      )
-  | Checked.Fail m -> Checked.Fail m
+let toplevel =  
+  Toplevel.make 
+    (SimpleExpr.L.fromString SimpleExpr.parse)
+    (fun (p, h) ->         
+        object inherit Toplevel.c
+            method ast cb = View.toString (
+                              HTMLView.ul ~attrs:"id=\"ast\" class=\"mktree\"" (
+                                SimpleExpr.html (Helpers.interval cb h) p
+                              )
+                            )
+            method vertical = SimpleExpr.vertical p
+            method code     = invalid_arg ""
+            method run      = invalid_arg ""
+            method compile  = invalid_arg ""
+          end
+    )  
+

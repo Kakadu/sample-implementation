@@ -121,24 +121,19 @@ module Program =
 
   end
 
-let toplevel source =  
-  match Lexer.fromString Program.parse source with
-  | Checked.Ok (p, hp, he) -> 
-      Checked.Ok (
-        let interval cb h t = 
-          if cb = "" 
-          then ""
-          else 
-            let ((x, y), (z, t)) = h t in
-            Printf.sprintf "onclick=\"%s ('%d', '%d', '%d', '%d')\"" cb x y z t 
-        in
-        object 
-          method ast cb =             
-            HTMLView.ul ~attrs:"id=\"ast\" class=\"mktree\"" (Program.html (interval cb hp) (interval cb he) p)
-          method print   = View.string (Program.vertical p)
-          method code    = invalid_arg ""
-          method run     = invalid_arg ""
-          method compile = invalid_arg ""
+let toplevel =  
+  Toplevel.make
+    (Lexer.fromString Program.parse)
+    (fun (p, hp, he) ->
+       object 
+          method ast cb = View.toString (
+                            HTMLView.ul ~attrs:"id=\"ast\" class=\"mktree\"" (
+                              Program.html (Helpers.interval cb hp) (Helpers.interval cb he) p
+                            )
+                          )
+          method vertical = Program.vertical p
+          method code     = invalid_arg ""
+          method run      = invalid_arg ""
+          method compile  = invalid_arg ""
         end
-      )
-  | Checked.Fail m -> Checked.Fail m
+    )

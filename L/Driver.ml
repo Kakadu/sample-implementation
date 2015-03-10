@@ -48,21 +48,21 @@ let _ =
                    | None   -> ()
                    | Some f -> 
                        let ch, cf = fileOps f in
-                       fprintf ch "%s\n" (View.toString p#print);
+                       fprintf ch "%s\n" p#vertical;
                        cf ch;
                   );
                   (match conf.get "g" with
                    | None -> ()
                    | Some f ->
                        let ch, cf = fileOps f in
-                       List.iter (fun s -> fprintf ch "%s\n" s) p#code; 
+                       fprintf ch "%s" p#code; 
                        cf ch
                   );
                   (match conf.get "c" with
                    | None -> ()
                    | Some f ->
                        let ch, cf = fileOps f in
-                       List.iter (fun s -> fprintf ch "%s" s) p#compile; 
+                       fprintf ch "%s" p#compile; 
                        cf ch
                   );
                   (match conf.get "r" with

@@ -3,7 +3,7 @@ open E
 let parse source =
   (Js.Unsafe.coerce Dom_html.window)##highlight <- Js.wrap_callback (fun () -> Js.string "");
   let source = Js.to_string source in
-  match E.toplevel source with
+  match toplevel source with
   | Checked.Ok p ->
       (Js.Unsafe.coerce Dom_html.window)##highlight <- Js.wrap_callback (
          fun x y z t -> 
@@ -12,9 +12,9 @@ let parse source =
            Js.string (HTMLHighlighting.perform [HTMLHighlighting.subtree_item (x, y) (z, t)] source)
       );
       (Js.Unsafe.coerce Dom_html.window)##vertical <- Js.wrap_callback (
-         fun () -> Js.string (View.toString p#print)
+         fun () -> Js.string p#vertical
       );
-      Js.string (View.toString (p#ast "do_highlighting"))
+      Js.string (p#ast "do_highlighting")
       
   | Checked.Fail [msg] -> 
       let default = HTMLView.string (HTMLView.escape (Ostap.Msg.toString msg)) in
