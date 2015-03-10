@@ -11,14 +11,14 @@ module Expr =
 
     @type primary = [`Var of string | `Const of int] with html, show, foldl
 
-    let parse s =
+    let parse h s =
       let primary p = ostap (
          x:!(Lexer.ident)   {`Var x}
         |  i:!(Lexer.literal) {`Const i}
         |  -"(" p -")"  
         )
       in         
-      E.Expr.parse [|
+      E.Expr.parse h [|
         `Lefta, ["||", E.Expr.ior];
         `Lefta, ["&&", E.Expr.iand];
         `Nona , ["==", E.Expr.b(=); "!=", E.Expr.b(<>); "<=", E.Expr.b(<=); "<", E.Expr.b(<); ">=", E.Expr.b(>=); ">", E.Expr.b(>)];
@@ -83,8 +83,7 @@ module Stmt =
         method c_Write  _ _ e     = Printf.sprintf "w\n%s" (e.fx ())
       end
 
-    let parse expr s = 
-      let h = Helpers.highlighting () in
+    let parse h expr s = 
       let ostap (
         ident    : !(Lexer.ident);
         key[name]: @(name ^ "\\b" : name);
@@ -101,7 +100,7 @@ module Stmt =
         }
       )
       in
-      ostap (s:parse {s, h#retrieve}) s
+      parse s
 
   end
 
@@ -109,12 +108,14 @@ module Program =
   struct
     
     let parse s = 
-      let rec parse s = Stmt.parse (ostap (e:!(Expr.parse) {fst e})) s in
-      ostap (parse -EOF) s
+      let hp = Helpers.highlighting () in
+      let he = Helpers.highlighting () in
+      let parse s = Stmt.parse hp (Expr.parse he) s in
+      ostap (p:parse -EOF {p, hp#retrieve, he#retrieve}) s
 
-    let rec html cb p = 
-      HTMLView.li ~attrs:(cb p)
-        (transform(Stmt.t) (fun _ -> html cb) (fun _ -> Expr.html (fun _ -> "")) (new @Stmt.t[html]) () p)
+    let rec html cbp cbe p = 
+      HTMLView.li ~attrs:(cbp p)
+        (transform(Stmt.t) (fun _ -> html cbp cbe) (fun _ -> Expr.html cbe) (new @Stmt.t[html]) () p)
 
     let rec vertical p = transform(Stmt.t) (fun _ -> vertical) (fun _ -> Expr.vertical) (new Stmt.vertical) () p
 
@@ -122,9 +123,9 @@ module Program =
 
 let toplevel source =  
   match Lexer.fromString Program.parse source with
-  | Checked.Ok (p, h) -> 
+  | Checked.Ok (p, hp, he) -> 
       Checked.Ok (
-        let interval cb t = 
+        let interval cb h t = 
           if cb = "" 
           then ""
           else 
@@ -133,7 +134,7 @@ let toplevel source =
         in
         object 
           method ast cb =             
-            HTMLView.ul ~attrs:"id=\"ast\" class=\"mktree\"" (Program.html (interval cb) p)
+            HTMLView.ul ~attrs:"id=\"ast\" class=\"mktree\"" (Program.html (interval cb hp) (interval cb he) p)
           method print   = View.string (Program.vertical p)
           method code    = invalid_arg ""
           method run     = invalid_arg ""

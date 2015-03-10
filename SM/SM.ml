@@ -54,7 +54,7 @@ let resolve p =
     (fun i -> 
        transform(t) 
   	 (fun _ i -> try List.assoc i !symbols with Not_found -> raise (No_label i)) 
-	 new @map[t] 
+	 new @t[map] 
 	 () 
 	 i
     ) 
@@ -95,7 +95,7 @@ ostap (
 let toString i = 
   let b = Buffer.create 1024 in
   Array.iter (fun i ->
-    Buffer.add_string b (transform(t) (fun _ i -> string_of_int i) (new @show[t]) () i);
+    Buffer.add_string b (transform(t) (fun _ i -> string_of_int i) (new @t[show]) () i);
     Buffer.add_string b "\n";
   ) i;
   Buffer.contents b

@@ -24,8 +24,7 @@ module Expr =
     let iand x y = abs (x * y) 
     let b f      = fun x y -> if f x y then 1 else 0 
 
-    let parse ops primary s = 
-      let h = Helpers.highlighting () in
+    let parse h ops primary s = 
       let rec parse s =  
         let l = List.map 
           (fun (s, t) -> 
@@ -40,7 +39,7 @@ module Expr =
         (primary parse)
         s
       in
-      ostap (t:parse {t, h#retrieve}) s
+      parse s
 
   end
 
@@ -52,6 +51,7 @@ module SimpleExpr =
     @type primary = [`Var of string | `Const of int] with html, show, foldl
 
     let parse s =
+      let h = Helpers.highlighting () in
       let primary p = ostap (
            x:!(L.ident)   {`Var x}
         |  i:!(L.literal) {`Const i}
@@ -59,7 +59,7 @@ module SimpleExpr =
         )
       in
       let entry s = 
-        Expr.parse [|
+        Expr.parse h [|
           `Lefta, ["&&", Expr.iand]; 
           `Nona , ["==", Expr.b(=)]; 
           `Lefta, ["+", (+)]; 
@@ -67,7 +67,7 @@ module SimpleExpr =
         |] 
         primary s
       in
-      ostap (entry -EOF) s;;
+      ostap (e:entry -EOF {e, h#retrieve}) s;;
 
     @type 'a expr = ['a Expr.t | primary] with html, show, foldl
 
