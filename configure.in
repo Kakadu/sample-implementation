@@ -96,6 +96,9 @@ common/Makefile
 E/Makefile
 E/js/Makefile
 E/base/Makefile
+L/Makefile
+L/js/Makefile
+L/base/Makefile
 SM/Makefile
 ])
 AC_OUTPUT

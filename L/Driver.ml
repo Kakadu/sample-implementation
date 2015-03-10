@@ -27,9 +27,7 @@ let _ =
   | Ok (conf, files) -> 
       (match conf.get "h" with Some _ -> printf "%s\n" (conf.help ()) | _ -> ());
       let toplevels = [|
-        L.Program.toplevel;
-        Extensions.Arrays.Stmt.toplevel;
-        Extensions.Breaks.toplevel
+        L.toplevel;
       |]
       in
       let level = 
@@ -50,7 +48,7 @@ let _ =
                    | None   -> ()
                    | Some f -> 
                        let ch, cf = fileOps f in
-                       fprintf ch "%s\n" (Ostap.Pretty.toString p#print);
+                       fprintf ch "%s\n" (View.toString p#print);
                        cf ch;
                   );
                   (match conf.get "g" with
@@ -73,7 +71,7 @@ let _ =
                   );
                   (match conf.get "m" with
                    | None   -> ()
-                   | Some _ -> (* printf "%s\n" (Ostap.Pretty.toString (Print.stmt bf (Mix.stmt p))) *) (* TODO *) ()
+                   | Some _ -> ()
                   )
               | Checked.Fail [msg] -> eprintf "Errors: %s\n" (Ostap.Msg.toString msg)
            ) files

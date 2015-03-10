@@ -40,7 +40,7 @@ module Expr =
         (primary parse)
         s
       in
-      ostap (t:parse EOF {t, h#retrieve}) s
+      ostap (t:parse {t, h#retrieve}) s
 
   end
 
@@ -53,18 +53,21 @@ module SimpleExpr =
 
     let parse s =
       let primary p = ostap (
-         x:!(L.ident)   {`Var x}
+           x:!(L.ident)   {`Var x}
         |  i:!(L.literal) {`Const i}
         |  -"(" p -")"  
         )
       in
-      Expr.parse [|
-        `Lefta, ["&&", Expr.iand]; 
-        `Nona , ["==", Expr.b(=)]; 
-        `Lefta, ["+", (+)]; 
-        `Lefta, ["/", (/)]
-      |] 
-      primary s;;
+      let entry s = 
+        Expr.parse [|
+          `Lefta, ["&&", Expr.iand]; 
+          `Nona , ["==", Expr.b(=)]; 
+          `Lefta, ["+", (+)]; 
+          `Lefta, ["/", (/)]
+        |] 
+        primary s
+      in
+      ostap (entry -EOF) s;;
 
     @type 'a expr = ['a Expr.t | primary] with html, show, foldl
 
