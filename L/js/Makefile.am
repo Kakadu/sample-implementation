@@ -22,7 +22,6 @@ PXFLAGS = $(P4FLAGS)
 CAMLPXLIB = $(CAMLP4LIB)
 MODULE_INCLUDES += -I $(CAMLP4LIB) -I ../../common -I ../../E/base -I ../base -I ../../js
 
-
 # add extra compiled libraries used for linking
 EXTRA_CMA += Common.cma E.cma L.cma Js_frontend.cma
 
@@ -30,7 +29,7 @@ TARGET := $(MLI) $(CMO) META $(BYTE) Frontend.js
 CLEAN_EXTRA += $(BYTE) $(NATIVE)
 
 %.js: %.byte
-	js_of_ocaml -o L.js $<
+	js_of_ocaml -o L.js $<; cp L.js ../../web; cp L.html ../../web
 
 include $(top_srcdir)/m4/Makefile.am.targets
 
