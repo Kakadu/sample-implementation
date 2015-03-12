@@ -9,7 +9,7 @@ let _ =
     customize (empty ()) [
       "l", "level"  , Number, Optional , " [<language level>]\t --- set language level (0 --- default).";
       "p", "print"  , String, Optional , " [<output file>]\t --- pretty-print file.";
-      "r", "run"    , Switch, Mandatory, "\t --- run program.";
+      "r", "run"    , String, Optional,  " [<output file>]\t --- run program.";
       "g", "gen"    , String, Optional , " [<output file>]\t --- generate vertical representation.";
       "c", "compile", String, Optional , " [<output file>]\t --- compile to stack machine code.\n";
       "h", "help"   , Switch, Mandatory, "\t --- show help on options."
@@ -66,7 +66,13 @@ let _ =
                   );
                   (match conf.get "r" with
                    | None   -> ()
-                   | Some _ -> ignore p#run
+                   | Some f -> 
+                       let ch, cf = fileOps f in
+                       fprintf ch "<html><head>%s%s</head><div style=\"transform:scaleY(-1)\"><ul class=\"mktree\">%s</ul></div></html>" 
+                         "<script type=\"text/javascript\" src=\"mktree.js\"></script>"
+                         "<link rel=\"stylesheet\" href=\"mktree1.css\" type=\"text/css\">"
+                         p#run; 
+                       cf ch
                   );
               | Checked.Fail [msg] -> eprintf "Errors: %s\n" (Ostap.Msg.toString msg)
            ) files

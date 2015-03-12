@@ -96,9 +96,57 @@ module SimpleExpr =
       HTMLView.li ~attrs:(cb e)
         (transform(expr) (fun _ -> html cb) (new html cb) () e)
 
+    let abbreviate_html cb = 
+      let subtree = function
+      | `Const i -> string_of_int i
+      | `Var x -> x
+      | _ -> "(&#8226;)"
+      in
+      function
+      | `Const i -> HTMLView.tag "tt" (HTMLView.int i)
+      | `Var   x -> HTMLView.tag "tt" (HTMLView.raw x)
+      | `Binop (_, s, x, y) -> HTMLView.tag "tt" (HTMLView.raw (Printf.sprintf "%s %s %s" (subtree x) s (subtree y)))
+
     let rec vertical e = transform(expr) (fun _ -> vertical) (new vertical) () e      
 
     let rec eval s e = transform(expr) eval (new eval) s e      
+
+    module Semantics =
+      struct
+        
+        let build ?(limit=(-1)) state e =
+          Semantics.Deterministic.Tree.build ~limit:limit 
+            (object 
+               inherit [unit, int State.t, 'a expr as 'a, int] Semantics.Deterministic.step
+                 method make env state expr =
+                   match expr with
+		   | `Binop (f, _, x, y) ->
+                      Semantics.Deterministic.Subgoals (
+                        [env, state, x; env, state, y],
+                        (fun [x'; y'] -> Some (f x' y'))
+                      )               
+		   | `Var x -> (try Semantics.Deterministic.Just (State.get state x) with _ ->  Semantics.Deterministic.Nothing)
+                   | `Const i -> Semantics.Deterministic.Just i
+             end
+            ) 
+            () 
+            state 
+            e 
+
+	let html tree =
+          Semantics.Deterministic.Tree.html 
+            (object 
+               inherit Semantics.Deterministic.Tree.html_customizer
+               method show_env   = false
+               method over_width = 70
+             end)
+            (fun _ -> HTMLView.unit)
+            (fun _ -> State.html string_of_int)
+            (fun _ -> abbreviate_html (fun _ -> ""))
+            (fun _ -> HTMLView.int) 
+            tree
+
+      end
 
   end
 
@@ -114,7 +162,7 @@ let toplevel =
                             )
             method vertical = SimpleExpr.vertical p
             method code     = invalid_arg ""
-            method run      = invalid_arg ""
+            method run      = View.toString (SimpleExpr.Semantics.html (SimpleExpr.Semantics.build State.empty p))
             method compile  = invalid_arg ""
           end
     )  
