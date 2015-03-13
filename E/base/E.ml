@@ -4,9 +4,7 @@ open GT
 module Expr =
   struct
 
-    @type 'a t = [  
-      | `Binop of (int -> int -> int) * string * 'a * 'a
-    ] with html, show, foldl
+    @type 'a t = [`Binop of (int -> int -> int) * string * 'a * 'a] with html, show, foldl
 
     class ['a] eval =
       object (this)
@@ -40,6 +38,51 @@ module Expr =
         s
       in
       parse s
+
+    module Semantics =
+      struct
+ 
+        module Deterministic =
+          struct
+
+            module BigStep =
+              struct
+
+                class virtual ['env, 'left, 'over, 'right, 'a] c =
+                  object 
+                    inherit ['a, 
+                             'env * 'left * 'over, ('env, 'left, 'over, 'right) Semantics.Deterministic.BigStep.case, 
+                             'env * 'left * 'over, ('env, 'left, 'over, 'right) Semantics.Deterministic.BigStep.case
+                            ] @t
+                  end
+
+		class virtual ['a] standard =
+                  object 
+                    inherit [unit, int State.t, 'a, int, 'a] c 
+                    method c_Binop (env, state, _) _ f _ x y =
+                      Semantics.Deterministic.BigStep.Subgoals (
+                        [env, state, x.GT.x; env, state, y.GT.x],
+                        (fun [x'; y'] -> Some (f  x' y')),
+                        "Binop"
+                      )               	       
+		  end
+
+		class virtual ['a] with_env =
+                  object 
+                    inherit [int State.t, 'a, unit, int, 'a] c 
+                    method c_Binop (state, _, _) _ f _ x y =
+                      Semantics.Deterministic.BigStep.Subgoals (
+                        [state, x.GT.x, (); state, y.GT.x, ()],
+                        (fun [x'; y'] -> Some (f  x' y')),
+                        "Binop"
+                      )               	       
+		  end
+
+              end           
+
+          end
+
+      end
 
   end
 
@@ -113,38 +156,92 @@ module SimpleExpr =
 
     module Semantics =
       struct
-        
-        let build ?(limit=(-1)) state e =
-          Semantics.Deterministic.Tree.build ~limit:limit 
-            (object 
-               inherit [unit, int State.t, 'a expr as 'a, int] Semantics.Deterministic.step
-                 method make env state expr =
-                   match expr with
-		   | `Binop (f, _, x, y) ->
-                      Semantics.Deterministic.Subgoals (
-                        [env, state, x; env, state, y],
-                        (fun [x'; y'] -> Some (f x' y'))
-                      )               
-		   | `Var x -> (try Semantics.Deterministic.Just (State.get state x) with _ ->  Semantics.Deterministic.Nothing)
-                   | `Const i -> Semantics.Deterministic.Just i
-             end
-            ) 
-            () 
-            state 
-            e 
 
-	let html tree =
-          Semantics.Deterministic.Tree.html 
-            (object 
-               inherit Semantics.Deterministic.Tree.html_customizer
-               method show_env   = false
-               method over_width = 70
-             end)
-            (fun _ -> HTMLView.unit)
-            (fun _ -> State.html string_of_int)
-            (fun _ -> abbreviate_html (fun _ -> ""))
-            (fun _ -> HTMLView.int) 
-            tree
+        module Deterministic = 
+          struct        
+
+            module BigStep =
+              struct
+
+                class virtual ['env, 'left, 'over, 'right, 'a] c =
+                  object 
+                    inherit ['a, 
+                             'env * 'left * 'over, ('env, 'left, 'over, 'right) Semantics.Deterministic.BigStep.case, 
+                             'env * 'left * 'over, ('env, 'left, 'over, 'right) Semantics.Deterministic.BigStep.case
+                            ] @expr
+                  end
+
+                module Standard =
+                  struct
+
+   		    class ['a] step =
+                      object 
+                        inherit [unit, int State.t, 'a expr, int, 'a] c
+                        inherit ['a] Expr.Semantics.Deterministic.BigStep.standard 
+                        method c_Var (env, state, _) _ x = 
+                          (try Semantics.Deterministic.BigStep.Just (State.get state x, "Var") with
+                          | _ -> Semantics.Deterministic.BigStep.Nothing (Printf.sprintf "undefined variable \"%s\"" x, "Var")
+                          )
+                        method c_Const (env, stat, _) _ i = Semantics.Deterministic.BigStep.Just (i, "Const")
+		      end
+
+                    let rec step env state e = 
+                      GT.transform(expr) (fun (env, state, _) e -> step env state e) (new step) (env, state, e) e
+
+                    let customizer =
+                      object 
+                        inherit Semantics.Deterministic.BigStep.Tree.html_customizer
+                        method show_env   = false
+                        method over_width = 70
+                      end
+
+                  end
+
+                module WithEnv =
+                  struct
+
+		    class ['a] step =
+                      object 
+                        inherit [int State.t, 'a expr, unit, int, 'a] c 
+                        inherit ['a] Expr.Semantics.Deterministic.BigStep.with_env 
+                        method c_Var (state, _, _) _ x = 
+                          (try Semantics.Deterministic.BigStep.Just (State.get state x, "Var") with
+                           | _ -> Semantics.Deterministic.BigStep.Nothing (Printf.sprintf "undefined variable \"%s\"" x, "Var")
+                          )
+                        method c_Const (state, _, _) _ i = Semantics.Deterministic.BigStep.Just (i, "Const")
+		      end
+
+                    let rec step state e _ = 
+                      GT.transform(expr) (fun (state, _, _) e -> step state e ()) (new step) (state, e, ()) e
+
+                    let customizer =
+                      object 
+                        inherit Semantics.Deterministic.BigStep.Tree.html_customizer
+                        method show_env   = true
+                        method show_over  = false
+                        method over_width = 50 
+                      end
+
+                  end                      
+
+                let build ?(limit=(-1)) state e = Semantics.Deterministic.BigStep.Tree.build ~limit:limit Standard.step () state e 
+
+                let html tree =
+                  Semantics.Deterministic.BigStep.Tree.html 
+                    (object 
+                       inherit Semantics.Deterministic.BigStep.Tree.html_customizer
+                       method show_env   = false
+                       method over_width = 70
+                     end)
+                    (fun _ -> HTMLView.unit)
+                    (fun _ -> State.html string_of_int)
+                    (fun _ -> abbreviate_html (fun _ -> ""))
+                    (fun _ -> HTMLView.int) 
+                    tree
+
+              end
+
+          end
 
       end
 
@@ -162,7 +259,7 @@ let toplevel =
                             )
             method vertical = SimpleExpr.vertical p
             method code     = invalid_arg ""
-            method run      = View.toString (SimpleExpr.Semantics.html (SimpleExpr.Semantics.build State.empty p))
+            method run      = View.toString (SimpleExpr.Semantics.Deterministic.BigStep.html (SimpleExpr.Semantics.Deterministic.BigStep.build State.empty p))
             method compile  = invalid_arg ""
           end
     )  

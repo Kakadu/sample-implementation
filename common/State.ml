@@ -18,5 +18,5 @@ let html fa s =
     "]" 
   in
   HTMLView.tag "attr" ~attrs:(Printf.sprintf "style=\"cursor:pointer\" title=\"%s\"" text) 
-    (View.string "&#8226;")
+    (View.string "s")
 
