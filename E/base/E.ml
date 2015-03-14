@@ -180,7 +180,7 @@ module SimpleExpr =
                         inherit ['a] Expr.Semantics.Deterministic.BigStep.standard 
                         method c_Var (env, state, _) _ x = 
                           (try Semantics.Deterministic.BigStep.Just (State.get state x, "Var") with
-                          | _ -> Semantics.Deterministic.BigStep.Nothing (Printf.sprintf "undefined variable \"%s\"" x, "Var")
+                          | _ -> Semantics.Deterministic.BigStep.Nothing (Printf.sprintf "undefined variable '%s'" x, "Var")
                           )
                         method c_Const (env, stat, _) _ i = Semantics.Deterministic.BigStep.Just (i, "Const")
 		      end

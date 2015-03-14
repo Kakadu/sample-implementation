@@ -68,9 +68,10 @@ let _ =
                    | None   -> ()
                    | Some f -> 
                        let ch, cf = fileOps f in
-                       fprintf ch "<html><head>%s%s</head><div style=\"transform:scaleY(-1)\"><ul class=\"mktree\">%s</ul></div></html>" 
+                       fprintf ch 
+                         "<html><head>%s%s</head><body onload=\"convertTree(document.getElementById(\"root\"), false)\"><div style=\"transform:scaleY(-1)\"><ul id=\"root\" class=\"mktree\">%s</ul></div><body></html>"
                          "<script type=\"text/javascript\" src=\"mktree.js\"></script>"
-                         "<link rel=\"stylesheet\" href=\"mktree1.css\" type=\"text/css\">"
+                         "<link rel=\"stylesheet\" href=\"mktree.css\" type=\"text/css\">"
                          p#run; 
                        cf ch
                   );

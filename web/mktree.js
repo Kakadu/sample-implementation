@@ -20,7 +20,7 @@ This code is inspired by and extended from Stuart Langridge's aqlist code:
 */
 
 // Automatically attach a listener to the window onload, to convert the trees
-addEvent(window,"load",convertTrees);
+//addEvent(window,"load",convertTrees);
 
 // Utility function to add an event listener
 function addEvent(o,e,f){
@@ -91,6 +91,21 @@ function expandCollapseList(ul,cName,itemId) {
 				item.className = cName;
 			}
 		}
+	}
+}
+
+// Search the document for UL elements with the correct CLASS name, then process them
+function convertTree(ul, bullet) {
+	setDefault("treeClass","mktree");
+	setDefault("nodeClosedClass","liClosed");
+	setDefault("nodeOpenClass","liOpen");          
+	setDefault("nodeBulletClass", bullet ? "liBullet" : "liNoBullet");
+	setDefault("nodeLinkClass","bullet");
+	setDefault("preProcessTrees",true);
+
+	if (preProcessTrees) {
+           if (!document.createElement) { return; } // Without createElement, we can't do anything
+           processList(ul);
 	}
 }
 
