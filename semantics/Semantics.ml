@@ -1,10 +1,10 @@
+@type 'a opt = Good of 'a | Bad of GT.string with html
+
 module Deterministic =
   struct 
 
     module BigStep =
       struct
-
-        @type 'a opt = Good of 'a | Bad of GT.string with html
 
         type ('env, 'left, 'over, 'right) case = 
           Nothing  of string * string
