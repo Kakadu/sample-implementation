@@ -20,3 +20,10 @@ let html fa s =
   HTMLView.tag "attr" ~attrs:(Printf.sprintf "style=\"cursor:pointer\" title=\"%s\"" text) 
     (View.string "s")
 
+open Ostap.Util
+
+ostap (
+  parse[name][a]: p:list[ostap (name -"=" a)] {
+    List.fold_left (fun m (n, v) -> M.add n v m) M.empty p
+  }
+)
