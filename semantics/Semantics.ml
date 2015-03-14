@@ -47,19 +47,20 @@ module Deterministic =
                             HTMLView.td ~attrs:"rowspan=\"3\" align=\"center\" valign=\"center\"" (left.GT.fx ());
                             if customizer#show_over 
                                then HTMLView.td ~attrs:(Printf.sprintf "width=\"%dpx\"align=\"center\"" customizer#over_width) (over.GT.fx ())
-                               else View.empty;
+                               else HTMLView.td (HTMLView.raw "&nbsp;");
                             HTMLView.td ~attrs:"rowspan=\"3\" align=\"center\" valign=\"center\"" 
                               (match right with 
                               | None   -> HTMLView.raw "<font color=\"red\">&#8224;</font>"
                               | Some r -> orig.GT.t#right () r
                               );
                             if customizer#show_rule
-                               then HTMLView.td ~attrs:"rowspan=\"3\" align=\"center\" valign=\"center\"" (HTMLView.string ("[" ^ rule ^ "]"))
+                               then HTMLView.td ~attrs:"rowspan=\"3\" align=\"center\" valign=\"center\" style=\"font-size:80%\"" 
+                                      (HTMLView.raw ("&nbsp;(<i>by</i>&nbsp;[" ^ rule ^ "])"))
                                else View.empty
                           ]
                         );
                         HTMLView.tr (
-                          HTMLView.td ~attrs:"align=\"center\" valign=\"center\"" (
+                          HTMLView.td ~attrs:(Printf.sprintf "width=\"%dpx\"align=\"center\" valign=\"center\"" customizer#over_width) (
                             HTMLView.tag ~attrs:(Printf.sprintf "style=\"display:inline-block;transform:scale(%d,1)\"" customizer#arrow_scale)
                               "span" (HTMLView.raw customizer#arrow)
                           )
@@ -104,6 +105,31 @@ module Deterministic =
                 else Limit
               in
               inner limit env left over
+
+              module Make (C : sig 
+
+                                 type env
+                                 type left
+                                 type over
+                                 type right
+
+                                 val step : env -> left -> over -> (env, left, over, right) case
+
+                                 val env_html   : env   -> HTMLView.er
+                                 val left_html  : left  -> HTMLView.er
+                                 val over_html  : over  -> HTMLView.er
+                                 val right_html : right -> HTMLView.er
+
+                                 val customizer : html_customizer
+
+                               end
+                          ) =
+                struct
+
+                  let build ?(limit=(-1)) = build ~limit:limit C.step
+                  let html = html C.customizer (GT.lift C.env_html) (GT.lift C.left_html) (GT.lift C.over_html) (GT.lift C.right_html)
+
+                end
 
           end    
       end

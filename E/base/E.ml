@@ -188,6 +188,16 @@ module SimpleExpr =
                     let rec step env state e = 
                       GT.transform(expr) (fun (env, state, _) e -> step env state e) (new step) (env, state, e) e
 
+                    type env   = unit
+                    type left  = int State.t
+                    type over  = 'a expr as 'a
+                    type right = int
+
+                    let env_html   = HTMLView.unit
+                    let left_html  = State.html string_of_int 
+                    let over_html  = abbreviate_html (fun _ -> "")
+                    let right_html = HTMLView.int
+
                     let customizer =
                       object 
                         inherit Semantics.Deterministic.BigStep.Tree.html_customizer
@@ -211,18 +221,32 @@ module SimpleExpr =
                         method c_Const (state, _, _) _ i = Semantics.Deterministic.BigStep.Just (i, "Const")
 		      end
 
+                    type env   = int State.t
+                    type left  = 'a expr as 'a
+                    type over  = unit
+                    type right = int
+
+                    let env_html   = State.html string_of_int
+                    let left_html  = abbreviate_html (fun _ -> "")
+                    let over_html  = HTMLView.unit
+                    let right_html = HTMLView.int
+
                     let rec step state e _ = 
                       GT.transform(expr) (fun (state, _, _) e -> step state e ()) (new step) (state, e, ()) e
 
                     let customizer =
                       object 
                         inherit Semantics.Deterministic.BigStep.Tree.html_customizer
-                        method show_env   = true
-                        method show_over  = false
-                        method over_width = 50 
+                        method show_env    = true
+                        method show_over   = false
+                        method over_width  = 50 
+                        method arrow_scale = 4
                       end
 
                   end                      
+
+                module WithEnvT = Semantics.Deterministic.BigStep.Tree.Make (WithEnv)
+                module StandardT = Semantics.Deterministic.BigStep.Tree.Make (Standard)
 
                 let build ?(limit=(-1)) state e = Semantics.Deterministic.BigStep.Tree.build ~limit:limit Standard.step () state e 
 
@@ -259,7 +283,16 @@ let toplevel =
                             )
             method vertical = SimpleExpr.vertical p
             method code     = invalid_arg ""
-            method run      = View.toString (SimpleExpr.Semantics.Deterministic.BigStep.html (SimpleExpr.Semantics.Deterministic.BigStep.build State.empty p))
+            method run      = (*View.toString (
+                                SimpleExpr.Semantics.Deterministic.BigStep.StandardT.html (
+                                  SimpleExpr.Semantics.Deterministic.BigStep.StandardT.build () State.empty p
+                                )
+                              )*)
+                              View.toString (
+                                SimpleExpr.Semantics.Deterministic.BigStep.WithEnvT.html (
+                                  SimpleExpr.Semantics.Deterministic.BigStep.WithEnvT.build State.empty p ()
+                                )
+                              )           
             method compile  = invalid_arg ""
           end
     )  
