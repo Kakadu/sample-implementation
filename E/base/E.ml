@@ -216,7 +216,7 @@ module SimpleExpr =
                         inherit ['a] Expr.Semantics.Deterministic.BigStep.with_env 
                         method c_Var (state, _, _) _ x = 
                           (try Semantics.Deterministic.BigStep.Just (State.get state x, "Var") with
-                           | _ -> Semantics.Deterministic.BigStep.Nothing (Printf.sprintf "undefined variable \"%s\"" x, "Var")
+                           | _ -> Semantics.Deterministic.BigStep.Nothing (Printf.sprintf "undefined variable \'%s\'" x, "Var")
                           )
                         method c_Const (state, _, _) _ i = Semantics.Deterministic.BigStep.Just (i, "Const")
 		      end
@@ -240,7 +240,7 @@ module SimpleExpr =
                         method show_env    = true
                         method show_over   = false
                         method over_width  = 50 
-                        method arrow_scale = 4
+                        method arrow_scale = 3
                       end
 
                   end                      
