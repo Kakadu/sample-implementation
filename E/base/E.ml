@@ -56,7 +56,7 @@ module Expr =
         method c_Binop _ _ s x y = Printf.sprintf "*\n%s\n%s%s" s (x.GT.fx ()) (y.GT.fx ())
       end
     
-    let parse h ops primary s = 
+    let hparse h ops primary s = 
       let rec parse s =  
         let l = List.map 
           (fun s -> 
@@ -72,6 +72,10 @@ module Expr =
         s
       in
       parse s
+
+    let parse ops primary s =
+      let h = Helpers.highlighting () in
+      ostap (e:hparse[h][ops][primary] -EOF {e, h#retrieve}) s
 
     module Semantics (D : Domain) =
       struct
@@ -114,31 +118,25 @@ module Expr =
 
   end
 
-module SimpleExpr =
+module SimpleExpr (C : sig val ops : ([`Nona | `Lefta | `Righta] * string list) array val keywords : string list end) =
   struct
 
-    module L = Lexer.Make (struct let keywords = [] end) 
+    module L = Lexer.Make (C) 
 
     @type primary = [`Var of string | `Const of int] with html, show, foldl
 
-    let parse s =
-      let h = Helpers.highlighting () in
+    let hparse h s =
       let primary p = ostap (
            x:!(L.ident)   {`Var x}
         |  i:!(L.literal) {`Const i}
         |  -"(" p -")"  
         )
       in
-      let entry s = 
-        Expr.parse h [|
-          `Lefta, ["&&"]; 
-          `Nona , ["=="]; 
-          `Lefta, ["+" ]; 
-          `Lefta, ["/" ]
-        |] 
-        primary s
-      in
-      ostap (e:entry -EOF {e, h#retrieve}) s;;
+      Expr.hparse h C.ops primary s
+
+    let parse s =
+      let h = Helpers.highlighting () in
+      ostap (e:hparse[h] -EOF {e, h#retrieve}) s;;
 
     @type 'a expr = ['a Expr.t | primary] with html, show, foldl
 
@@ -294,23 +292,34 @@ module SimpleExpr =
   end
 
 let toplevel =  
+  let module Expr = SimpleExpr (
+    struct 
+      let ops = [|`Lefta, ["&&"]; 
+                  `Nona , ["=="];  
+                  `Lefta, ["+" ]; 
+                  `Lefta, ["/" ]
+                |]
+      let keywords = []
+    end)
+  in
   Toplevel.make 
-    (SimpleExpr.L.fromString SimpleExpr.parse)
+    (Expr.L.fromString Expr.parse)
     (fun (p, h) ->         
         object inherit Toplevel.c
             method ast cb = View.toString (
                               HTMLView.ul ~attrs:"id=\"ast\" class=\"mktree\"" (
-                                SimpleExpr.html (Helpers.interval cb h) p
+                                Expr.html (Helpers.interval cb h) p
                               )
                             )
-            method vertical = SimpleExpr.vertical p
+            method vertical = Expr.vertical p
             method code     = invalid_arg ""
             method run      = (*View.toString (
                                 SimpleExpr.Semantics.Deterministic.BigStep.StandardT.html (
                                   SimpleExpr.Semantics.Deterministic.BigStep.StandardT.build () State.empty p
                                 )
                               )*)
-                              let module S = SimpleExpr.Semantics (StrictInt)(struct let from_int x = x end) in
+                              
+                              let module S = Expr.Semantics (StrictInt)(struct let from_int x = x end) in
                               View.toString (
                                 S.Deterministic.BigStep.WithEnvT.html (
                                   S.Deterministic.BigStep.WithEnvT.build State.empty p ()

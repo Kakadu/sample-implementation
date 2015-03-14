@@ -6,7 +6,22 @@ module Lexer = Lexer.Make (
     end
   )
 
-module Expr =
+module Expr = E.SimpleExpr (
+   struct
+
+     let ops = [|
+        `Lefta, ["||"];
+        `Lefta, ["&&"];
+        `Nona , ["=="; "!="; "<="; "<"; ">="; ">"];
+        `Lefta, ["+" ; "-"];
+        `Lefta, ["*" ; "/"; "%"];
+      |] 
+
+     let keywords = ["while"; "do"; "if"; "then"; "else"; "skip"; "read"; "write"] 
+
+   end
+  )
+(*
   struct
 
     @type primary = [`Var of string | `Const of int] with html, show, foldl
@@ -57,6 +72,7 @@ module Expr =
     let rec eval s e = transform(expr) eval (new eval) s e      
 
   end
+*)
 
 module Stmt =
   struct
@@ -110,7 +126,7 @@ module Program =
     let parse s = 
       let hp = Helpers.highlighting () in
       let he = Helpers.highlighting () in
-      let parse s = Stmt.parse hp (Expr.parse he) s in
+      let parse s = Stmt.parse hp (Expr.hparse he) s in
       ostap (p:parse -EOF {p, hp#retrieve, he#retrieve}) s
 
     let rec html cbp cbe p = 
