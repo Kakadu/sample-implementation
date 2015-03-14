@@ -24,3 +24,14 @@ ostap (
   }
 )
 
+class cname =
+  object
+    method cname name =
+      String.uncapitalize (
+        if name.[0] = '`' 
+        then String.sub name 1 (String.length name - 1)
+        else name
+      )
+      
+  end
+

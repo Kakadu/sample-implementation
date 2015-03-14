@@ -143,6 +143,7 @@ module SimpleExpr (C : sig val ops : ([`Nona | `Lefta | `Righta] * string list) 
     class ['a] html cb =
       object (this)
         inherit ['a] @expr[html]
+        inherit Helpers.cname
       end
 
     class ['a] vertical =

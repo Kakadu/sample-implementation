@@ -21,58 +21,6 @@ module Expr = E.SimpleExpr (
 
    end
   )
-(*
-  struct
-
-    @type primary = [`Var of string | `Const of int] with html, show, foldl
-
-    let parse h s =
-      let primary p = ostap (
-         x:!(Lexer.ident)   {`Var x}
-        |  i:!(Lexer.literal) {`Const i}
-        |  -"(" p -")"  
-        )
-      in         
-      E.Expr.parse h [|
-        `Lefta, ["||", E.Expr.ior];
-        `Lefta, ["&&", E.Expr.iand];
-        `Nona , ["==", E.Expr.b(=); "!=", E.Expr.b(<>); "<=", E.Expr.b(<=); "<", E.Expr.b(<); ">=", E.Expr.b(>=); ">", E.Expr.b(>)];
-        `Lefta, ["+" , ( + ); "-" , (-)];
-        `Lefta, ["*" , ( * ); "/" , (/); "%" , (mod)];
-      |] 
-      primary s;;
-
-    @type 'a expr = ['a E.Expr.t | primary] with html, show, foldl
-
-    class ['a] html cb =
-      object (this)
-        inherit ['a] @expr[html]
-      end
-
-    class ['a] vertical =
-      object (this)
-        inherit ['a] @expr[show]
-        inherit ['a] E.Expr.vertical
-        method c_Var _ _ x = Printf.sprintf "x\n%s\n" x
-        method c_Const _ _ i = Printf.sprintf "c\n%d\n" i
-      end
-
-    class ['a] eval =
-      object (this)
-        inherit ['a] E.Expr.eval
-        inherit ['a, int State.t, int, int State.t, int] @expr
-        method c_Var s _ x = State.get s x
-        method c_Const _ _ i = i
-      end
-
-    let rec html cb e = 
-      HTMLView.li ~attrs:(cb e)
-        (transform(expr) (fun _ -> html cb) (new html cb) () e)
-    let rec vertical e = transform(expr) (fun _ -> vertical) (new vertical) () e 
-    let rec eval s e = transform(expr) eval (new eval) s e      
-
-  end
-*)
 
 module Stmt =
   struct
@@ -97,6 +45,17 @@ module Stmt =
         method c_If     _ _ c x y = Printf.sprintf "i\n%s%s%s" (c.fx ()) (x.fx ()) (y.fx ())
         method c_Read   _ _ x     = Printf.sprintf "r\n%s\n" x
         method c_Write  _ _ e     = Printf.sprintf "w\n%s" (e.fx ())
+      end
+
+    class ['self, 'e] html =
+      object
+        inherit ['self, 'e] @t[html]
+        inherit Helpers.cname as helped
+        method cname name =
+          match helped#cname name with
+          | "assign" -> ":="
+          | "seq"    -> ";"
+          | name     -> name
       end
 
     let parse h expr s = 
@@ -131,7 +90,7 @@ module Program =
 
     let rec html cbp cbe p = 
       HTMLView.li ~attrs:(cbp p)
-        (transform(Stmt.t) (fun _ -> html cbp cbe) (fun _ -> Expr.html cbe) (new @Stmt.t[html]) () p)
+        (transform(Stmt.t) (fun _ -> html cbp cbe) (fun _ -> Expr.html cbe) (new Stmt.html) () p)
 
     let rec vertical p = transform(Stmt.t) (fun _ -> vertical) (fun _ -> Expr.vertical) (new Stmt.vertical) () p
 
