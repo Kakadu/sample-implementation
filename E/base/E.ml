@@ -62,7 +62,7 @@ module Expr =
                     method c_Binop (env, state, _) _ f _ x y =
                       Semantics.Deterministic.BigStep.Subgoals (
                         [env, state, x.GT.x; env, state, y.GT.x],
-                        (fun [x'; y'] -> Some (f  x' y')),
+                        (fun [x'; y'] -> Semantics.Deterministic.BigStep.Good (f  x' y')),
                         "Binop"
                       )               	       
 		  end
@@ -73,7 +73,7 @@ module Expr =
                     method c_Binop (state, _, _) _ f _ x y =
                       Semantics.Deterministic.BigStep.Subgoals (
                         [state, x.GT.x, (); state, y.GT.x, ()],
-                        (fun [x'; y'] -> Some (f  x' y')),
+                        (fun [x'; y'] -> Semantics.Deterministic.BigStep.Good (f  x' y')),
                         "Binop"
                       )               	       
 		  end

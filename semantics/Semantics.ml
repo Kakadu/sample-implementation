@@ -4,16 +4,18 @@ module Deterministic =
     module BigStep =
       struct
 
+        @type 'a opt = Good of 'a | Bad of GT.string with html
+
         type ('env, 'left, 'over, 'right) case = 
           Nothing  of string * string
         | Just     of 'right * string
-        | Subgoals of ('env * 'left * 'over) list * ('right list -> 'right option) * string
+        | Subgoals of ('env * 'left * 'over) list * ('right list -> 'right opt) * string
 
         module Tree =
           struct
 
             @type ('env, 'left, 'over, 'right) t = 
-              Node of 'env * 'left * 'over * 'right GT.option * ('env, 'left, 'over, 'right) t GT.list * GT.string
+              Node of 'env * 'left * 'over * 'right opt * ('env, 'left, 'over, 'right) t GT.list * GT.string
             | Limit 
             with html
 
@@ -50,8 +52,8 @@ module Deterministic =
                                else HTMLView.td (HTMLView.raw "&nbsp;");
                             HTMLView.td ~attrs:"rowspan=\"3\" align=\"center\" valign=\"center\"" 
                               (match right with 
-                              | None   -> HTMLView.raw "<font color=\"red\">&#8224;</font>"
-                              | Some r -> orig.GT.t#right () r
+                              | Bad t -> HTMLView.raw (Printf.sprintf "<attr title=\"%s\"><font color=\"red\">&#8224;</font></attr>" t)
+                              | Good r -> orig.GT.t#right () r
                               );
                             if customizer#show_rule
                                then HTMLView.td ~attrs:"rowspan=\"3\" align=\"center\" valign=\"center\" style=\"font-size:80%\"" 
@@ -89,17 +91,23 @@ module Deterministic =
             let html customizer env left over right tree = 
               GT.transform(t) env left over right (new custom_html customizer) () tree
 
+            exception SomeBad of string
+
             let build ?(limit=(-1)) step env left over =
               let rec inner i env left over =
                 if i != 0 then 
                   match step env left over with
-    	          | Nothing (reason, rule) -> Node (env, left, over, None, [], rule)
-                  | Just (right, rule) -> Node (env, left, over, Some right, [], rule)
+    	          | Nothing (reason, rule) -> Node (env, left, over, Bad reason, [], rule)
+                  | Just (right, rule) -> Node (env, left, over, Good right, [], rule)
                   | Subgoals (triples, fright, rule) ->
                       let subnodes = List.map (fun (env', left', over') -> inner (i-1) env' left' over') triples in
                       let right    = 
-                        try fright (List.map (function Node (_, _, _, Some r, _, _) -> r) subnodes)
-                        with Match_failure _ -> None
+                        try fright (List.map (function 
+                                              | Node (_, _, _, Good r, _, _) -> r
+					      | Node (_, _, _, Bad t, _, _) -> raise (SomeBad t)
+                                              | Limit -> raise (SomeBad "step limit reached")
+                                             ) subnodes)
+                        with SomeBad t -> Bad t
                       in
                       Node (env, left, over, right, subnodes, rule)
                 else Limit
