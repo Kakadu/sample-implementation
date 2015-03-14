@@ -5,14 +5,14 @@
   <script src="E.js"></script>
   <script type="text/javascript">
     function do_parse () {
-       document.getElementById ("parsed").innerHTML = window.parse (document.getElementById ("text").value);
+       document.getElementById ("parsed").innerHTML = window.parse (document.getElementById ("text").innerText);
        convertTrees ();
        expandTree ("ast");
        do_highlighting (0, 0, 0, 0);
     }
 
     function do_highlighting (x, y, z, t) {
-       document.getElementById ("highlighted").innerHTML = window.highlight (x, y, z, t);
+       document.getElementById ("text").innerHTML = window.highlight (x, y, z, t);
        event.cancelBubble = true;
     }
 
@@ -24,7 +24,7 @@
 
         for (var i = 0, f; f = files[i]; i++) {
           fr.onload = function (e) {
-            document.getElementById("text").value = e.target.result;
+            document.getElementById("text").innerHTML = "<pre>" + e.target.result + "</pre>";
           };
 
           fr.readAsText (f);
@@ -91,21 +91,34 @@ Header
 
 <nav>
   <table width="100%">
-    <tr><td align="left" width="100%"></td><textarea rows="20" id="text"></textarea></tr>
+    <tr>
+      <td align="left" width="100%">
+        Source code:
+        <div class="scrollable" style="height:250px;font-family:monospace;line-height:90%;background-color:white" contentEditable="true" id="text"></div>
+      </td>
+    </tr>
     <tr>
       <td align="center">
+        <hr>
         <button type="button" onclick="do_parse()">Parse</button>&nbsp;&nbsp;
         <input type="file" id="loadFile" name="file">&nbsp;&nbsp;
         <button type="button" onclick="convert()">Export</button>&nbsp;&nbsp;<a href="" id=save></a>
+        <hr>
       </td>
     </tr>    
+    <tr>
+      <td>
+       Abstract syntax tree:
+       <div class="scrollable" style="background-color:white" id="parsed"></div>
+      </td>
+    </tr>
   </table>
-  <div class="scrollable" id="parsed"></div>
 </nav>
 
 <section>
-<div class="scrollable" style="height:850px; width:1200px"id="highlighted">
+<!--<div class="scrollable" style="height:850px; width:1200px"id="highlighted">
 </div>
+-->
 </section>
 
 <footer>
