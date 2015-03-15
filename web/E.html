@@ -4,15 +4,54 @@
   <script type="text/javascript" src="mktree.js"></script>
   <script src="E.js"></script>
   <script type="text/javascript">
+    var script = null;
+
+    function registerScript (text) {
+      "use strict";
+
+      if (!script) script = document.createElement("script");
+      else document.body.removeChild (script);
+
+      script.innerHTML = text;
+      document.body.appendChild(script);
+    }
+
+    function do_run () {
+      var result = window.run ("1", "wizard", "navigate");
+      registerScript (result[1]);
+      window [result[0]] (); 
+    }
+
+    function navigate(i, cr) {
+      return i;
+    }
+
+    function disable_actions () {
+      document.getElementById ("run_button").disabled = true;
+      document.getElementById ("export_button").disabled = true;
+      document.getElementById ("parsed").innerHTML = "&nbsp;";
+      document.getElementById ("wizard").innerHTML = "&nbsp;";
+      document.getElementById ("output").innerHTML = "&nbsp;";      
+    }
+
+    function enable_actions () {
+      document.getElementById ("run_button").disabled = false;
+      document.getElementById ("export_button").disabled = false;   
+    }
+
     function do_parse () {
-       document.getElementById ("parsed").innerHTML = window.parse (document.getElementById ("text").value);
-       convertTrees ();
-       expandTree ("ast");
-       do_highlighting (0, 0, 0, 0);
+       var result = window.parse (document.getElementById ("text").value);
+       if (result[0] == "1") {
+          enable_actions ();
+          document.getElementById ("parsed").innerHTML = result[1];
+          convertTrees ();
+          expandTree ("ast");
+          do_highlighting (0, 0, 0, 0);
+       } else disable_actions ();
     }
 
     function do_highlighting (x, y, z, t) {
-       document.getElementById ("highlighted").innerHTML = window.highlight (x, y, z, t);
+       document.getElementById ("text").innerHTML = window.highlight (x, y, z, t);
        event.cancelBubble = true;
     }
 
@@ -24,7 +63,8 @@
 
         for (var i = 0, f; f = files[i]; i++) {
           fr.onload = function (e) {
-            document.getElementById("text").value = e.target.result;
+            document.getElementById("text").innerHTML = "<pre>" + e.target.result + "</pre>";
+            disable_actions ();
           };
 
           fr.readAsText (f);
@@ -91,21 +131,43 @@ Header
 
 <nav>
   <table width="100%">
-    <tr><td align="left" width="100%"></td><textarea rows="20" id="text"></textarea></tr>
+    <tr>
+      <td align="left" width="100%">
+        Source code:
+        <div class="scrollable" style="height:250px;font-family:monospace;line-height:90%;background-color:white" contentEditable="true" id="text"></div>
+      </td>
+    </tr>
     <tr>
       <td align="center">
+        <hr>
         <button type="button" onclick="do_parse()">Parse</button>&nbsp;&nbsp;
         <input type="file" id="loadFile" name="file">&nbsp;&nbsp;
-        <button type="button" onclick="convert()">Export</button>&nbsp;&nbsp;<a href="" id=save></a>
+        <button type="button" onclick="convert()" disabled="true" id="export_button">Export</button>&nbsp;&nbsp;<a href="" id=save></a>&nbsp;&nbsp;
+        <button type="button" onclick="do_run()" disabled="true" id="run_button">Run</button>
+        <hr>
       </td>
     </tr>    
+    <tr>
+      <td>
+       Abstract syntax tree:
+       <div class="scrollable" style="background-color:white" id="parsed"></div>
+      </td>
+    </tr>
   </table>
-  <div class="scrollable" id="parsed"></div>
 </nav>
 
 <section>
-<div class="scrollable" style="height:850px; width:1200px"id="highlighted">
-</div>
+<table>
+  <tr>
+    <td>
+      Semantics:
+      <div id="wizard" align="center">
+      </div>
+      <div id="output">
+      </div>
+    </td>
+  </tr>
+</table>
 </section>
 
 <footer>
