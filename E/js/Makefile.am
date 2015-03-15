@@ -24,7 +24,7 @@ MODULE_INCLUDES += -I $(CAMLP4LIB) -I ../../common -I ../../semantics -I ../base
 
 
 # add extra compiled libraries used for linking
-EXTRA_CMA += Common.cma Semantics.cma E.cma Js_frontend.cma
+EXTRA_CMA += Common.cma Semantics.cma Js_frontend.cma E.cma 
 
 TARGET := $(MLI) $(CMO) META $(BYTE) Frontend.js
 CLEAN_EXTRA += $(BYTE) $(NATIVE)

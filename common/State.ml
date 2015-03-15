@@ -23,7 +23,7 @@ let html fa s =
 open Ostap.Util
 
 ostap (
-  parse[name][a]: p:list[ostap (name -"=" a)] {
+  parse[name][a]: p:list0[ostap (name -"=" a)] {
     List.fold_left (fun m (n, v) -> M.add n v m) M.empty p
   }
 )

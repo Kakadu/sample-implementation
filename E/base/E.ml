@@ -140,7 +140,7 @@ module SimpleExpr (C : sig val ops : ([`Nona | `Lefta | `Righta] * string list) 
 
     @type 'a expr = ['a Expr.t | primary] with html, show, foldl
 
-    class ['a] html cb =
+    class ['a] html =
       object (this)
         inherit ['a] @expr[html]
         inherit Helpers.cname
@@ -156,22 +156,26 @@ module SimpleExpr (C : sig val ops : ([`Nona | `Lefta | `Righta] * string list) 
 
     let rec html cb e = 
       HTMLView.li ~attrs:(cb e)
-        (transform(expr) (fun _ -> html cb) (new html cb) () e)
+        (transform(expr) (fun _ -> html cb) (new html) () e)
 
     let abbreviate_html cb = 
+      let wrap node html =
+        HTMLView.tag "attr" ~attrs:(Printf.sprintf "%s style=\"cursor:pointer\"" (cb node)) html
+      in
       let subtree = function
-      | `Const i -> string_of_int i
-      | `Var x -> x
-      | _ -> "(&#8226;)"
+      | `Const i as node -> wrap node (HTMLView.raw (string_of_int i))
+      | `Var   x as node -> wrap node (HTMLView.raw x)
+      | node -> wrap node (HTMLView.raw "(&#8226;)")
       in
       function
-      | `Const i -> HTMLView.tag "tt" (HTMLView.int i)
-      | `Var   x -> HTMLView.tag "tt" (HTMLView.raw x)
-      | `Binop (s, x, y) -> HTMLView.tag "tt" (HTMLView.raw (Printf.sprintf "%s %s %s" (subtree x) s (subtree y)))
+      | `Const i as node  -> wrap node (HTMLView.tag "tt" (HTMLView.int i))
+      | `Var   x as node -> wrap node (HTMLView.tag "tt" (HTMLView.raw x))
+      | `Binop (s, x, y) as node -> 
+          HTMLView.tag "tt" (HTMLView.seq [subtree x; wrap node (HTMLView.raw (Printf.sprintf " %s " s)); subtree y])
 
     let rec vertical e = transform(expr) (fun _ -> vertical) (new vertical) () e      
 
-    module Semantics (D : Domain) (I : sig val from_int : int -> D.t end) =
+    module Semantics (D : Domain) (I : sig val from_int : int -> D.t end) (C : sig val cb : 'a expr as 'a -> string end) =
       struct
 
         module Expr = Expr.Semantics (D)
@@ -216,7 +220,7 @@ module SimpleExpr (C : sig val ops : ([`Nona | `Lefta | `Righta] * string list) 
 
                     let env_html   = HTMLView.unit
                     let left_html  = State.html D.show
-                    let over_html  = abbreviate_html (fun _ -> "")
+                    let over_html  = abbreviate_html C.cb
                     let right_html = D.html
 
                     let customizer =
@@ -248,7 +252,7 @@ module SimpleExpr (C : sig val ops : ([`Nona | `Lefta | `Righta] * string list) 
                     type right = D.t
 
                     let env_html   = State.html D.show
-                    let left_html  = abbreviate_html (fun _ -> "")
+                    let left_html  = abbreviate_html C.cb
                     let over_html  = HTMLView.unit
                     let right_html = D.html
 
@@ -280,7 +284,7 @@ module SimpleExpr (C : sig val ops : ([`Nona | `Lefta | `Righta] * string list) 
                      end)
                     (fun _ -> HTMLView.unit)
                     (fun _ -> State.html string_of_int)
-                    (fun _ -> abbreviate_html (fun _ -> ""))
+                    (fun _ -> abbreviate_html C.cb)
                     (fun _ -> HTMLView.int) 
                     tree
 
@@ -303,12 +307,6 @@ let toplevel =
       let keywords = []
     end)
   in
-  let module Strict    = Expr.Semantics (StrictInt)    (struct let from_int x = x end) in
-  let module NonStrict = Expr.Semantics (NonStrictInt) (struct let from_int x = x end) in  
-  let wizard =
-    let p0 = [HTMLView.Wizard.Page.Item.make "strict" (HTMLView.Wizard.Page.Item.Flag "")] in
-    [p0]
-  in
   Toplevel.make 
     (Expr.L.fromString Expr.parse)
     (fun (p, h) ->         
@@ -320,17 +318,43 @@ let toplevel =
                             )
             method vertical = Expr.vertical p
             method code     = invalid_arg ""
-            method run      = (wizard,
-                               fun _ ->
-                                  "root",
-                                  View.toString (
-                                    HTMLView.tag "div" ~attrs:"style=\"transform:scaleY(-1)\"" (
-                                      HTMLView.ul ~attrs:"id=\"root\" class=\"mktree\""
-                                        (Strict.Deterministic.BigStep.WithEnvT.html (
-                                           Strict.Deterministic.BigStep.WithEnvT.build State.empty p ()
-                                        )
-                                    ))
-                                ))
+            method run cb   = 
+              let module Strict    = Expr.Semantics (StrictInt)   (struct let from_int x = x end)(struct let cb = (Helpers.interval cb h) end) in
+              let module NonStrict = Expr.Semantics (NonStrictInt)(struct let from_int x = x end)(struct let cb = (Helpers.interval cb h) end) in  
+              let wizard =
+                let p0 = [
+                  HTMLView.Wizard.Page.Item.make "strict" (HTMLView.Wizard.Page.Item.Flag "");
+                  HTMLView.Wizard.Page.Item.make "state"  (HTMLView.Wizard.Page.Item.String "");
+                ] 
+                in
+                [p0]
+              in
+              (wizard,
+               fun c ->
+                 let state = c "state" in
+                 match Expr.L.fromString (ostap (!(State.parse)[Expr.L.ident][Expr.L.literal] -EOF)) state with
+                 | Checked.Ok state ->
+                   if c "strict" = "true" 
+                   then
+                     "root",
+                     View.toString (
+                       HTMLView.tag "div" ~attrs:"style=\"transform:scaleY(-1)\"" (
+                         HTMLView.ul ~attrs:"id=\"root\" class=\"mktree\""
+                           (Strict.Deterministic.BigStep.WithEnvT.html (
+                              Strict.Deterministic.BigStep.WithEnvT.build state p ()
+                           )
+                     )))                                  
+                   else
+                     "root",
+                     View.toString (
+                       HTMLView.tag "div" ~attrs:"style=\"transform:scaleY(-1)\"" (
+                         HTMLView.ul ~attrs:"id=\"root\" class=\"mktree\""
+                           (NonStrict.Deterministic.BigStep.WithEnvT.html (
+                              NonStrict.Deterministic.BigStep.WithEnvT.build state p ()
+                           )
+                     )))
+		 | Checked.Fail [msg] -> "", Js_frontend.highlighted_msg state msg
+              )
             method compile  = invalid_arg ""
           end
     )  
