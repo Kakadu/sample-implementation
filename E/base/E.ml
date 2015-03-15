@@ -320,23 +320,16 @@ let toplevel =
                             )
             method vertical = Expr.vertical p
             method code     = invalid_arg ""
-            method run      = wizard
-
-(*View.toString (
-                                SimpleExpr.Semantics.Deterministic.BigStep.StandardT.html (
-                                  SimpleExpr.Semantics.Deterministic.BigStep.StandardT.build () State.empty p
-                                )
-                              )*)
-                              
-                              
-(*
-                              let module S = Expr.Semantics (StrictInt)(struct let from_int x = x end) in
-                              View.toString (
-                                S.Deterministic.BigStep.WithEnvT.html (
-                                  S.Deterministic.BigStep.WithEnvT.build State.empty p ()
-                                )
-                              )           
-*)
+            method run      = (wizard,
+                               fun _ ->
+                                  "root",
+                                  View.toString (
+                                    HTMLView.ul ~attrs:"id=\"root\" class=\"mktree\""
+                                      (Strict.Deterministic.BigStep.WithEnvT.html (
+                                         Strict.Deterministic.BigStep.WithEnvT.build State.empty p ()
+                                      )
+                                  )
+                              ))
             method compile  = invalid_arg ""
           end
     )  

@@ -18,7 +18,16 @@ module Make (T : sig val toplevel : string -> (Toplevel.c, Ostap.Msg.t) Checked.
           (Js.Unsafe.coerce Dom_html.window)##run <- Js.wrap_callback (
              fun id target navigate -> 
                let id, target, navigate = Js.to_string id, Js.to_string target, Js.to_string navigate in
-               let entry, code = HTMLView.Wizard.render id target navigate p#run in
+               let wizard, callback = p#run in
+               (Js.Unsafe.coerce Dom_html.window)##interpret <- Js.wrap_callback (
+                  fun _ -> 
+                    let root, tree = callback () in
+                    let a = jsnew Js.array_empty () in
+                    Js.array_set a 0 (Js.string root);
+                    Js.array_set a 1 (Js.string tree);
+                    a
+               );
+               let entry, code = HTMLView.Wizard.render id target navigate wizard in
                let a = jsnew Js.array_empty () in
                Js.array_set a 0 (Js.string entry);
                Js.array_set a 1 (Js.string code);
