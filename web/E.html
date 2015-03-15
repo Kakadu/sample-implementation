@@ -4,6 +4,17 @@
   <script type="text/javascript" src="mktree.js"></script>
   <script src="E.js"></script>
   <script type="text/javascript">
+    function do_run () {
+      var result = window.run ("1", "wizard", "navigate");
+
+      document.getElementById ("wizard_code").innerHTML = result[1];
+      present_1 (); 
+    }
+
+    function navigate(i, cr){
+      return i+1;
+    }
+
     function do_parse () {
        document.getElementById ("parsed").innerHTML = window.parse (document.getElementById ("text").value);
        convertTrees ();
@@ -96,7 +107,8 @@ Header
       <td align="center">
         <button type="button" onclick="do_parse()">Parse</button>&nbsp;&nbsp;
         <input type="file" id="loadFile" name="file">&nbsp;&nbsp;
-        <button type="button" onclick="convert()">Export</button>&nbsp;&nbsp;<a href="" id=save></a>
+        <button type="button" onclick="convert()">Export</button>&nbsp;&nbsp;<a href="" id=save></a>&nbsp;&nbsp;
+        <button type="button" onclick="do_run()">Run</button>
       </td>
     </tr>    
   </table>
@@ -104,6 +116,9 @@ Header
 </nav>
 
 <section>
+<script type="text/javascript" id="wizard_code">
+</script>
+<div id="wizard"></div>
 <div class="scrollable" style="height:850px; width:1200px"id="highlighted">
 </div>
 </section>
