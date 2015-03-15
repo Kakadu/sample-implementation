@@ -58,29 +58,35 @@ module Stmt =
           | name     -> name
       end
 
-    class ['self, 'e] html'  =
-      let wrap node html = html in
+    class ['self, 'e] html' =
       object inherit ['self, 'e] @t[html]
-        method c_Skip   _ node       = wrap node (HTMLView.tag "tt" (HTMLView.raw "skip"))
-        method c_Assign _ node x e   = wrap node (HTMLView.tag "tt" (HTMLView.seq [HTMLView.raw x; HTMLView.raw " := "; e.GT.fx ()]))
-        method c_Write  _ node e     = wrap node (HTMLView.tag "tt" (HTMLView.seq [HTMLView.raw "write ("; e.GT.fx (); HTMLView.raw ")"]))
-        method c_Read   _ node x     = wrap node (HTMLView.tag "tt" (HTMLView.seq [HTMLView.raw "read ("; HTMLView.raw x; HTMLView.raw ")"]))
-        method c_Seq    _ node s1 s2 = wrap node (HTMLView.tag "tt" (HTMLView.seq [s1.GT.fx (); HTMLView.raw " ; "; s2.GT.fx ()]))
-        method c_While  _ node e s   = wrap node (HTMLView.tag "tt" (HTMLView.seq [HTMLView.raw "while "; e.GT.fx (); HTMLView.raw " do "; s.GT.fx ()]))
-        method c_If     _ node e s1 s2 = wrap node (HTMLView.tag "tt" (HTMLView.seq [HTMLView.raw "if "; e.GT.fx (); HTMLView.raw " then "; s1.GT.fx (); HTMLView.raw " else "; s2.GT.fx ()]))
-
+        method c_Skip   _ _         = HTMLView.raw "skip"
+        method c_Assign _ _ x e     = HTMLView.seq [HTMLView.raw x; HTMLView.raw " := "; e.GT.fx ()]
+        method c_Write  _ _ e       = HTMLView.seq [HTMLView.raw "write ("; e.GT.fx (); HTMLView.raw ")"]
+        method c_Read   _ _ x       = HTMLView.seq [HTMLView.raw "read ("; HTMLView.raw x; HTMLView.raw ")"]
+        method c_Seq    _ _ s1 s2   = HTMLView.seq [s1.GT.fx (); HTMLView.raw " ; "; s2.GT.fx ()]
+        method c_While  _ _ e s     = HTMLView.seq [HTMLView.raw "while "; e.GT.fx (); HTMLView.raw " do "; s.GT.fx ()]
+        method c_If     _ _ e s1 s2 = HTMLView.seq [HTMLView.raw "if "; 
+                                                    e.GT.fx (); 
+                                                    HTMLView.raw " then "; 
+                                                    s1.GT.fx (); 
+                                                    HTMLView.raw " else "; 
+                                                    s2.GT.fx ()
+                                      ]
       end
 
     let rec abbreviate_html cb fe stmt = 
       let wrap node html =
         HTMLView.tag "attr" ~attrs:(Printf.sprintf "style=\"cursor:pointer\" %s" (cb node)) html
       in
-      GT.transform(t) 
+      wrap stmt
+      (GT.transform(t) 
          (fun _ stmt -> wrap stmt (HTMLView.raw "S"))
          (GT.lift fe)
          (new html') 
          ()
          stmt
+      )
 
     let parse h expr s = 
       let ostap (
@@ -208,7 +214,7 @@ module Stmt =
                           object 
                             inherit S.Tree.html_customizer
                             method show_env   = false
-                            method over_width = 80
+                            method over_width = 100
                           end
                       end
 
