@@ -45,6 +45,10 @@
     }
 
     function do_parse () {
+       document.getElementById ("parsed").innerHTML = "&nbsp;";
+       document.getElementById ("wizard").innerHTML = "&nbsp;";
+       document.getElementById ("output").innerHTML = "&nbsp;";     
+
        var result = window.parse (document.getElementById ("text").innerText);
        if (result[0] == "1") {
           enable_actions ();
@@ -112,6 +116,7 @@
       padding:5px; 
     }
     section {
+      background-color:#aaaaaa;
       width:600px;
       float:left;
       padding:10px; 
@@ -169,9 +174,13 @@ Header
   <tr>
     <td>
       Semantic settings:
-      <div id="wizard" align="center">
+      <hr>
+      <div id="wizard" style="width:600px;height:250px;background-color:white" align="center">
       </div>
-      <div id="output">
+      <hr>
+      Interpretation results:
+      <hr>
+      <div class="scrollable" style="background-color:white;height:540px" id="output">
       </div>
     </td>
   </tr>

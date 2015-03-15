@@ -100,6 +100,9 @@ function convertTree(ul, bullet) {
 	setDefault("nodeClosedClass","liClosed");
 	setDefault("nodeOpenClass","liOpen");          
 	setDefault("nodeBulletClass", bullet ? "liBullet" : "liNoBullet");
+
+        nodeBulletClass = bullet ? "liBullet" : "liNoBullet";
+	
 	setDefault("nodeLinkClass","bullet");
 	setDefault("preProcessTrees",true);
 
