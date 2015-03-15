@@ -156,7 +156,7 @@ module Stmt =
                         method c_Read (_, (s, i, o), _) _ x =
                           match i with
 			  | []    -> S.Nothing ("empty input", "")
-                          | y::i' -> S.Just ((s, i', o), "Read")
+                          | y::i' -> S.Just ((State.modify s x y, i', o), "Read")
 
                         method c_Write ((_, (s, i, o), _) as inh) _ e =
                           expr e inh (fun d -> S.Just ((s, i, o@[d]), "Write")) 
@@ -208,7 +208,7 @@ module Stmt =
                           object 
                             inherit S.Tree.html_customizer
                             method show_env   = false
-                            method over_width = 70
+                            method over_width = 80
                           end
                       end
 
