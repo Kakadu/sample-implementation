@@ -324,12 +324,13 @@ let toplevel =
                                fun _ ->
                                   "root",
                                   View.toString (
-                                    HTMLView.ul ~attrs:"id=\"root\" class=\"mktree\""
-                                      (Strict.Deterministic.BigStep.WithEnvT.html (
-                                         Strict.Deterministic.BigStep.WithEnvT.build State.empty p ()
-                                      )
-                                  )
-                              ))
+                                    HTMLView.tag "div" ~attrs:"style=\"transform:scaleY(-1)\"" (
+                                      HTMLView.ul ~attrs:"id=\"root\" class=\"mktree\""
+                                        (Strict.Deterministic.BigStep.WithEnvT.html (
+                                           Strict.Deterministic.BigStep.WithEnvT.build State.empty p ()
+                                        )
+                                    ))
+                                ))
             method compile  = invalid_arg ""
           end
     )  
