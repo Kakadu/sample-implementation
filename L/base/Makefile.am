@@ -20,11 +20,11 @@ AM_OFLAGS += -rectypes -annot -cclib "-static"
 # overwrite some variables
 PXFLAGS = $(P5FLAGS)
 CAMLPXLIB = $(CAMLP5LIB)
-MODULE_INCLUDES += -I $(CAMLP5LIB) -I ../../common -I ../../semantics -I ../../E/base
+MODULE_INCLUDES += -I $(CAMLP5LIB) -I ../../common -I ../../js -I ../../semantics -I ../../E/base
 
 
 # add extra compiled libraries used for linking
-EXTRA_CMA += $(addsuffix .cma, str) Common.cma Semantics.cma E.cma
+EXTRA_CMA += $(addsuffix .cma, str) Common.cma Js_frontend.cma Semantics.cma E.cma
 # EXTRA_CMXA += $(addsuffix .cmxa, str)
 
 TARGET := $(MLI) $(CMO) $(CMA) META

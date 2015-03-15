@@ -125,7 +125,7 @@ EXEEXT = @EXEEXT@
 
 # add extra compiled libraries used for linking
 EXTRA_CMA = @EXTRA_CMA@ $(addsuffix .cma, str) Common.cma \
-	Semantics.cma E.cma L.cma
+	Js_frontend.cma Semantics.cma E.cma L.cma
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
@@ -139,7 +139,7 @@ MAKEINFO = @MAKEINFO@
 META = @META@
 MKDIR_P = @MKDIR_P@
 MODULE_INCLUDES = @MODULE_INCLUDES@ -I $(CAMLP5LIB) -I base -I \
-	../common -I ../semantics -I ../E/base
+	../common -I ../js -I ../semantics -I ../E/base
 OCAMLC = @OCAMLC@
 OCAMLDEP = @OCAMLDEP@
 OCAMLDOC = @OCAMLDOC@
