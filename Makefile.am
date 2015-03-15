@@ -1,4 +1,4 @@
-SUBDIRS = common js E L SM
+SUBDIRS = common js semantics E L SM
 
 .PHONY: doc
 doc:
