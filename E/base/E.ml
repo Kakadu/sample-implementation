@@ -303,6 +303,12 @@ let toplevel =
       let keywords = []
     end)
   in
+  let module Strict    = Expr.Semantics (StrictInt)    (struct let from_int x = x end) in
+  let module NonStrict = Expr.Semantics (NonStrictInt) (struct let from_int x = x end) in  
+  let wizard =
+    let p0 = [HTMLView.Wizard.Page.Item.make "strict" (HTMLView.Wizard.Page.Item.Flag "")] in
+    [p0]
+  in
   Toplevel.make 
     (Expr.L.fromString Expr.parse)
     (fun (p, h) ->         
@@ -314,18 +320,23 @@ let toplevel =
                             )
             method vertical = Expr.vertical p
             method code     = invalid_arg ""
-            method run      = (*View.toString (
+            method run      = wizard
+
+(*View.toString (
                                 SimpleExpr.Semantics.Deterministic.BigStep.StandardT.html (
                                   SimpleExpr.Semantics.Deterministic.BigStep.StandardT.build () State.empty p
                                 )
                               )*)
                               
+                              
+(*
                               let module S = Expr.Semantics (StrictInt)(struct let from_int x = x end) in
                               View.toString (
                                 S.Deterministic.BigStep.WithEnvT.html (
                                   S.Deterministic.BigStep.WithEnvT.build State.empty p ()
                                 )
                               )           
+*)
             method compile  = invalid_arg ""
           end
     )  

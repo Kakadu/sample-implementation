@@ -5,7 +5,7 @@ class c =
     method ast   (_:string)  = ""
     method vertical          = ""
     method code              = ""
-    method run               = ""
+    method run               = ([] : HTMLView.Wizard.t)
     method compile           = ""
   end
 

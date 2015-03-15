@@ -66,7 +66,8 @@ let _ =
                   );
                   (match conf.get "r" with
                    | None   -> ()
-                   | Some f -> 
+                   | Some f -> ()
+(*
                        let ch, cf = fileOps f in
                        fprintf ch 
                          "<html><head>%s%s</head><body onload=\"convertTree(document.getElementById('root'), false)\"><div style=\"transform:scaleY(-1)\"><ul id=\"root\" class=\"mktree\">%s</ul></div><body></html>"
@@ -74,6 +75,7 @@ let _ =
                          "<link rel=\"stylesheet\" href=\"mktree.css\" type=\"text/css\">"
                          p#run; 
                        cf ch
+*)
                   );
               | Checked.Fail [msg] -> eprintf "Errors: %s\n" (Ostap.Msg.toString msg)
            ) files

@@ -15,7 +15,19 @@ module Make (T : sig val toplevel : string -> (Toplevel.c, Ostap.Msg.t) Checked.
           (Js.Unsafe.coerce Dom_html.window)##vertical <- Js.wrap_callback (
              fun () -> Js.string p#vertical
           );
-          Js.string (p#ast "do_highlighting")
+          (Js.Unsafe.coerce Dom_html.window)##run <- Js.wrap_callback (
+             fun id target navigate -> 
+               let id, target, navigate = Js.to_string id, Js.to_string target, Js.to_string navigate in
+               let entry, code = HTMLView.Wizard.render id target navigate p#run in
+               let a = jsnew Js.array_empty () in
+               Js.array_set a 0 (Js.string entry);
+               Js.array_set a 1 (Js.string code);
+               a
+          );
+          let a = jsnew Js.array_empty () in
+          Js.array_set a 0 (Js.string "1");
+          Js.array_set a 1 (Js.string (p#ast "do_highlighting"));
+          a
       
       | Checked.Fail [msg] -> 
           let default = HTMLView.string (HTMLView.escape (Ostap.Msg.toString msg)) in
@@ -27,7 +39,10 @@ module Make (T : sig val toplevel : string -> (Toplevel.c, Ostap.Msg.t) Checked.
                 HTMLView.seq [source; string]
              | _ -> default
           in
-          Js.string (HTMLView.toHTML info)
+          let a = jsnew Js.array_empty () in
+          Js.array_set a 0 (Js.string "0");
+          Js.array_set a 1 (Js.string (HTMLView.toHTML info));
+          a          
   
     let _ = 
       (Js.Unsafe.coerce Dom_html.window)##parse <- Js.wrap_callback parse
