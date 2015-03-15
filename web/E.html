@@ -23,6 +23,11 @@
     }
 
     function navigate(i, cr) {
+      var result = window.interpret (cr);
+
+      document.getElementById ("output").innerHTML = result[1];
+      convertTree (document.getElementById (result[0]), false);
+
       return i;
     }
 
@@ -163,7 +168,7 @@ Header
 <table>
   <tr>
     <td>
-      Semantics:
+      Semantic settings:
       <div id="wizard" align="center">
       </div>
       <div id="output">
