@@ -40,14 +40,17 @@
     }
 
     function do_parse () {
-       var result = window.parse (document.getElementById ("text").value);
+       var result = window.parse (document.getElementById ("text").innerText);
        if (result[0] == "1") {
           enable_actions ();
           document.getElementById ("parsed").innerHTML = result[1];
           convertTrees ();
           expandTree ("ast");
           do_highlighting (0, 0, 0, 0);
-       } else disable_actions ();
+       } else {
+          disable_actions ();
+          document.getElementById ("parsed").innerHTML = result[1];       
+       }
     }
 
     function do_highlighting (x, y, z, t) {
