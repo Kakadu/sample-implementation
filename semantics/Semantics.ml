@@ -1,5 +1,49 @@
 @type 'a opt = Good of 'a | Bad of GT.string with html
 
+module type Domain =
+ sig
+
+   type t
+   val op   : string -> t -> t -> t opt
+   val show : t -> string
+   val html : t -> HTMLView.er
+
+ end
+
+module IntDomain (S : sig val strict : bool end) =
+  struct
+
+   type t = int
+
+   exception NotABool 
+
+   let op = 
+     let b    f x y = if f x y then 1 else 0 in
+     let lift f x y = try Good (f x y) with NotABool -> Bad "not a boolean value" in
+     let ib = function 0 -> 0 | 1 -> 1 | _ -> raise NotABool in    
+     function
+     | "+"  -> lift (+)
+     | "-"  -> lift (-)
+     | "*"  -> if S.strict then lift ( * ) else lift (fun x y -> if x = 0 then 0 else x * y)
+     | "/"  -> (fun x y -> if y = 0 then Bad "division by zero" else Good (x / y))
+     | "%"  -> (fun x y -> if y = 0 then Bad "division by zero" else Good (x mod y))
+     | "==" -> lift (b (=))
+     | "!=" -> lift (b (<>))
+     | "<=" -> lift (b (<=))
+     | "<"  -> lift (b (<))
+     | ">=" -> lift (b (>=))
+     | ">"  -> lift (b (>))
+     | "&&" -> if S.strict then lift (fun x y -> ib x * ib y) else lift (fun x y -> if ib x = 0 then 0 else ib y)
+     | "||" -> if S.strict then lift (fun x y -> ib x + ib y) else lift (fun x y -> if ib x = 1 then 1 else ib y)
+
+   let show = string_of_int
+   let html = HTMLView.int
+
+ end
+
+module StrictInt    = IntDomain (struct let strict = true  end)
+module NonStrictInt = IntDomain (struct let strict = false end)
+
 module Deterministic =
   struct 
 

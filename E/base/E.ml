@@ -1,49 +1,5 @@
 open Ostap.Pretty
 open GT
-
-module type Domain =
- sig
-
-   type t
-   val op   : string -> t -> t -> t Semantics.opt
-   val show : t -> string
-   val html : t -> HTMLView.er
-
- end
-
-module IntDomain (S : sig val strict : bool end) =
-  struct
-
-   type t = int
-
-   exception NotABool 
-
-   let op = 
-     let b    f x y = if f x y then 1 else 0 in
-     let lift f x y = try Semantics.Good (f x y) with NotABool -> Semantics.Bad "not a boolean value" in
-     let ib = function 0 -> 0 | 1 -> 1 | _ -> raise NotABool in    
-     function
-     | "+"  -> lift (+)
-     | "-"  -> lift (-)
-     | "*"  -> if S.strict then lift ( * ) else lift (fun x y -> if x = 0 then 0 else x * y)
-     | "/"  -> (fun x y -> if y = 0 then Semantics.Bad "division by zero" else Semantics.Good (x / y))
-     | "%"  -> (fun x y -> if y = 0 then Semantics.Bad "division by zero" else Semantics.Good (x mod y))
-     | "==" -> lift (b (=))
-     | "!=" -> lift (b (<>))
-     | "<=" -> lift (b (<=))
-     | "<"  -> lift (b (<))
-     | ">=" -> lift (b (>=))
-     | ">"  -> lift (b (>))
-     | "&&" -> if S.strict then lift (fun x y -> ib x * ib y) else lift (fun x y -> if ib x = 0 then 0 else ib y)
-     | "||" -> if S.strict then lift (fun x y -> ib x + ib y) else lift (fun x y -> if ib x = 1 then 1 else ib y)
-
-   let show = string_of_int
-   let html = HTMLView.int
-
- end
-
-module StrictInt    = IntDomain (struct let strict = true  end)
-module NonStrictInt = IntDomain (struct let strict = false end)
  
 module Expr =
   struct
@@ -77,7 +33,7 @@ module Expr =
       let h = Helpers.highlighting () in
       ostap (e:hparse[h][ops][primary] -EOF {e, h#retrieve}) s
 
-    module Semantics (D : Domain) =
+    module Semantics (D : Semantics.Domain) =
       struct
  
         module Deterministic =
@@ -175,7 +131,9 @@ module SimpleExpr (C : sig val ops : ([`Nona | `Lefta | `Righta] * string list) 
 
     let rec vertical e = transform(expr) (fun _ -> vertical) (new vertical) () e      
 
-    module Semantics (D : Domain) (I : sig val from_int : int -> D.t end) (C : sig val cb : 'a expr as 'a -> string end) =
+    module TopSemantics = Semantics
+
+    module Semantics (D : Semantics.Domain) (I : sig val from_int : int -> D.t end) (C : sig val cb : 'a expr as 'a -> string end) =
       struct
 
         module Expr = Expr.Semantics (D)
@@ -294,6 +252,18 @@ module SimpleExpr (C : sig val ops : ([`Nona | `Lefta | `Righta] * string list) 
 
       end
 
+    let eval_strict state e =
+      let module Strict = Semantics (TopSemantics.StrictInt)(struct let from_int x = x end)(struct let cb _ = "" end) in
+      match Strict.Deterministic.BigStep.WithEnvT.build state e () with
+      | TopSemantics.Deterministic.BigStep.Tree.Node (_, _, _, r, _, _) -> r
+      | TopSemantics.Deterministic.BigStep.Tree.Limit -> TopSemantics.Bad "step limit reached"
+
+    let eval_non_strict state e =
+      let module NonStrict = Semantics (TopSemantics.NonStrictInt)(struct let from_int x = x end)(struct let cb _ = "" end) in  
+      match NonStrict.Deterministic.BigStep.WithEnvT.build state e () with
+      | TopSemantics.Deterministic.BigStep.Tree.Node (_, _, _, r, _, _) -> r
+      | TopSemantics.Deterministic.BigStep.Tree.Limit -> TopSemantics.Bad "step limit reached"
+
   end
 
 let toplevel =  
@@ -319,8 +289,8 @@ let toplevel =
             method vertical = Expr.vertical p
             method code     = invalid_arg ""
             method run cb   = 
-              let module Strict    = Expr.Semantics (StrictInt)   (struct let from_int x = x end)(struct let cb = (Helpers.interval cb h) end) in
-              let module NonStrict = Expr.Semantics (NonStrictInt)(struct let from_int x = x end)(struct let cb = (Helpers.interval cb h) end) in  
+              let module Strict    = Expr.Semantics (Semantics.StrictInt)   (struct let from_int x = x end)(struct let cb = (Helpers.interval cb h) end) in
+              let module NonStrict = Expr.Semantics (Semantics.NonStrictInt)(struct let from_int x = x end)(struct let cb = (Helpers.interval cb h) end) in  
               let wizard =
                 let p0 = [
                   HTMLView.Wizard.Page.Item.make "strict" (HTMLView.Wizard.Page.Item.Flag "");
