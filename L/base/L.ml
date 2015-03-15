@@ -154,7 +154,7 @@ module Stmt =
                         method c_Skip (_, conf, _) _ = S.Just (conf, "Skip")
 
                         method c_Seq  (e, conf, _) _ s1 s2 = 
-                          S.Subgoals ([e, conf, s1.GT.x; e, conf, s2.GT.x], (fun [_; s2'] -> Semantics.Good s2') , "Seq")
+                          S.Subgoals ([e, conf, s1.GT.x], (fun [s1'] -> S.Subgoals ([e, s1', s2.GT.x], (fun [s2'] -> S.Just (s2', "")), "")), "Seq")
 
                         method c_Assign ((_, (s, i, o), _) as inh) _ x e = 
                           expr e inh (fun d -> S.Just ((State.modify s x d, i, o), "Assn")) 
@@ -170,16 +170,16 @@ module Stmt =
                         method c_If ((env, conf, _) as inh) _ e s1 s2 =
                           expr e inh (fun d -> 
                             match B.boolean d with
-			    | `True  -> S.Subgoals ([env, conf, s1.GT.x], (fun [s1'] -> Semantics.Good s1'), "If-True")
-			    | `False -> S.Subgoals ([env, conf, s2.GT.x], (fun [s2'] -> Semantics.Good s2'), "If-False")
+			    | `True  -> S.Subgoals ([env, conf, s1.GT.x], (fun [s1'] -> S.Just (s1', "")), "If-True")
+			    | `False -> S.Subgoals ([env, conf, s2.GT.x], (fun [s2'] -> S.Just (s2', "")), "If-False")
 			    |  _     -> S.Nothing  ("not a boolean value", "")
                           )
 
-                        method c_While ((env, conf, _) as inh) _ e s =
+                        method c_While ((env, conf, _) as inh) w e s =
                           expr e inh (fun d ->
                             match B.boolean d with
-			    | `True  -> S.Just (conf, "While-False")
-                            | `False -> S.Just (conf, "While-False")
+			    | `True  -> S.Subgoals ([env, conf, s.GT.x], (fun [s'] -> w.GT.fx (env, s', w.GT.x)), "While-True")
+                            | `False -> S.Just     (conf, "While-False")
                             |  _     -> S.Nothing  ("not a boolean value", "")
                           )
 

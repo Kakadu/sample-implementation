@@ -56,14 +56,14 @@ module Expr =
                   object 
                     inherit [unit, D.t State.t, 'a, D.t, 'a] c 
                     method c_Binop (env, state, _) _ s x y =
-                      S.Subgoals ([env, state, x.GT.x; env, state, y.GT.x], (fun [x'; y'] -> D.op s  x' y'), "Binop")               	       
+                      S.Subgoals ([env, state, x.GT.x; env, state, y.GT.x], (fun [x'; y'] -> S.opt_to_case "" (D.op s  x' y')), "Binop")
 		  end
 
 		class virtual ['a] with_env =
                   object 
                     inherit [D.t State.t, 'a, unit, D.t, 'a] c 
                     method c_Binop (state, _, _) _ s x y =
-                      S.Subgoals ([state, x.GT.x, (); state, y.GT.x, ()], (fun [x'; y'] -> D.op s  x' y'), "Binop")
+                      S.Subgoals ([state, x.GT.x, (); state, y.GT.x, ()], (fun [x'; y'] -> S.opt_to_case "" (D.op s  x' y')), "Binop")
 		  end
 
               end           

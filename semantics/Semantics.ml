@@ -53,7 +53,11 @@ module Deterministic =
         type ('env, 'left, 'over, 'right) case = 
           Nothing  of string * string
         | Just     of 'right * string
-        | Subgoals of ('env * 'left * 'over) list * ('right list -> 'right opt) * string
+        | Subgoals of ('env * 'left * 'over) list * ('right list -> ('env, 'left, 'over, 'right) case (*'right opt*)) * string
+
+        let opt_to_case rule = function
+	| Good x     -> Just (x, rule)
+	| Bad reason -> Nothing (reason, rule)
 
         module Tree =
           struct
@@ -99,7 +103,7 @@ module Deterministic =
                               | Bad t -> HTMLView.raw (Printf.sprintf "<attr title=\"%s\"><font color=\"red\">&#8224;</font></attr>" t)
                               | Good r -> orig.GT.t#right () r
                               );
-                            if customizer#show_rule
+                            if customizer#show_rule && rule <> ""
                                then HTMLView.td ~attrs:"rowspan=\"3\" align=\"center\" valign=\"center\" style=\"font-size:80%\"" 
                                       (HTMLView.raw ("&nbsp;(<i>by</i>&nbsp;[" ^ rule ^ "])"))
                                else View.empty
@@ -144,7 +148,24 @@ module Deterministic =
     	          | Nothing (reason, rule) -> Node (env, left, over, Bad reason, [], rule)
                   | Just (right, rule) -> Node (env, left, over, Good right, [], rule)
                   | Subgoals (triples, fright, rule) ->
-                      let subnodes = List.map (fun (env', left', over') -> inner (i-1) env' left' over') triples in
+                      let rec process_subgoals subnodes subgoals subfun =
+                        let subnodes' = List.map (fun (env', left', over') -> inner (i-1) env' left' over') subgoals in
+			try
+                          let rights = List.map (function 
+                                                 | Node (_, _, _, Good r, _, _) -> r
+				                 | Node (_, _, _, Bad t, _, _) -> raise (SomeBad t)
+                                                 | Limit -> raise (SomeBad "step limit reached")
+                                                 ) subnodes'
+                          in
+                          match subfun rights with
+	  	          | Just     (right  , _)         -> Node (env, left, over, Good right, subnodes@subnodes', rule)
+                          | Nothing  (reason , _)         -> Node (env, left, over, Bad reason, subnodes@subnodes', rule)
+                          | Subgoals (triples, fright, _) -> process_subgoals (subnodes@subnodes') triples fright
+			with SomeBad t -> Node (env, left, over, Bad t, subnodes, rule)
+		      in
+		      process_subgoals [] triples fright
+
+(*
                       let right    = 
                         try fright (List.map (function 
                                               | Node (_, _, _, Good r, _, _) -> r
@@ -154,6 +175,7 @@ module Deterministic =
                         with SomeBad t -> Bad t
                       in
                       Node (env, left, over, right, subnodes, rule)
+*)
                 else Limit
               in
               inner limit env left over
