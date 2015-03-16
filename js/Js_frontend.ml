@@ -46,7 +46,7 @@ module Make (T : sig val toplevel : string -> (Toplevel.c, Ostap.Msg.t) Checked.
                let entry, code = HTMLView.Wizard.render id target navigate wizard in
                string_array [|entry; code|]
           );
-          string_array [|"1"; p#ast "do_highlighting"|]
+          string_array [|"1"; "" (*p#ast "do_highlighting"*)|]
       
       | Checked.Fail [msg] -> string_array [|"0"; highlighted_msg source msg|]
   
