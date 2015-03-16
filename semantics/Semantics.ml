@@ -53,7 +53,7 @@ module Deterministic =
         type ('env, 'left, 'over, 'right) case = 
           Nothing  of string * string
         | Just     of 'right * string
-        | Subgoals of ('env * 'left * 'over) list * ('right list -> ('env, 'left, 'over, 'right) case (*'right opt*)) * string
+        | Subgoals of ('env * 'left * 'over) list * ('right list -> ('env, 'left, 'over, 'right) case) * string	
 
         let opt_to_case rule = function
 	| Good x     -> Just (x, rule)

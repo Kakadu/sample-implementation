@@ -178,7 +178,11 @@ module Stmt =
                         method c_While ((env, conf, _) as inh) w e s =
                           expr e inh (fun d ->
                             match B.boolean d with
-			    | `True  -> S.Subgoals ([env, conf, s.GT.x], (fun [s'] -> w.GT.fx (env, s', w.GT.x)), "While-True")
+			    | `True  -> S.Subgoals (
+                                         [env, conf, s.GT.x], 
+                                         (fun [s'] -> S.Subgoals ([env, s', w.GT.x], (fun [s''] -> S.Just (s'', "")), "")), 
+                                         "While-True"
+                                        )
                             | `False -> S.Just     (conf, "While-False")
                             |  _     -> S.Nothing  ("not a boolean value", "")
                           )
