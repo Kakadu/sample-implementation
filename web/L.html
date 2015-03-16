@@ -49,7 +49,7 @@
        document.getElementById ("wizard").innerHTML = "&nbsp;";
        document.getElementById ("output").innerHTML = "&nbsp;";     
 
-       var result = window.parse (document.getElementById ("text").innerText);
+       var result = window.parse (document.getElementById ("text").innerText.replace(/\u00a0/g, " "));
        if (result[0] == "1") {
           enable_actions ();
           document.getElementById ("parsed").innerHTML = result[1];
