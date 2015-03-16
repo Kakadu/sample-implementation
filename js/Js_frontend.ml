@@ -25,7 +25,7 @@ module Make (T : sig val toplevel : string -> (Toplevel.c, Ostap.Msg.t) Checked.
       let source = Js.to_string source in
       let charcodes = 
         let b = Buffer.create 256 in
-        for i = 0 to String.length source do
+        for i = 0 to String.length source - 1do
           Buffer.add_string b (Printf.sprintf "%d\n" (Char.code source.[i]))
         done;
         Buffer.contents b
