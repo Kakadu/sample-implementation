@@ -48,7 +48,7 @@ module Make (T : sig val toplevel : string -> (Toplevel.c, Ostap.Msg.t) Checked.
           );
           string_array [|"1"; p#ast "do_highlighting"|]
       
-      | Checked.Fail [msg] -> string_array [|"0"; "" (*highlighted_msg source msg*)|]
+      | Checked.Fail [msg] -> string_array [|"0"; Ostap.Msg.toString msg (*highlighted_msg source msg*)|]
   
     let _ = 
       (Js.Unsafe.coerce Dom_html.window)##parse <- Js.wrap_callback parse
