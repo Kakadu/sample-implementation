@@ -23,6 +23,13 @@ module Make (T : sig val toplevel : string -> (Toplevel.c, Ostap.Msg.t) Checked.
     let parse source =
       (Js.Unsafe.coerce Dom_html.window)##highlight <- Js.wrap_callback (fun () -> Js.string "");
       let source = Js.to_string source in
+      let charcodes = 
+        let b = Buffer.create 256 in
+        for i = 0 to String.length source do
+          Buffer.add_string b (Printf.sprintf "%d\n" (Char.code source.[i]))
+        done;
+        Buffer.contents b
+      in
       match T.toplevel source with
       | Checked.Ok p ->
           (Js.Unsafe.coerce Dom_html.window)##highlight <- Js.wrap_callback (
@@ -48,7 +55,7 @@ module Make (T : sig val toplevel : string -> (Toplevel.c, Ostap.Msg.t) Checked.
           );
           string_array [|"1"; p#ast "do_highlighting"|]
       
-      | Checked.Fail [msg] -> string_array [|"0"; Ostap.Msg.toString msg (*highlighted_msg source msg*)|]
+      | Checked.Fail [msg] -> string_array [|"0"; charcodes(*Ostap.Msg.toString msg*) (*highlighted_msg source msg*)|]
   
     let _ = 
       (Js.Unsafe.coerce Dom_html.window)##parse <- Js.wrap_callback parse
