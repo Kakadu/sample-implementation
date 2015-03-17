@@ -1,3 +1,53 @@
+module type Sig =
+  sig
+
+    class t :
+      string ->
+      object ('a)
+        method col        : int
+        method coord      : Ostap.Msg.Coord.t
+        method get        : string -> Re_str.regexp -> ('a, Ostap.Matcher.Token.t, Ostap.Reason.t) Ostap.Combinators.result
+        method getEOF     : ('a, Ostap.Matcher.Token.t, Ostap.Reason.t) Ostap.Combinators.result
+        method getIDENT   : ('a, Ostap.Matcher.Token.t, Ostap.Reason.t) Ostap.Combinators.result
+        method getLITERAL : ('a, Ostap.Matcher.Token.t, Ostap.Reason.t) Ostap.Combinators.result
+        method line       : int
+        method loc        : Ostap.Msg.Locator.t
+        method look       : string -> ('a, Ostap.Matcher.Token.t, Ostap.Reason.t) Ostap.Combinators.result
+        method pos        : int
+        method prefix     : int -> string
+        method regexp     : string -> string -> ('a, Ostap.Matcher.Token.t, Ostap.Reason.t) Ostap.Combinators.result
+        method skip       : int -> Ostap.Msg.Coord.t -> [ `Failed of Ostap.Msg.t | `Skipped of int * Ostap.Msg.Coord.t ]
+      end
+
+    val ident :
+      (< getIDENT : ('a, Ostap.Matcher.Token.t, 'b)
+                    Ostap.Combinators.result;
+         .. >
+       as 'a) ->
+      ('a, string, 'b) Ostap.Combinators.result
+ 
+    val literal :
+      (< getLITERAL : ('a, Ostap.Matcher.Token.t, 'b)
+                      Ostap.Combinators.result;
+         .. >
+       as 'a) ->
+      ('a, int, 'b) Ostap.Combinators.result
+
+    val fromString :
+      (t ->
+       ('a, 'b,
+        < retrieve : [> `First of int ] ->
+                     [> `Desc ] ->
+                     (Ostap.Msg.Locator.t *
+                      [< `Comment of string * 'c | `Msg of Ostap.Msg.t ]
+                      list)
+                     list;
+          .. >)
+       Ostap.Combinators.result) ->
+      string -> ('b, Ostap.Msg.t) Checked.t
+
+  end
+
 module Make (K : sig val keywords : string list end) =
   struct
 

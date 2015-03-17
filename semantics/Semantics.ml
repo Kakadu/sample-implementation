@@ -64,7 +64,6 @@ module Deterministic =
 
             @type ('env, 'left, 'over, 'right) t = 
               Node of 'env * 'left * 'over * 'right opt * ('env, 'left, 'over, 'right) t GT.list * GT.string
-            | Limit 
             with html
 
             class html_customizer =
@@ -154,29 +153,16 @@ module Deterministic =
                           let rights = List.map (function 
                                                  | Node (_, _, _, Good r, _, _) -> r
 				                 | Node (_, _, _, Bad t, _, _) -> raise (SomeBad t)
-                                                 | Limit -> raise (SomeBad "step limit reached")
                                                  ) subnodes'
                           in
                           match subfun rights with
 	  	          | Just     (right  , _)         -> Node (env, left, over, Good right, subnodes@subnodes', rule)
                           | Nothing  (reason , _)         -> Node (env, left, over, Bad reason, subnodes@subnodes', rule)
                           | Subgoals (triples, fright, _) -> process_subgoals (subnodes@subnodes') triples fright
-			with SomeBad t -> Node (env, left, over, Bad t, subnodes, rule)
+			with SomeBad t -> Node (env, left, over, Bad t, subnodes @ subnodes', rule)
 		      in
 		      process_subgoals [] triples fright
-
-(*
-                      let right    = 
-                        try fright (List.map (function 
-                                              | Node (_, _, _, Good r, _, _) -> r
-					      | Node (_, _, _, Bad t, _, _) -> raise (SomeBad t)
-                                              | Limit -> raise (SomeBad "step limit reached")
-                                             ) subnodes)
-                        with SomeBad t -> Bad t
-                      in
-                      Node (env, left, over, right, subnodes, rule)
-*)
-                else Limit
+                else Node (env, left, over, Bad "step limit reached", [], "")
               in
               inner limit env left over
 

@@ -74,10 +74,10 @@ module Expr =
 
   end
 
-module SimpleExpr (C : sig val ops : ([`Nona | `Lefta | `Righta] * string list) array val keywords : string list end) =
+module SimpleExpr (L : Lexer.Sig)(C : sig val ops : ([`Nona | `Lefta | `Righta] * string list) array end) =
   struct
 
-    module L = Lexer.Make (C) 
+    module L = L
 
     @type primary = [`Var of string | `Const of int] with html, show, foldl
 
@@ -256,19 +256,18 @@ module SimpleExpr (C : sig val ops : ([`Nona | `Lefta | `Righta] * string list) 
       let module Strict = Semantics (TopSemantics.StrictInt)(struct let from_int x = x end)(struct let cb _ = "" end) in
       match Strict.Deterministic.BigStep.WithEnvT.build state e () with
       | TopSemantics.Deterministic.BigStep.Tree.Node (_, _, _, r, _, _) -> r
-      | TopSemantics.Deterministic.BigStep.Tree.Limit -> TopSemantics.Bad "step limit reached"
 
     let eval_non_strict state e =
       let module NonStrict = Semantics (TopSemantics.NonStrictInt)(struct let from_int x = x end)(struct let cb _ = "" end) in  
       match NonStrict.Deterministic.BigStep.WithEnvT.build state e () with
       | TopSemantics.Deterministic.BigStep.Tree.Node (_, _, _, r, _, _) -> r
-      | TopSemantics.Deterministic.BigStep.Tree.Limit -> TopSemantics.Bad "step limit reached"
 
   end
 
 let toplevel =  
-  let module Expr = SimpleExpr (
-    struct 
+  let module Expr = SimpleExpr 
+   (Lexer.Make (struct let keywords = [] end))
+   (struct 
       let ops = [|`Lefta, ["&&"]; 
                   `Nona , ["=="];  
                   `Lefta, ["+" ]; 

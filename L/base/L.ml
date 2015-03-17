@@ -6,9 +6,9 @@ module Lexer = Lexer.Make (
     end
   )
 
-module Expr = E.SimpleExpr (
-   struct
-
+module Expr = E.SimpleExpr 
+  (Lexer)
+  (struct
      let ops = [|
         `Lefta, ["||"];
         `Lefta, ["&&"];
@@ -16,11 +16,7 @@ module Expr = E.SimpleExpr (
         `Lefta, ["+" ; "-"];
         `Lefta, ["*" ; "/"; "%"];
       |] 
-
-     let keywords = ["while"; "do"; "if"; "then"; "else"; "skip"; "read"; "write"] 
-
-   end
-  )
+   end)
 
 module Stmt =
   struct
@@ -99,10 +95,8 @@ module Stmt =
         | l:($) key["write"] "(" e:expr ")"                              r:($) {h#register (`Write e) l r}
         | l:($) key["if"] c:expr key["then"] x:parse key["else"] y:parse r:($) {h#register (`If (c, x, y)) l r}
         | l:($) key["while"] c:expr key["do"] s:parse                    r:($) {h#register (`While (c, s)) l r}
-        | l:($) "{" s:parse ";" ss:seqs[s] "}"                           r:($) {h#register ss l r};
-        seqs[acc]: l:($) s:parse t:(-";" seqs[let (p1, _), (_, p2) = h#retrieve acc, h#retrieve s in h#reassign (`Seq (acc, s)) p1 p2])? r:($) {
-          h#register (match t with Some t -> t | None -> `Seq (acc, s)) l r
-        }
+        | -"{" seqs -"}";
+        seqs: l:($) s:parse ss:(-";" seqs)? r:($) {match ss with None -> s | Some ss -> h#register (`Seq (s, ss)) l r}
       )
       in
       parse s
@@ -272,15 +266,19 @@ let toplevel =
                       | Semantics.Bad  reason -> Semantics.Bad reason
 
                    let html e = HTMLView.tag "attr" ~attrs:(Printf.sprintf "style=\"cursor:pointer\" %s" (Helpers.interval hcb he e))
-                                  (HTMLView.raw "e")
+                                  (match e with 
+				   | `Const i -> HTMLView.raw (string_of_int i)
+                                   | `Var   x -> HTMLView.raw x
+				   | _        -> HTMLView.raw "(&#8226;)"
+                                  )
                  end)
                 (struct let cb = Helpers.interval hcb hp  end) 
               in
               let module T = Semantics.Deterministic.BigStep.Tree.Make (S) in
               let wizard =
                 let p0 = [                                    
-                  HTMLView.Wizard.Page.Item.make "Input" (HTMLView.Wizard.Page.Item.String "");
-                  HTMLView.Wizard.Page.Item.make "Number of steps" (HTMLView.Wizard.Page.Item.String "")
+                  HTMLView.Wizard.Page.Item.make "Input stream" (HTMLView.Wizard.Page.Item.String "");
+                  HTMLView.Wizard.Page.Item.make "Tree depth" (HTMLView.Wizard.Page.Item.String "")
                 ] 
                 in
                 [p0]
@@ -288,7 +286,7 @@ let toplevel =
               (wizard,
                fun c ->
                  let input  = c "Input stream" in
-                 let nsteps = c "Number of steps" in
+                 let nsteps = c "Tree depth"   in
                  match Lexer.fromString (ostap (!(Ostap.Util.list0)[Lexer.literal] -EOF)) input,
                        Lexer.fromString (ostap (s:"-"? n:!(Lexer.literal) -EOF {match s with Some _ -> -(n) | _ -> n})) nsteps
                  with
