@@ -278,24 +278,28 @@ let toplevel =
               in
               let module T = Semantics.Deterministic.BigStep.Tree.Make (S) in
               let wizard =
-                let p0 = [                  
-                  HTMLView.Wizard.Page.Item.make "input" (HTMLView.Wizard.Page.Item.String "");
+                let p0 = [                                    
+                  HTMLView.Wizard.Page.Item.make "Input" (HTMLView.Wizard.Page.Item.String "");
+                  HTMLView.Wizard.Page.Item.make "Number of steps" (HTMLView.Wizard.Page.Item.String "")
                 ] 
                 in
                 [p0]
               in
               (wizard,
                fun c ->
-                 let input = c "input" in
-                 match Lexer.fromString (ostap (!(Ostap.Util.list0)[Lexer.literal] -EOF)) input with
-                 | Checked.Ok input ->
+                 let input  = c "Input stream" in
+                 let nsteps = c "Number of steps" in
+                 match Lexer.fromString (ostap (!(Ostap.Util.list0)[Lexer.literal] -EOF)) input,
+                       Lexer.fromString (ostap (s:"-"? n:!(Lexer.literal) -EOF {match s with Some _ -> -(n) | _ -> n})) nsteps
+                 with
+                 | Checked.Ok input, Checked.Ok nsteps ->
                      "root",
                      View.toString (
                        HTMLView.tag "div" ~attrs:"style=\"transform:scaleY(-1)\"" (
                          HTMLView.ul ~attrs:"id=\"root\" class=\"mktree\""
-                           (T.html (T.build () (State.empty, input, []) p)
+                           (T.html (T.build ~limit:nsteps () (State.empty, input, []) p)
                      )))
-		 | Checked.Fail [msg] -> "", Js_frontend.highlighted_msg input msg
+		 | Checked.Fail [msg], _ | _, Checked.Fail [msg] -> "", Js_frontend.highlighted_msg input msg
               )
 
          method vertical = Program.vertical p
