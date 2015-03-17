@@ -23,11 +23,18 @@
     }
 
     function navigate(i, cr) {
+      clear_run_msg ();
+
       var result = window.interpret (cr);
 
-      document.getElementById ("output").innerHTML = result[1];
-
-      if (result[0] != "") convertTree (document.getElementById (result[0]), false);
+      if (result[0] != "") {
+         document.getElementById ("output").innerHTML = result[1];      
+         convertTree (document.getElementById (result[0]), false);      
+      }
+      else {
+         run_msg (result[1]);
+         document.getElementById (result[2]).innerHTML = result[3];
+      }
 
       return i;
     }
@@ -45,10 +52,29 @@
       document.getElementById ("export_button").disabled = false;   
     }
 
+    function parser_msg (text) {
+      document.getElementById ("parsemsg").innerText = text;
+    }
+
+    function run_msg (text) {
+      document.getElementById ("runmsg").innerText = text;
+    }
+
+    function clear_parser_msg () {
+      document.getElementById ("parsemsg").innerHTML = "&nbsp;";
+    }
+
+    function clear_run_msg () {
+      document.getElementById ("runmsg").innerHTML = "&nbsp;";
+    }
+
     function do_parse () {
        document.getElementById ("parsed").innerHTML = "&nbsp;";
        document.getElementById ("wizard").innerHTML = "&nbsp;";
        document.getElementById ("output").innerHTML = "&nbsp;";     
+
+       clear_parser_msg ();
+       clear_run_msg ();
 
        var result = window.parse (document.getElementById ("text").innerText.replace(/\u00a0/g, " "));
        if (result[0] == "1") {
@@ -59,7 +85,8 @@
           do_highlighting (0, 0, 0, 0);
        } else {
           disable_actions ();
-          document.getElementById ("parsed").innerHTML = result[1];       
+          parser_msg (result[1]);
+          document.getElementById ("text").innerHTML = result[2];
        }
     }
 
@@ -110,7 +137,6 @@
       padding:5px; 
     }
     nav {
-      line-height:30px;
       background-color:#eeeeee;
       width:600px;
       float:left;
@@ -120,7 +146,7 @@
       background-color:#aaaaaa;
       width:600px;
       float:left;
-      padding:10px; 
+      padding:5px; 
     }
     footer {
       background-color:black;
@@ -148,7 +174,10 @@ Header
     <tr>
       <td align="left" width="100%">
         Source code:
+        <hr>
         <div class="scrollable" style="height:250px;font-family:monospace;line-height:90%;background-color:white" contentEditable="true" id="text"></div>
+        <hr>
+        <div id="parsemsg">&nbsp;</div>
       </td>
     </tr>
     <tr>
@@ -178,6 +207,8 @@ Header
       <hr>
       <div id="wizard" style="width:600px;height:250px;background-color:white" align="center">
       </div>
+      <hr>
+      <div id="runmsg">&nbsp;</div>
       <hr>
       Interpretation results:
       <hr>
