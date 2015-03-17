@@ -290,13 +290,13 @@ let toplevel =
             method run cb   = 
               let module Strict    = Expr.Semantics (Semantics.StrictInt)   (struct let from_int x = x end)(struct let cb = (Helpers.interval cb h) end) in
               let module NonStrict = Expr.Semantics (Semantics.NonStrictInt)(struct let from_int x = x end)(struct let cb = (Helpers.interval cb h) end) in  
-              let wizard =
-                let p0 = [
-                  HTMLView.Wizard.Page.Item.make "strict" (HTMLView.Wizard.Page.Item.Flag "");
-                  HTMLView.Wizard.Page.Item.make "state"  (HTMLView.Wizard.Page.Item.String "");
-                ] 
-                in
-                [p0]
+              let wizard id target navigate =
+                let w = HTMLView.Wizard.create id target navigate in
+                w#page [
+                  HTMLView.Wizard.flag   "strict";
+                  HTMLView.Wizard.string "state"
+                ];
+		w
               in
               (wizard,
                fun c ->

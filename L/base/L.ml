@@ -275,13 +275,13 @@ let toplevel =
                 (struct let cb = Helpers.interval hcb hp  end) 
               in
               let module T = Semantics.Deterministic.BigStep.Tree.Make (S) in
-              let wizard =
-                let p0 = [                                    
-                  HTMLView.Wizard.Page.Item.make "Input stream" (HTMLView.Wizard.Page.Item.String "");
-                  HTMLView.Wizard.Page.Item.make "Tree depth" (HTMLView.Wizard.Page.Item.String "")
-                ] 
-                in
-                [p0]
+              let wizard id target navigate =
+                let w = HTMLView.Wizard.create id target navigate in
+                w#page [                                    
+                  HTMLView.Wizard.string "Input stream";
+                  HTMLView.Wizard.string "Tree depth"
+                ];
+                w
               in
               (wizard,
                fun c ->

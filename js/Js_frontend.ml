@@ -43,7 +43,7 @@ module Make (T : sig val toplevel : string -> (Toplevel.c, Ostap.Msg.t) Checked.
                     let root, tree = callback (proxy cr) in
                     string_array [|root; tree|]
                );
-               let entry, code = HTMLView.Wizard.render id target navigate wizard in
+               let entry, code = (wizard id target navigate)#generate in
                string_array [|entry; code|]
           );
           string_array [|"1"; p#ast "do_highlighting"|]
