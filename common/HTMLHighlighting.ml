@@ -14,7 +14,7 @@ let subtree_item p1 p2 = (p1, p2), "<div style=\"background-color:lavender; disp
 
 let perform r source =
   let decorated = Buffer.create 1024 in
-  Buffer.add_string decorated "<pre>";
+  Buffer.add_string decorated "<pre class=\"inline\">";
   let opens, closes = List.fold_left 
     (fun (opens, closes) ((first_pos, last_pos), open_string, close_string) ->
        (first_pos, open_string)::opens,
