@@ -77,7 +77,7 @@ module Stmt =
       in
       wrap stmt
       (GT.transform(t) 
-         (fun _ stmt -> wrap stmt (HTMLView.raw "S"))
+         (fun _ stmt -> wrap stmt (HTMLView.raw "&#8226;"))
          (GT.lift fe)
          (new html') 
          ()
@@ -269,7 +269,7 @@ let toplevel =
                                   (match e with 
 				   | `Const i -> HTMLView.raw (string_of_int i)
                                    | `Var   x -> HTMLView.raw x
-				   | _        -> HTMLView.raw "(&#8226;)"
+				   | _        -> HTMLView.raw "&#8226;"
                                   )
                  end)
                 (struct let cb = Helpers.interval hcb hp  end) 
