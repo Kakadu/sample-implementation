@@ -279,8 +279,8 @@ let toplevel =
               let depth = ref (-1) in
               Toplevel.Wizard.Page (
                 [                                    
-                  HTMLView.Wizard.div "Input stream";
-                  HTMLView.Wizard.div ~default:"-1" "Tree depth"
+                  Toplevel.Wizard.div "Input stream";
+                  Toplevel.Wizard.div ~default:"-1" "Tree depth"
                 ],
                 [(fun page conf ->
                    let stream' = conf "Input stream" in

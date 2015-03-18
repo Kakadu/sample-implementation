@@ -295,7 +295,7 @@ let toplevel =
               let state = ref State.empty in	      
               Toplevel.Wizard.Page ([
                   HTMLView.Wizard.flag "strict";
-                  HTMLView.Wizard.div  "state"
+                  Toplevel.Wizard.div  "state"
                ], 
                [
                 (fun page conf -> 

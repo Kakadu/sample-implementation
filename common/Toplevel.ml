@@ -9,6 +9,8 @@ module Wizard =
     | Page of (HTMLView.Wizard.page -> HTMLView.Wizard.page) list * ((HTMLView.Wizard.page -> proxy -> bool) * node) list
     | Exit of (proxy -> unit)
 
+    let div ?(attrs="") = HTMLView.Wizard.div ~attrs:(Printf.sprintf "%s class=\"editablediv\"" attrs)
+
     let make id target navigate (Page (inputs, decisions)) as root =
       let w = HTMLView.Wizard.create id target navigate in
       let i =
