@@ -17,26 +17,15 @@
     }
 
     function do_run () {
-      var result = window.run ("1", "wizard", "navigate");
+      var result = window.run ("1", "wizard");
       registerScript (result[1]);
       window [result[0]] (); 
     }
 
-    function navigate(i, cr) {
+    function show_results (root, tree) {
       clear_run_msg ();
-
-      var result = window.interpret (cr);
-
-      if (result[0] != "") {
-         document.getElementById ("output").innerHTML = result[1];      
-         convertTree (document.getElementById (result[0]), false);      
-      }
-      else {
-         run_msg (result[1]);
-         document.getElementById (result[2]).innerHTML = result[3];
-      }
-
-      return i;
+      document.getElementById ("output").innerHTML = tree;  
+      convertTree (document.getElementById (root), false);      
     }
 
     function disable_actions () {
@@ -53,11 +42,11 @@
     }
 
     function parser_msg (text) {
-      document.getElementById ("parsemsg").innerText = text;
+      document.getElementById ("parsemsg").innerHTML = text;
     }
 
     function run_msg (text) {
-      document.getElementById ("runmsg").innerText = text;
+      document.getElementById ("runmsg").innerHTML = text;
     }
 
     function clear_parser_msg () {

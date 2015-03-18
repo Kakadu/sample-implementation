@@ -6,16 +6,25 @@ let string_array sa =
   a
 
 let highlighted_msg source msg =
-  let default = HTMLView.string (HTMLView.escape (Ostap.Msg.toString msg)) in
-  let info = 
-    match Ostap.Msg.loc msg with
-    | Ostap.Msg.Locator.Point p ->
-        let source = View.string (HTMLHighlighting.perform [HTMLHighlighting.error_item p] (source ^ " ")) in
-        let string = HTMLView.string (Ostap.Msg.string msg) in
-        HTMLView.seq [source; string]
-    | _ -> default
-  in
-  HTMLView.toHTML info
+  match Ostap.Msg.loc msg with
+  | Ostap.Msg.Locator.Point p ->
+     HTMLHighlighting.perform [HTMLHighlighting.error_item p] (source ^ " "), HTMLView.escape (Ostap.Msg.string msg)
+  | _ -> HTMLHighlighting.perform [] source, HTMLView.escape (Ostap.Msg.toString msg)
+
+let setHTML elem str =
+  let target = Js.Unsafe.fun_call (Js.Unsafe.variable "document.getElementById") [|Js.Unsafe.inject (Js.string elem)|] in
+  target##innerHTML <- Js.string str
+
+let js_nav nav i obj =
+  Js.number_of_float (float_of_int (nav (int_of_float (Js.float_of_number i)) (proxy obj)))
+
+let error page input source msg =
+  let source, msg = highlighted_msg source msg in
+  setHTML "runmsg" msg; 
+  try setHTML (page#id input) source with Not_found _ -> ()
+
+let show_results (root, tree) =
+  Js.Unsafe.fun_call (Js.Unsafe.variable "window.show_results") [|Js.Unsafe.inject (Js.string root); Js.Unsafe.inject (Js.string tree)|]
 
 module Make (T : sig val toplevel : string -> (Toplevel.c, Ostap.Msg.t) Checked.t end) =
   struct
@@ -35,20 +44,19 @@ module Make (T : sig val toplevel : string -> (Toplevel.c, Ostap.Msg.t) Checked.
              fun () -> Js.string p#vertical
           );
           (Js.Unsafe.coerce Dom_html.window)##run <- Js.wrap_callback (
-             fun id target navigate -> 
-               let id, target, navigate = Js.to_string id, Js.to_string target, Js.to_string navigate in
-               let wizard, callback = p#run "do_highlighting" in
-               (Js.Unsafe.coerce Dom_html.window)##interpret <- Js.wrap_callback (
-                  fun cr -> 
-                    let root, tree = callback (proxy cr) in
-                    string_array [|root; tree|]
-               );
-               let entry, code = (wizard id target navigate)#generate in
+             fun id target ->                
+               let id, target  = Js.to_string id, Js.to_string target in
+               let root        = p#run "do_highlighting" in
+               let wizard, nav = Toplevel.Wizard.make id target "navigate" root in
+               (Js.Unsafe.coerce Dom_html.window)##navigate <- Js.wrap_callback (js_nav nav);
+               let entry, code = wizard#generate in
                string_array [|entry; code|]
           );
           string_array [|"1"; p#ast "do_highlighting"|]
       
-      | Checked.Fail [msg] -> string_array [|"0"; highlighted_msg source msg|]
+      | Checked.Fail [msg] -> 
+          let source, msg = highlighted_msg source msg in
+          string_array [|"0"; msg; source|]
   
     let _ = 
       (Js.Unsafe.coerce Dom_html.window)##parse <- Js.wrap_callback parse

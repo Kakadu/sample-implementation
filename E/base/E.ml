@@ -290,41 +290,49 @@ let toplevel =
             method run cb   = 
               let module Strict    = Expr.Semantics (Semantics.StrictInt)   (struct let from_int x = x end)(struct let cb = (Helpers.interval cb h) end) in
               let module NonStrict = Expr.Semantics (Semantics.NonStrictInt)(struct let from_int x = x end)(struct let cb = (Helpers.interval cb h) end) in  
-              let wizard id target navigate =
-                let w = HTMLView.Wizard.create id target navigate in
-                w#page [
-                  HTMLView.Wizard.flag   "strict";
-                  HTMLView.Wizard.string "state"
-                ];
-		w
-              in
-              (wizard,
-               fun c ->
-                 let state = c "state" in
-                 match Expr.L.fromString (ostap (!(State.parse)[Expr.L.ident][Expr.L.literal] -EOF)) state with
-                 | Checked.Ok state ->
-                   if c "strict" = "true" 
+
+              
+              let state = ref State.empty in	      
+              Toplevel.Wizard.Page ([
+                  HTMLView.Wizard.flag "strict";
+                  HTMLView.Wizard.div  "state"
+               ], 
+               [
+                (fun page conf -> 
+                  let st = conf "state" in
+                  match Expr.L.fromString (ostap (!(State.parse)[Expr.L.ident][Expr.L.literal] -EOF)) st with
+		  | Checked.Ok st -> 
+                     state := st; 
+                     true
+		  | Checked.Fail [msg] ->                     
+                     Js_frontend.error page "state" st msg;
+                     false
+                ), 
+                Toplevel.Wizard.Exit (fun conf ->
+                  Js_frontend.show_results (
+		  if conf "strict" = "true" 
                    then
                      "root",
                      View.toString (
                        HTMLView.tag "div" ~attrs:"style=\"transform:scaleY(-1)\"" (
                          HTMLView.ul ~attrs:"id=\"root\" class=\"mktree\""
                            (Strict.Deterministic.BigStep.WithEnvT.html (
-                              Strict.Deterministic.BigStep.WithEnvT.build state p ()
+                              Strict.Deterministic.BigStep.WithEnvT.build !state p ()
                            )
-                     )))                                  
+                     )))                                 
                    else
                      "root",
                      View.toString (
                        HTMLView.tag "div" ~attrs:"style=\"transform:scaleY(-1)\"" (
                          HTMLView.ul ~attrs:"id=\"root\" class=\"mktree\""
                            (NonStrict.Deterministic.BigStep.WithEnvT.html (
-                              NonStrict.Deterministic.BigStep.WithEnvT.build state p ()
+                              NonStrict.Deterministic.BigStep.WithEnvT.build !state p ()
                            )
                      )))
-		 | Checked.Fail [msg] -> "", Js_frontend.highlighted_msg state msg
+                ))
+               ]
               )
-            method compile  = invalid_arg ""
+            method compile = invalid_arg ""
           end
     )  
 

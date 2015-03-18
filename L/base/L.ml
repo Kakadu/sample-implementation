@@ -275,29 +275,35 @@ let toplevel =
                 (struct let cb = Helpers.interval hcb hp  end) 
               in
               let module T = Semantics.Deterministic.BigStep.Tree.Make (S) in
-              let wizard id target navigate =
-                let w = HTMLView.Wizard.create id target navigate in
-                w#page [                                    
-                  HTMLView.Wizard.string "Input stream";
-                  HTMLView.Wizard.string "Tree depth"
-                ];
-                w
-              in
-              (wizard,
-               fun c ->
-                 let input  = c "Input stream" in
-                 let nsteps = c "Tree depth"   in
-                 match Lexer.fromString (ostap (!(Ostap.Util.list0)[Lexer.literal] -EOF)) input,
-                       Lexer.fromString (ostap (s:"-"? n:!(Lexer.literal) -EOF {match s with Some _ -> -(n) | _ -> n})) nsteps
-                 with
-                 | Checked.Ok input, Checked.Ok nsteps ->
-                     "root",
-                     View.toString (
-                       HTMLView.tag "div" ~attrs:"style=\"transform:scaleY(-1)\"" (
-                         HTMLView.ul ~attrs:"id=\"root\" class=\"mktree\""
-                           (T.html (T.build ~limit:nsteps () (State.empty, input, []) p)
-                     )))
-		 | Checked.Fail [msg], _ | _, Checked.Fail [msg] -> "", Js_frontend.highlighted_msg input msg
+              let input = ref []   in
+              let depth = ref (-1) in
+              Toplevel.Wizard.Page (
+                [                                    
+                  HTMLView.Wizard.div "Input stream";
+                  HTMLView.Wizard.div ~default:"-1" "Tree depth"
+                ],
+                [(fun page conf ->
+                   let stream' = conf "Input stream" in
+                   let depth'  = conf "Tree depth"   in
+                   match Lexer.fromString (ostap (!(Ostap.Util.list0)[Lexer.literal] -EOF)) stream',
+                         Lexer.fromString (ostap (s:"-"? n:!(Lexer.literal) -EOF {match s with Some _ -> -(n) | _ -> n})) depth'
+                   with
+                   | Checked.Ok input'', Checked.Ok depth'' -> input := input''; depth := depth''; true
+                   | Checked.Fail [msg], _ -> Js_frontend.error page "Input stream" stream' msg; false
+                   | _, Checked.Fail [msg] -> Js_frontend.error page "Tree depth" depth' msg; false
+                 ),
+                 Toplevel.Wizard.Exit (fun _ ->
+		   Js_frontend.show_results (
+                       "root",
+                       View.toString (
+                         HTMLView.tag "div" ~attrs:"style=\"transform:scaleY(-1)\"" (
+                           HTMLView.ul ~attrs:"id=\"root\" class=\"mktree\""
+                             (T.html (T.build ~limit:!depth () (State.empty, !input, []) p)
+                       )))
+
+                   )				     
+                 )
+	        ]
               )
 
          method vertical = Program.vertical p
