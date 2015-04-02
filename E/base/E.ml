@@ -166,12 +166,9 @@ module SimpleExpr (L : Lexer.Sig)(C : sig val ops : ([`Nona | `Lefta | `Righta] 
                     ] @expr
           end
 
-        module E = Expr.Semantics.NonStrict(D)
-
-        class ['a] step =
+        class virtual ['a] base_step =
           object 
             inherit [unit, D.t State.t, 'a expr, D.t, 'a] c
-            inherit ['a] E.step
             method c_Var (env, state, _) _ x = 
               (try S.Just (State.get state x, "Var") with
                | _ -> S.Nothing (Printf.sprintf "undefined variable '%s'" x, "Var")
@@ -179,11 +176,23 @@ module SimpleExpr (L : Lexer.Sig)(C : sig val ops : ([`Nona | `Lefta | `Righta] 
             method c_Const (env, stat, _) _ i = S.Just (I.from_int i, "Const")
           end
 
-        module Tree = S.Tree.Make (
-          struct
-            let rec step env state e = 
-              GT.transform(expr) (fun (env, state, _) e -> step env state e) (new step) (env, state, e) e
+        module ENS = Expr.Semantics.NonStrict(D)
+        module ES  = Expr.Semantics.Strict(D)
+        
+        class ['a] strict_step =
+          object 
+            inherit ['a] base_step
+            inherit ['a] ES.step
+          end
 
+        class ['a] non_strict_step =
+          object 
+            inherit ['a] base_step
+            inherit ['a] ENS.step
+          end
+
+        module Base =
+          struct
             type env   = unit
             type left  = D.t State.t
             type over  = 'a expr as 'a
@@ -201,18 +210,39 @@ module SimpleExpr (L : Lexer.Sig)(C : sig val ops : ([`Nona | `Lefta | `Righta] 
                 method over_width = 70
               end
           end
-	)
+
+        module Strict =
+          struct
+            module Tree = S.Tree.Make (
+              struct
+                include Base
+                let rec step env state e = 
+                  GT.transform(expr) (fun (env, state, _) e -> step env state e) (new strict_step) (env, state, e) e
+              end
+            )
+          end
+
+        module NonStrict =
+          struct
+            module Tree = S.Tree.Make (
+              struct
+                include Base
+                let rec step env state e = 
+                  GT.transform(expr) (fun (env, state, _) e -> step env state e) (new non_strict_step) (env, state, e) e
+              end
+            )
+          end
 
       end
 
     let eval_strict state e =
       let module S = Semantics (TopSemantics.Int)(struct let from_int x = x end)(struct let cb _ = "" end) in
-      match S.Tree.build () state e with
+      match S.Strict.Tree.build () state e with
       | TopSemantics.Deterministic.BigStep.Tree.Node (_, _, _, r, _, _) -> r
 
     let eval_non_strict state e =
       let module S = Semantics (TopSemantics.Int)(struct let from_int x = x end)(struct let cb _ = "" end) in  
-      match S.Tree.build () state e with
+      match S.NonStrict.Tree.build () state e with
       | TopSemantics.Deterministic.BigStep.Tree.Node (_, _, _, r, _, _) -> r
 
   end
@@ -266,8 +296,8 @@ let toplevel =
                      View.toString (
                        HTMLView.tag "div" ~attrs:"style=\"transform:scaleY(-1)\"" (
                          HTMLView.ul ~attrs:"id=\"root\" class=\"mktree\""
-                           (S.Tree.html (
-                              S.Tree.build () !state p
+                           (S.Strict.Tree.html (
+                              S.Strict.Tree.build () !state p
                            )
                      )))                                 
                    else
@@ -275,8 +305,8 @@ let toplevel =
                      View.toString (
                        HTMLView.tag "div" ~attrs:"style=\"transform:scaleY(-1)\"" (
                          HTMLView.ul ~attrs:"id=\"root\" class=\"mktree\""
-                           (S.Tree.html (
-                              S.Tree.build () !state p
+                           (S.NonStrict.Tree.html (
+                              S.NonStrict.Tree.build () !state p
                            )
                      )))
                 ))

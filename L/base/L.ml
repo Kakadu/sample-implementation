@@ -241,7 +241,7 @@ module Program =
 
     let rec vertical p = transform(Stmt.t) (fun _ -> vertical) (fun _ -> Expr.vertical) (new Stmt.vertical) () p
 
-    module Semantics = Stmt.Semantics (Semantics.StrictInt)(struct let boolean = function 1 -> `True | 0 -> `False | _ -> `NonBoolean end) 
+    module Semantics = Stmt.Semantics (Semantics.Int)(struct let boolean = function 1 -> `True | 0 -> `False | _ -> `NonBoolean end) 
 
   end
 
