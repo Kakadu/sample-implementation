@@ -1,6 +1,6 @@
 @type 'a opt = Good of 'a | Bad of GT.string with html
 
-module type Domain =
+module type Algebra =
  sig
 
    type t
@@ -10,7 +10,37 @@ module type Domain =
 
  end
 
-module IntDomain (S : sig val strict : bool end) =
+module type Domain =
+ sig
+
+   include Algebra
+   val dop : string -> t -> [`Value of t opt | `Curried of t -> t opt]
+
+ end
+
+
+module MakeDomain (A : Algebra) (S : sig val spec : (string * (A.t -> bool)) list end) =
+ struct
+
+   type t = A.t
+ 
+   let show = A.show
+   let html = A.html
+  
+   let dop s x =
+     try
+       let _, p = List.find (fun (s', _) -> s' = s) S.spec in
+       if p x then `Value (Good x) else `Curried (A.op s x)
+     with Not_found -> `Curried (A.op s x)
+
+   let op s x y = 
+     match dop s x with 
+     | `Value   z -> z 
+     | `Curried f -> f y
+
+ end
+
+module IntA =
   struct
 
    type t = int
@@ -24,7 +54,7 @@ module IntDomain (S : sig val strict : bool end) =
      function
      | "+"  -> lift (+)
      | "-"  -> lift (-)
-     | "*"  -> if S.strict then lift ( * ) else lift (fun x y -> if x = 0 then 0 else x * y)
+     | "*"  -> lift ( * ) 
      | "/"  -> (fun x y -> if y = 0 then Bad "division by zero" else Good (x / y))
      | "%"  -> (fun x y -> if y = 0 then Bad "division by zero" else Good (x mod y))
      | "==" -> lift (b (=))
@@ -33,16 +63,16 @@ module IntDomain (S : sig val strict : bool end) =
      | "<"  -> lift (b (<))
      | ">=" -> lift (b (>=))
      | ">"  -> lift (b (>))
-     | "&&" -> if S.strict then lift (fun x y -> ib x * ib y) else lift (fun x y -> if ib x = 0 then 0 else ib y)
-     | "||" -> if S.strict then lift (fun x y -> ib x + ib y) else lift (fun x y -> if ib x = 1 then 1 else ib y)
+     | "&&" -> lift (fun x y -> ib x * ib y)
+     | "||" -> lift (fun x y -> ib x + ib y)
 
    let show = string_of_int
    let html = HTMLView.int
 
  end
 
-module StrictInt    = IntDomain (struct let strict = true  end)
-module NonStrictInt = IntDomain (struct let strict = false end)
+module NSInt = MakeDomain (IntA)(struct let spec = ["*", (=) 0; "&&", (=) 0; "||", (=) 1] end)
+module Int   = MakeDomain (IntA)(struct let spec = [] end)
 
 module Deterministic =
   struct 
