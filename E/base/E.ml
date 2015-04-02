@@ -271,7 +271,7 @@ let toplevel =
             method vertical = Expr.vertical p
             method code     = invalid_arg ""
             method run cb   = 
-              let module S = Expr.Semantics (Semantics.Int)(struct let from_int x = x end)(struct let cb = (Helpers.interval cb h) end) in
+              let module S = Expr.Semantics (Semantics.NSInt)(struct let from_int x = x end)(struct let cb = (Helpers.interval cb h) end) in
               let state = ref State.empty in	      
               Toplevel.Wizard.Page ([
                   HTMLView.Wizard.flag "strict";
