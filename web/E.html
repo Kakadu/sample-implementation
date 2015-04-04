@@ -92,7 +92,7 @@
 
         for (var i = 0, f; f = files[i]; i++) {
           fr.onload = function (e) {
-            document.getElementById("text").innerHTML = "<pre>" + e.target.result + "</pre>";
+            document.getElementById("text").innerHTML = "<pre class=\"inline\">" + e.target.result + "</pre>";
             disable_actions ();
           };
 
