@@ -9,10 +9,11 @@ module Expr =
     class ['a] vertical =
       object (this)
         inherit ['a] @t[show]
-        method c_Binop _ _ s x y = Printf.sprintf "*\n%s\n%s%s" s (x.GT.fx ()) (y.GT.fx ())
+        method c_Binop _ _ s x y = 
+          Printf.sprintf "*\n%s\n%s%s" s (x.GT.fx ()) (y.GT.fx ())
       end
     
-    let hparse h ops primary s = 
+    let hparse (h : Helpers.h) ops primary s = 
       let rec parse s =  
         let l = List.map 
           (fun s -> 
@@ -23,15 +24,17 @@ module Expr =
              )
           ) 
         in
-        Ostap.Util.expr (Helpers.loc h#register) (Array.map (fun (a, s) -> a, l s) ops)
-        (primary parse)
-        s
+        Ostap.Util.expr 
+          (Helpers.loc (fun x l r -> h#register x (l :> Helpers.loc) (r :> Helpers.loc))) 
+          (Array.map (fun (a, s) -> a, l s) ops)
+          (primary parse)
+          s
       in
       parse s
 
     let parse ops primary s =
       let h = Helpers.highlighting () in
-      ostap (e:hparse[h][ops][primary] -EOF {e, h#retrieve}) s
+      ostap (e:hparse[h][ops][primary] -EOF {e, h}) s
 
     module Semantics =
       struct
@@ -86,7 +89,9 @@ module Expr =
 
   end
 
-module SimpleExpr (L : Lexer.Sig)(C : sig val ops : ([`Nona | `Lefta | `Righta] * string list) array end) =
+module SimpleExpr 
+  (L : Lexer.Sig)
+  (C : sig val ops : ([`Nona | `Lefta | `Righta] * string list) array end) =
   struct
 
     module L = L
@@ -104,7 +109,7 @@ module SimpleExpr (L : Lexer.Sig)(C : sig val ops : ([`Nona | `Lefta | `Righta] 
 
     let parse s =
       let h = Helpers.highlighting () in
-      ostap (e:hparse[h] -EOF {e, h#retrieve}) s;;
+      ostap (e:hparse[h] -EOF {e, h}) s;;
 
     @type 'a expr = ['a Expr.t | primary] with html, show, foldl
 
@@ -268,9 +273,9 @@ let toplevel =
                                 Expr.html (Helpers.interval cb h) p
                               )
                             )
-            method vertical = Expr.vertical p
-            method code     = invalid_arg ""
-            method run cb   = 
+            method vertical  = Expr.vertical p
+            method code      = invalid_arg ""
+            method run cb js = 
               let module S = Expr.Semantics (Semantics.NSInt)(struct let from_int x = x end)(struct let cb = (Helpers.interval cb h) end) in
               let state = ref State.empty in	      
               Toplevel.Wizard.Page ([
@@ -285,31 +290,19 @@ let toplevel =
                      state := st; 
                      true
 		  | Checked.Fail [msg] ->                     
-                     Js_frontend.error page "state" st msg;
+                     js#error page "state" st msg;
                      false
                 ), 
-                Toplevel.Wizard.Exit (fun conf ->
-                  Js_frontend.show_results (
-		  if conf "strict" = "true" 
-                   then
-                     "root",
-                     View.toString (
-                       HTMLView.tag "div" ~attrs:"style=\"transform:scaleY(-1)\"" (
-                         HTMLView.ul ~attrs:"id=\"root\" class=\"mktree\""
-                           (S.Strict.Tree.html (
-                              S.Strict.Tree.build () !state p
-                           )
-                     )))                                 
-                   else
-                     "root",
-                     View.toString (
-                       HTMLView.tag "div" ~attrs:"style=\"transform:scaleY(-1)\"" (
-                         HTMLView.ul ~attrs:"id=\"root\" class=\"mktree\""
-                           (S.NonStrict.Tree.html (
-                              S.NonStrict.Tree.build () !state p
-                           )
-                     )))
-                ))
+                Toplevel.Wizard.Exit 
+                  (fun conf ->
+                    js#results "root"                   
+		      (View.toString (
+                         if conf "strict" = "true" 
+                         then S.Strict.Tree.html "root" (S.Strict.Tree.build () !state p)
+                         else S.NonStrict.Tree.html "root" (S.NonStrict.Tree.build () !state p)
+		       )
+                      )
+                  )
                ]
               )
             method compile = invalid_arg ""

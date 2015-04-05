@@ -71,19 +71,19 @@ module Stmt =
                                       ]
       end
 
-    let parse h expr s = 
+    let parse (h : Helpers.h) expr s = 
       let ostap (
         ident    : !(Lexer.ident);
         key[name]: @(name ^ "\\b" : name);
         parse: 
-          l:($) x:ident ":=" e:expr                                      r:($) {h#register (`Assign (x, e)) l r}
-        | l:($) key["skip"]                                              r:($) {h#register (`Skip) l r}
-        | l:($) key["read" ] "(" x:ident ")"                             r:($) {h#register (`Read x) l r}
-        | l:($) key["write"] "(" e:expr ")"                              r:($) {h#register (`Write e) l r}
-        | l:($) key["if"] c:expr key["then"] x:parse key["else"] y:parse r:($) {h#register (`If (c, x, y)) l r}
-        | l:($) key["while"] c:expr key["do"] s:parse                    r:($) {h#register (`While (c, s)) l r}
+          l:($) x:ident ":=" e:expr                                      r:($) {h#register (`Assign (x, e)) (l :> Helpers.loc) (r :> Helpers.loc)}
+        | l:($) key["skip"]                                              r:($) {h#register (`Skip) (l :> Helpers.loc) (r :> Helpers.loc)}
+        | l:($) key["read" ] "(" x:ident ")"                             r:($) {h#register (`Read x) (l :> Helpers.loc) (r :> Helpers.loc)}
+        | l:($) key["write"] "(" e:expr ")"                              r:($) {h#register (`Write e) (l :> Helpers.loc) (r :> Helpers.loc)}
+        | l:($) key["if"] c:expr key["then"] x:parse key["else"] y:parse r:($) {h#register (`If (c, x, y)) (l :> Helpers.loc) (r :> Helpers.loc)}
+        | l:($) key["while"] c:expr key["do"] s:parse                    r:($) {h#register (`While (c, s)) (l :> Helpers.loc) (r :> Helpers.loc)}
         | -"{" seqs -"}";
-        seqs: l:($) s:parse ss:(-";" seqs)? r:($) {match ss with None -> s | Some ss -> h#register (`Seq (s, ss)) l r}
+        seqs: l:($) s:parse ss:(-";" seqs)? r:($) {match ss with None -> s | Some ss -> h#register (`Seq (s, ss)) (l :> Helpers.loc) (r :> Helpers.loc)}
       )
       in
       parse s
@@ -290,7 +290,12 @@ module Stmt =
 		  end
 
                 let rec step fe env conf stmt = 
-                  GT.transform(k) (fun (env, conf, _) stmt -> step fe env conf stmt) fe (new step) (env, conf, stmt) stmt
+                  GT.transform(k) 
+                    (fun (env, conf, _) stmt -> step fe env conf stmt) 
+                    fe 
+                    (new step) 
+                    (env, conf, stmt) 
+                    stmt
 
                 module Instantiate 
                     (E : sig 
@@ -300,7 +305,7 @@ module Stmt =
                            val html : expr -> HTMLView.er
                          end
                      )
-                    (C : sig val cb : ('a, E.expr) t as 'a -> string end) =
+                    (C : sig val cb : ('a, E.expr) k as 'a -> string end) =
                   struct
                     type env   = ('a, E.expr) k as 'a
                     type left  = conf
@@ -309,7 +314,10 @@ module Stmt =
 
                     let env_html s =
    	              let wrap node html =
-			HTMLView.tag "attr" ~attrs:(Printf.sprintf "style=\"cursor:pointer\" %s"  (C.cb (Obj.magic node))) html
+			HTMLView.tag "attr" 
+                          ~attrs:(Printf.sprintf "style=\"cursor:pointer\" %s"   
+                          (C.cb node)) 
+                          html
 		      in
 		      wrap s
 			(GT.transform(k) 
@@ -349,15 +357,32 @@ module Program =
       let hp = Helpers.highlighting () in
       let he = Helpers.highlighting () in
       let parse s = Stmt.parse hp (Expr.hparse he) s in
-      ostap (p:parse -EOF {p, hp#retrieve, he#retrieve}) s
+      ostap (p:parse -EOF {p, hp, he}) s
 
     let rec html cbp cbe p = 
       HTMLView.li ~attrs:(cbp p)
-        (transform(Stmt.t) (fun _ -> html cbp cbe) (fun _ -> Expr.html cbe) (new Stmt.html) () p)
+        (transform(Stmt.t) 
+           (fun _ -> html cbp cbe) 
+           (fun _ -> Expr.html cbe) 
+           (new Stmt.html) 
+           () 
+           p
+        )
 
-    let rec vertical p = transform(Stmt.t) (fun _ -> vertical) (fun _ -> Expr.vertical) (new Stmt.vertical) () p
+    let rec vertical p = 
+      transform(Stmt.t) 
+        (fun _ -> vertical) 
+        (fun _ -> Expr.vertical) 
+        (new Stmt.vertical) 
+        () 
+        p
 
-    module Semantics = Stmt.Semantics (Semantics.Int)(struct let boolean = function 1 -> `True | 0 -> `False | _ -> `NonBoolean end) 
+    module Semantics = Stmt.Semantics 
+      (Semantics.Int)
+      (struct 
+         let boolean = function 1 -> `True | 0 -> `False | _ -> `NonBoolean 
+       end
+      ) 
 
   end
 
@@ -371,7 +396,7 @@ let toplevel =
                              Program.html (Helpers.interval cb hp) (Helpers.interval cb he) p
                            )
                          )
-         method run (hcb : string) = 
+         method run hcb (js : Toplevel.js) = 
            let module E = 
              struct 
                type expr  = 'a Expr.expr as 'a 
@@ -390,9 +415,8 @@ let toplevel =
                    )
               end
 	   in
-           let module C    = struct let cb = Helpers.interval hcb hp end in
-           let module S    = Program.Semantics.BigStep.Standard.Instantiate (E)(C) in
-           let module CPS  = Program.Semantics.BigStep.CPS     .Instantiate (E)(C) in
+           let module S    = Program.Semantics.BigStep.Standard.Instantiate (E)(struct let cb = Helpers.interval hcb hp end) in
+           let module CPS  = Program.Semantics.BigStep.CPS     .Instantiate (E)(struct let cb = Helpers.interval hcb hp end) in
            let module TS   = Semantics.Deterministic.BigStep.Tree.Make (S  ) in
            let module TCPS = Semantics.Deterministic.BigStep.Tree.Make (CPS) in
            let input = ref []   in
@@ -410,31 +434,27 @@ let toplevel =
                       Lexer.fromString (ostap (s:"-"? n:!(Lexer.literal) -EOF {match s with Some _ -> -(n) | _ -> n})) depth'
                 with
                 | Checked.Ok input'', Checked.Ok depth'' -> input := input''; depth := depth''; true
-                | Checked.Fail [msg], _ -> Js_frontend.error page "Input stream" stream' msg; false
-                | _, Checked.Fail [msg] -> Js_frontend.error page "Tree depth" depth' msg; false
+                | Checked.Fail [msg], _ -> js#error page "Input stream" stream' msg; false
+                | _, Checked.Fail [msg] -> js#error page "Tree depth" depth' msg; false
               ),
-              Toplevel.Wizard.Exit (fun conf ->
-		Js_frontend.show_results (
-                    "root",
-                    View.toString (
-                      HTMLView.tag "div" ~attrs:"style=\"transform:scaleY(-1)\"" (
-                        HTMLView.ul ~attrs:"id=\"root\" class=\"mktree\""
-                          (if conf "Type" = "normal"
-                           then
-			     TS.html (TS.build ~limit:!depth () (State.empty, !input, []) p)
-                           else
-			     TCPS.html (
-			       TCPS.build 
-                                 ~limit:!depth 
-                                 `L 
-                                 (State.empty, !input, []) 
-                                 (p :> ('a, 'b Expr.expr as 'b) Program.Semantics.BigStep.CPS.k as 'a)
-			     )
-                          )
-	              )
-                    )
-                   )
-                 )
+              Toplevel.Wizard.Exit 
+                (fun conf ->
+		  js#results 
+                    "root"
+                     (View.toString (
+                        if conf "Type" = "normal"
+                        then TS.html "root" (TS.build ~limit:!depth () (State.empty, !input, []) p)
+                        else
+		          TCPS.html "root" (
+		            TCPS.build 
+                              ~limit:!depth 
+                              `L 
+                              (State.empty, !input, []) 
+                              (p :> ('a, 'b Expr.expr as 'b) Program.Semantics.BigStep.CPS.k as 'a)
+		          )
+                     )
+                     )
+                )
 	     ]
            )
          method vertical = Program.vertical p

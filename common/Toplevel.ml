@@ -43,13 +43,17 @@ module Wizard =
       w, inner (fun i _ -> i) 0 (inputs, decisions)
 
   end
-
+class type js =
+  object
+    method error   : HTMLView.Wizard.page -> string -> string -> Ostap.Msg.t -> unit
+    method results : string -> string -> unit
+  end
 
 class virtual c =
   object
     method virtual ast      : string -> string
     method virtual vertical : string
-    method virtual run      : string -> Wizard.node
+    method virtual run      : string -> js -> Wizard.node
 
     method code    = ""
     method compile = ""

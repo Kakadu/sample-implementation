@@ -23,7 +23,7 @@ let error page input source msg =
   setHTML "runmsg" msg; 
   try setHTML (page#id input) source with Not_found _ -> ()
 
-let show_results (root, tree) =
+let show_results root tree =
   Js.Unsafe.fun_call (Js.Unsafe.variable "window.show_results") [|Js.Unsafe.inject (Js.string root); Js.Unsafe.inject (Js.string tree)|]
 
 module Make (T : sig val toplevel : string -> (Toplevel.c, Ostap.Msg.t) Checked.t end) =
@@ -46,7 +46,7 @@ module Make (T : sig val toplevel : string -> (Toplevel.c, Ostap.Msg.t) Checked.
           (Js.Unsafe.coerce Dom_html.window)##run <- Js.wrap_callback (
              fun id target ->                
                let id, target  = Js.to_string id, Js.to_string target in
-               let root        = p#run "do_highlighting" in
+               let root        = p#run "do_highlighting" (object method results = show_results method error = error end) in
                let wizard, nav = Toplevel.Wizard.make id target "navigate" root in
                (Js.Unsafe.coerce Dom_html.window)##navigate <- Js.wrap_callback (js_nav nav);
                let entry, code = wizard#generate in

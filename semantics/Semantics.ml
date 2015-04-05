@@ -165,8 +165,11 @@ module Deterministic =
 
               end
 
-            let html customizer env left over right tree = 
-              GT.transform(t) env left over right (new custom_html customizer) () tree
+            let html id customizer env left over right tree = 
+              HTMLView.tag "div" ~attrs:"style=\"transform:scaleY(-1)\"" (
+                HTMLView.ul ~attrs:(Printf.sprintf "id=\"%s\" class=\"mktree\"" id)
+                  (GT.transform(t) env left over right (new custom_html customizer) () tree)
+              )
 
             exception SomeBad of string
 
@@ -217,7 +220,7 @@ module Deterministic =
                 struct
 
                   let build ?(limit=(-1)) = build ~limit:limit C.step
-                  let html = html C.customizer (GT.lift C.env_html) (GT.lift C.left_html) (GT.lift C.over_html) (GT.lift C.right_html)
+                  let html id = html id C.customizer (GT.lift C.env_html) (GT.lift C.left_html) (GT.lift C.over_html) (GT.lift C.right_html)
 
                 end
 
