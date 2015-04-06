@@ -2,69 +2,60 @@
 Require Export Bool List.
 Export ListNotations.
 Require Export Arith Arith.EqNat.
-Require Export Id.
+Require Import Id.
 
-Definition state (A : Set) := list (id * A).
+Section S.
 
-Definition empty_state {A : Set} : state A := [].
+  Variable A : Set.
 
-Definition update (st : state) (x : id) (n : nat) : state :=
-  fun x' => if eq_id_dec x x' then n else st x'.
+  Definition state := list (id * A). 
 
-(** For proofs involving states, we'll need several simple properties
-    of [update]. *)
+  Inductive st_binds : state -> id -> A -> Prop := 
+    st_binds_hd : forall st id x, st_binds ((id, x) :: st) id x
+  | st_binds_tl : forall st id x id' x', 
+     id >> id' -> st_binds st id x -> st_binds ((id', x')::st) id x.
 
-(** **** Exercise: 1 star (update_eq) *)
-Theorem update_eq : forall n x st,
-  (update st x n) x = n.
-Proof.
-  intros. unfold update. apply eq_id.
-Qed.
+  Fixpoint update (st : state) (id : id) (a : A) : state := 
+    match st with
+    | [] => [(id, a)]
+    | (id', a')::st' =>
+      if eq_id_dec id' id 
+      then (id, a)::st' 
+      else if le_gt_id_dec id' id 
+           then (id', a') :: update st' id a
+           else (id, a) :: st
+    end.
 
-(** **** Exercise: 1 star (update_neq) *)
-Theorem update_neq : forall x2 x1 n st,
-  x2 <> x1 ->                        
-  (update st x2 n) x1 = (st x1).
-Proof.
-  intros. unfold update. apply neq_id. assumption.
-Qed.
+  Lemma update_eq : forall (st : state) (x : id) (n : A),
+    st_binds (update st x n) x n.
+  Proof.
+    admit.
+  Qed.
 
-(** **** Exercise: 1 star (update_example) *)
-(** Before starting to play with tactics, make sure you understand
-    exactly what the theorem is saying! *)
+  Lemma update_neq : forall (st : state) (x2 x1 : id) (n m : A),
+    x2 <> x1 -> st_binds (update st x2 n) x1 m = st_binds st x1 m.
+  Proof.
+    admit.
+  Qed.
 
-Theorem update_example : forall (n:nat),
-  (update empty_state (Id 2) n) (Id 3) = 0.
-Proof.
-  intros. unfold update. simpl. unfold empty_state. reflexivity.
-Qed.
+  Lemma update_shadow : forall (st : state) (x1 x2 : id) (n1 n2 m : A),
+    st_binds (update (update st x2 n1) x2 n2) x1 m = st_binds (update st x2 n2) x1 m.
+  Proof.
+    admit.
+  Qed.
 
-(** **** Exercise: 1 star (update_shadow) *)
-Theorem update_shadow : forall n1 n2 x1 x2 (st : state),
-   (update  (update st x2 n1) x2 n2) x1 = (update st x2 n2) x1.
-Proof.
-  intros. unfold update. destruct (eq_id_dec x2 x1) eqn:D.
-    reflexivity.
-    reflexivity.
-Qed.
+  Lemma update_same : forall (st : state) (x1 x2 : id) (n1 m : A),
+    st_binds st x1 n1 -> st_binds st x2 m -> st_binds (update st x1 n1) x2 m.
+  Proof.
+    admit.
+  Qed.
 
-(** **** Exercise: 2 stars (update_same) *)
-Theorem update_same : forall n1 x1 x2 (st : state),
-  st x1 = n1 ->
-  (update st x1 n1) x2 = st x2.
-Proof.
-  intros. unfold update. destruct (eq_id_dec x1 x2). rewrite <- e. symmetry. assumption.
-  reflexivity.
-Qed.
+  Lemma update_permute : forall (st : state) (x1 x2 x3 : id) (n1 n2 m : A),
+    x2 <> x1 -> 
+    st_binds (update (update st x2 n1) x1 n2) x3 m = 
+    st_binds (update (update st x1 n2) x2 n1) x3 m.
+  Proof.
+    admit.
+  Qed.  
 
-(** **** Exercise: 3 stars (update_permute) *)
-Theorem update_permute : forall n1 n2 x1 x2 x3 st,
-  x2 <> x1 -> 
-  (update (update st x2 n1) x1 n2) x3 = (update (update st x1 n2) x2 n1) x3.
-Proof.
-  intros. unfold update. 
-  destruct (eq_id_dec x1 x3) eqn: D1. rewrite e in H. 
-    destruct (eq_id_dec x2 x3) eqn: D2. contradiction. reflexivity.
-    reflexivity.
-Qed.  
-
+End S.

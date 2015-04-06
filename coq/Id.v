@@ -46,7 +46,7 @@ Hint Constructors le_id gt_id.
 Notation "n <<= m" := (le_id n m).
 Notation "n >>  m" := (gt_id n m).
 
-Lemma le_lt_id_dec : forall id1 id2 : id, {id1 <<= id2} + {id1 >> id2}.
+Lemma le_gt_id_dec : forall id1 id2 : id, {id1 <<= id2} + {id1 >> id2}.
 Proof.
   intros id1 id2. destruct id1 as [n1]. destruct id2 as [n2].
   destruct (le_gt_dec n1 n2). left. auto. right. auto.
