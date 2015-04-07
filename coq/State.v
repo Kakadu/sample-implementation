@@ -1,8 +1,8 @@
 (** Borrowed from Pierce's "Software Foundations" *)
-Require Export Bool List.
-Export ListNotations.
+Require Import List.
+Import ListNotations.
 Require Export Arith Arith.EqNat.
-Require Import Id.
+Require Export Id.
 
 Section S.
 
@@ -40,7 +40,7 @@ Section S.
   Qed.
 
   Lemma update_neq : forall (st : state) (x2 x1 : id) (n m : A),
-    x2 <> x1 -> st [x2 <- n] / x1 => m -> st / x1 => m.
+    x2 <> x1 -> st / x1 => m -> st [x2 <- n] / x1 => m.
   Proof.
     admit.
   Qed.

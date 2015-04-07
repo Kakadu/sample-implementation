@@ -1,6 +1,5 @@
 (** Borrowed from Pierce's "Software Foundations" *)
-
-Require Export Arith Arith.EqNat.
+Require Import Arith Arith.EqNat.
 
 Inductive id : Type :=
   Id : nat -> id.
