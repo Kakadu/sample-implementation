@@ -1,5 +1,0 @@
-version = "Revision:"
-description = ""
-requires = ""
-archive(byte) = "Frontend.cma"
-archive(native) = "Frontend.cmxa"

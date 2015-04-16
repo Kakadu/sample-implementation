@@ -99,7 +99,7 @@ EXEEXT = @EXEEXT@
 
 # add extra compiled libraries used for linking
 EXTRA_CMA = @EXTRA_CMA@ $(addsuffix .cma, str) Common.cma \
-	Js_frontend.cma Semantics.cma E.cma L.cma
+	Js_frontend.cma Semantics.cma E.cmo
 HAVE_OCAMLFIND_FALSE = @HAVE_OCAMLFIND_FALSE@
 HAVE_OCAMLFIND_TRUE = @HAVE_OCAMLFIND_TRUE@
 INSTALL_DATA = @INSTALL_DATA@
@@ -114,8 +114,8 @@ MAKEINFO = @MAKEINFO@
 META = @META@
 MINGW32_FALSE = @MINGW32_FALSE@
 MINGW32_TRUE = @MINGW32_TRUE@
-MODULE_INCLUDES = @MODULE_INCLUDES@ -I $(CAMLP5LIB) -I base -I \
-	../common -I ../js -I ../semantics -I ../E/base
+MODULE_INCLUDES = @MODULE_INCLUDES@ -I $(CAMLP5LIB) -I ../common -I \
+	../js -I ../semantics -I ../E
 OCAMLC = @OCAMLC@
 OCAMLDEP = @OCAMLDEP@
 OCAMLDOC = @OCAMLDOC@
@@ -131,7 +131,7 @@ OCAMLYACC = @OCAMLYACC@
 OFLAGS = @OFLAGS@
 P4FLAGS = @P4FLAGS@
 P5FLAGS = @P5FLAGS@
-PACKAGE := Driver
+PACKAGE := L
 PACKAGE_BUGREPORT = @PACKAGE_BUGREPORT@
 PACKAGE_NAME = @PACKAGE_NAME@
 PACKAGE_STRING = @PACKAGE_STRING@
@@ -210,10 +210,10 @@ target_alias = @target_alias@
 target_cpu = @target_cpu@
 target_os = @target_os@
 target_vendor = @target_vendor@
-SUBDIRS = base js
+SUBDIRS = 
 
 # type in sources here
-SOURCES = Driver.ml
+SOURCES = L.ml Frontend.ml
 MLI = 
 
 # define macros that creates directiries
@@ -267,14 +267,13 @@ CMO4CMA = $(CMO)
 # sources for .cmxa linking
 CMX4CMXA = $(CMO4CMA:.cmo=.cmx)
 DOCFILES = $(PACKAGE).ps $(PACKAGE).html
-# EXTRA_CMXA += $(addsuffix .cmxa, str)
-TARGET := $(MLI) $(CMO) $(CMA) META $(BYTE) 
+TARGET := $(MLI) $(CMO) META $(BYTE) L.js
 
 # OCaml parser called with flags
 AM_P4FLAGS = -pp "$(CAMLP4OF) $(PARSER_INCLUDES)"
 
 # OCaml parser call with flags
-AM_P5FLAGS := -pp "$(CAMLP5O) $(PARSER_INCLUDES) pr_o.cmo pa_checked.cmo pa_ostap.cmo pa_log.cmo pa_gt.cmo -L `camlp5o -where` $(LOG) $(DOC)"
+AM_P5FLAGS := -pp "$(CAMLP5O) $(PARSER_INCLUDES) pa_checked.cmo pa_ostap.cmo pa_log.cmo pa_gt.cmo -L `camlp5o -where` $(LOG) $(DOC)"
 
 # OCaml documentator called with flags
 AM_DOCFLAGS = -html
@@ -291,7 +290,7 @@ AM_OFLAGS = $(MODULE_INCLUDES) -rectypes -annot -cclib "-static"
 # extra .cmi to delete those are generated from .ml
 CLEAN_CMI := $(CMO:.cmo=.cmi)
 # other extra files to clean up
-CLEAN_EXTRA := .depend $(BYTE)
+CLEAN_EXTRA := .depend $(BYTE) $(NATIVE)
 all: all-recursive
 
 .SUFFIXES:
@@ -580,6 +579,9 @@ uninstall-info: uninstall-info-recursive
 	mostlyclean-recursive pdf pdf-am ps ps-am tags tags-recursive \
 	uninstall uninstall-am uninstall-info-am
 
+
+%.js: %.byte
+	js_of_ocaml -o L.js $<; cp L.js ../web
 
 # default build:
 # - update timestamp

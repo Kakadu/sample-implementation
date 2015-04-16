@@ -1,8 +1,8 @@
-PACKAGE := Driver
-SUBDIRS = base js
+PACKAGE := L
+SUBDIRS = 
 
 # type in sources here
-SOURCES = Driver.ml
+SOURCES = L.ml Frontend.ml
 MLI = 
 
 include $(top_srcdir)/m4/Makefile.am.vars
@@ -13,21 +13,24 @@ include $(top_srcdir)/m4/Makefile.am.vars
 CMO := $(SORTED:.ml=.cmo)
 
 # OCaml parser call with flags
-AM_P5FLAGS := -pp "$(CAMLP5O) $(PARSER_INCLUDES) pr_o.cmo pa_checked.cmo pa_ostap.cmo pa_log.cmo pa_gt.cmo -L `camlp5o -where` $(LOG) $(DOC)"
+AM_P5FLAGS := -pp "$(CAMLP5O) $(PARSER_INCLUDES) pa_checked.cmo pa_ostap.cmo pa_log.cmo pa_gt.cmo -L `camlp5o -where` $(LOG) $(DOC)"
 AM_BFLAGS += -rectypes -annot
 AM_OFLAGS += -rectypes -annot -cclib "-static"
 
 # overwrite some variables
 PXFLAGS = $(P5FLAGS)
 CAMLPXLIB = $(CAMLP5LIB)
-MODULE_INCLUDES += -I $(CAMLP5LIB) -I base -I ../common -I ../js -I ../semantics -I ../E/base
+MODULE_INCLUDES += -I $(CAMLP5LIB) -I ../common -I ../js -I ../semantics -I ../E
+
 
 # add extra compiled libraries used for linking
-EXTRA_CMA += $(addsuffix .cma, str) Common.cma Js_frontend.cma Semantics.cma E.cma L.cma
-# EXTRA_CMXA += $(addsuffix .cmxa, str)
+EXTRA_CMA += $(addsuffix .cma, str) Common.cma Js_frontend.cma Semantics.cma E.cmo
 
-TARGET := $(MLI) $(CMO) $(CMA) META $(BYTE) 
-CLEAN_EXTRA += $(BYTE)
+TARGET := $(MLI) $(CMO) META $(BYTE) L.js
+CLEAN_EXTRA += $(BYTE) $(NATIVE)
+
+%.js: %.byte
+	js_of_ocaml -o L.js $<; cp L.js ../web
 
 include $(top_srcdir)/m4/Makefile.am.targets
 
