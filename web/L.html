@@ -142,11 +142,14 @@
       bottom:0;
       top:0;
       padding:0px;
+      overflow-x:auto;
+      overflow-y:auto;
     }
 
     .maincontent{
       position:fixed;
       left:31%;
+      top:8%;
       width:30%;
       display:block;
       height:100%;
@@ -155,13 +158,14 @@
     }
 
     .leftcol{
-      position:relative; 
-      float:left;      
-      width:30%;
+      position:fixed; 
+      left:1%;
+      top:8%;
+      display:block;
+      width:29%;
       padding:0;
       margin:0px auto;
-      bottom:0;
-      top:0;
+      bottom:0;      
       height:100%;
       overflow-x:hidden;
       overflow-y:hidden;
@@ -170,6 +174,7 @@
     .rightcol{
       position:fixed;
       left:62%;
+      top:8%;
       width:37%;
       display:block;
       height:100%;
@@ -178,11 +183,12 @@
     }
 
     .header {
-      position:relative;
+      position:fixed;
       float:top;
       top:0%;
       width:100%;
       top:0px;
+      display:block;
     }
 
     .scrollable {
@@ -203,7 +209,7 @@
         <td align="left" width="100%">
           Source code:
           <hr>
-          <div class="scrollable" style="height:300px;font-family:monospace;line-height:90%;background-color:white" contentEditable="true" id="text"></div>
+          <div class="scrollable" style="height:200px;font-family:monospace;line-height:90%;background-color:white" contentEditable="true" id="text"></div>
           <hr>
           <div id="parsemsg">&nbsp;</div>
         </td>
@@ -222,7 +228,7 @@
         <td>
          Abstract syntax tree:
          <hr>
-         <div class="scrollable" style="height:400px;background-color:white" id="parsed"></div>
+         <div class="scrollable" style="height:500px;background-color:white" id="parsed"></div>
         </td>
       </tr>
     </table>
@@ -234,7 +240,7 @@
         <td>
           Semantic settings:
           <hr>
-          <div id="wizard" style="height:300px" align="center">
+          <div id="wizard" style="height:200px" align="center" valign="center">
           </div>
           <hr>
           <div id="runmsg">&nbsp;</div>
@@ -245,7 +251,7 @@
           <hr>
           Interpretation results:
           <hr>
-          <div class="scrollable" style="height:443px;background-color:white" id="output">
+          <div class="scrollable" style="height:543px;background-color:white" id="output">
           </div>
         </td>
       </tr>
