@@ -119,108 +119,152 @@
     pre.inline {
       display: inline;
     }
+
    .editablediv {
       border-style:solid;
       border-width:1px;
       border-color:#bbbbbb;
+      background-color:white;
       width:50px;
     }
+
     textarea {
       width:98%;
     }
-    header {
-      background-color:black;
-      color:white;
-      text-align:center;
-      padding:5px; 
+
+    body {
+      background-color:#DDDDDD;
     }
-    nav {
-      background-color:#eeeeee;
-      width:600px;
-      float:left;
-      padding:5px; 
+
+    .main{
+      position:absolute;
+      width:100%;
+      bottom:0;
+      top:0;
+      padding:0px;
     }
-    section {
-      background-color:#aaaaaa;
-      width:600px;
-      float:left;
-      padding:5px; 
+
+    .maincontent{
+      position:fixed;
+      left:31%;
+      width:30%;
+      display:block;
+      height:100%;
+      overflow-x:hidden;
+      overflow-y:hidden;
     }
-    footer {
-      background-color:black;
-      color:white;
-      clear:both;
-      text-align:center;
-      padding:5px; 
+
+    .leftcol{
+      position:relative; 
+      float:left;      
+      width:30%;
+      padding:0;
+      margin:0px auto;
+      bottom:0;
+      top:0;
+      height:100%;
+      overflow-x:hidden;
+      overflow-y:hidden;
     }
+
+    .rightcol{
+      position:fixed;
+      left:62%;
+      width:37%;
+      display:block;
+      height:100%;
+      overflow-x:hidden;
+      overflow-y:hidden;
+    }
+
+    .header {
+      position:relative;
+      float:top;
+      top:0%;
+      width:100%;
+      top:0px;
+    }
+
     .scrollable {
-      width: 600px;
-      height: 500px;
-      overflow-y: scroll;
-      overflow-x: scroll;
+      overflow-y:scroll;
+      overflow-x:scroll;
     }
 </style>
 </head>
 <body>
 
-<header>
-Header
-</header>
+<div class="main">
+  <div class="header">
+     <h2><center>Operational Semantics Primer</center></h2>
+  </div>
+  <div class="leftcol">
+    <table width="100%">
+      <tr>
+        <td align="left" width="100%">
+          Source code:
+          <hr>
+          <div class="scrollable" style="height:300px;font-family:monospace;line-height:90%;background-color:white" contentEditable="true" id="text"></div>
+          <hr>
+          <div id="parsemsg">&nbsp;</div>
+        </td>
+      </tr>
+      <tr>
+        <td align="center">
+          <hr>
+          <button type="button" onclick="do_parse()">Parse</button>&nbsp;&nbsp;
+          <input type="file" id="loadFile" name="file">&nbsp;&nbsp;
+          <button type="button" onclick="convert()" disabled="true" id="export_button">Export</button>&nbsp;&nbsp;<a href="" id=save></a>&nbsp;&nbsp;
+          <button type="button" onclick="do_run()" disabled="true" id="run_button">Run</button>
+          <hr>
+        </td>
+      </tr>    
+      <tr>
+        <td>
+         Abstract syntax tree:
+         <hr>
+         <div class="scrollable" style="height:400px;background-color:white" id="parsed"></div>
+        </td>
+      </tr>
+    </table>
+  </div>
 
-<nav>
-  <table width="100%">
-    <tr>
-      <td align="left" width="100%">
-        Source code:
+  <div class="maincontent">
+    <table width="100%">
+      <tr>
+        <td>
+          Semantic settings:
+          <hr>
+          <div id="wizard" style="height:300px" align="center">
+          </div>
+          <hr>
+          <div id="runmsg">&nbsp;</div>
+        </td>
+      </tr>  
+      <tr>
+        <td>
+          <hr>
+          Interpretation results:
+          <hr>
+          <div class="scrollable" style="height:443px;background-color:white" id="output">
+          </div>
+        </td>
+      </tr>
+    </table>
+  </div>
+  
+  <div class="rightcol">
+    <table width="100%">
+      <tr>
+        <td>
+        Semantic Description:
         <hr>
-        <div class="scrollable" style="height:250px;font-family:monospace;line-height:90%;background-color:white" contentEditable="true" id="text"></div>
-        <hr>
-        <div id="parsemsg">&nbsp;</div>
-      </td>
-    </tr>
-    <tr>
-      <td align="center">
-        <hr>
-        <button type="button" onclick="do_parse()">Parse</button>&nbsp;&nbsp;
-        <input type="file" id="loadFile" name="file">&nbsp;&nbsp;
-        <button type="button" onclick="convert()" disabled="true" id="export_button">Export</button>&nbsp;&nbsp;<a href="" id=save></a>&nbsp;&nbsp;
-        <button type="button" onclick="do_run()" disabled="true" id="run_button">Run</button>
-        <hr>
-      </td>
-    </tr>    
-    <tr>
-      <td>
-       Abstract syntax tree:
-       <div class="scrollable" style="background-color:white" id="parsed"></div>
-      </td>
-    </tr>
-  </table>
-</nav>
-
-<section>
-<table>
-  <tr>
-    <td>
-      Semantic settings:
-      <hr>
-      <div id="wizard" style="width:600px;height:250px;background-color:white" align="center">
-      </div>
-      <hr>
-      <div id="runmsg">&nbsp;</div>
-      <hr>
-      Interpretation results:
-      <hr>
-      <div class="scrollable" style="background-color:white;height:540px" id="output">
-      </div>
-    </td>
-  </tr>
-</table>
-</section>
-
-<footer>
-Footer
-</footer>
-
+          <div class="scrollable" style="height:837px;background-color:white" id="description">
+          </div>
+        </td>
+      </tr>
+    </table>
+  </div>
+</div>
 </body>
 <script type="text/javascript">
   document.getElementById ("loadFile").addEventListener("change", handleFile, false);      
