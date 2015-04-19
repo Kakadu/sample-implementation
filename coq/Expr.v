@@ -41,7 +41,7 @@ Definition zbool (x : Z) : Prop := x = Z.one \/ x = Z.zero.
   
 Definition zor (x y : Z) : Z :=
   if Z_le_gt_dec (Z.of_nat 1) (x + y) then Z.one else Z.zero.
-
+   
 Reserved Notation "[| e |] st => z" (at level 0).
 Notation "st / x => y" := (st_binds Z st x y) (at level 0).
 
@@ -141,14 +141,51 @@ where "x ? e" := (V e x).
 *)
 Lemma defined_expression: forall (e : expr) (s : state Z) (z : Z) (id : id),
   [| e |] s => z -> id ? e -> exists z', s / id => z'.
-Proof. admit. Qed.
+Proof.
+  intros e s z id Heval Hdef.
+  generalize dependent z.
+  induction e;
+    (* solves cases with binary operations Z->Z->Z *)
+    try solve [
+          intros z Hact;     
+          inversion_clear Hdef;
+          inversion_clear Hact;
+          inversion_clear H as [Hl | Hr];
+          [ exact (IHe1 Hl za H0) |
+            exact (IHe2 Hr zb H1) ]
+        ];
+    (* solves cases with binary operations Z->Z->bool *)
+    try solve [
+          intros z Hact;
+          inversion_clear Hdef;
+          inversion_clear Hact;
+          [
+            inversion_clear H as [Hl | Hr]; [
+              exact (IHe1 Hl za H0) |
+              exact (IHe2 Hr zb H1) ] |
+            inversion_clear H as [Hl | Hr]; [
+                exact (IHe1 Hl za H0) |
+                exact (IHe2 Hr zb H1)] ]
+        ].  
+  (* e = Nat n*)
+  inversion Hdef.
+  (* e = Var i*)
+  induction s.
+     (* base *)
+     intros z Heval. inversion Heval. inversion H0.
+     (* step *)
+     intros z Hdef_new. inversion Hdef_new. inversion Hdef.
+     subst i i0 id0. exists z. assumption. 
+  Qed.
 
 (* If a variable in expression is undefined in some state, then the expression
    is undefined is that state as well
 *)
 Lemma undefined_variable: forall (e : expr) (s : state Z) (id : id),
   id ? e -> (forall (z : Z), ~ (s / id => z)) -> (forall (z : Z), ~ ([| e |] s => z)).
-Proof. admit. Qed.
+Proof.
+ 
+  admit. Qed.
 
 (* The result of expression evaluation in a state dependes only on the values
    of occurring variables
