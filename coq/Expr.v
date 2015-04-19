@@ -184,8 +184,12 @@ Proof.
 Lemma undefined_variable: forall (e : expr) (s : state Z) (id : id),
   id ? e -> (forall (z : Z), ~ (s / id => z)) -> (forall (z : Z), ~ ([| e |] s => z)).
 Proof.
- 
-  admit. Qed.
+  intros e s id Hvar Hundef z.
+  unfold not; intro Heval.
+  pose proof (defined_expression e s z id Heval Hvar) as Hex.
+  inversion Hex as [x Hdef].
+  contradiction (Hundef x).
+Qed.
 
 (* The result of expression evaluation in a state dependes only on the values
    of occurring variables
