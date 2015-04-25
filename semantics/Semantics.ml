@@ -1,5 +1,10 @@
 @type 'a opt = Good of 'a | Bad of GT.string with html
 
+let (>>=) x f =
+  match x with Good x' -> f x' | Bad s -> Bad s
+
+let bind = (>>=)
+
 module type Algebra =
  sig
 
@@ -17,7 +22,6 @@ module type Domain =
    val dop : string -> t -> [`Value of t opt | `Curried of t -> t opt]
 
  end
-
 
 module MakeDomain (A : Algebra) (S : sig val spec : (string * (A.t -> bool)) list end) =
  struct
