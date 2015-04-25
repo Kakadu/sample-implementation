@@ -186,7 +186,7 @@ module Deterministic =
                           let rights = List.map (function 
                                                  | Node (_, _, _, Good r, _, _) -> r
 				                 | Node (_, _, _, Bad t, _, _) -> raise (SomeBad t)
-                                                 ) subnodes'
+                                                ) subnodes'
                           in
                           match subfun rights with
 	  	          | Just     (right  , _)         -> Node (env, left, over, Good right, subnodes@subnodes', rule)
@@ -218,13 +218,65 @@ module Deterministic =
                                end
                           ) =
                 struct
-
                   let build ?(limit=(-1)) = build ~limit:limit C.step
                   let html id = html id C.customizer (GT.lift C.env_html) (GT.lift C.left_html) (GT.lift C.over_html) (GT.lift C.right_html)
-
                 end
 
           end    
+      end
+
+    module SmallStep =
+      struct
+
+        module Make (C : sig 
+                           type env
+                           type left
+                           type over
+                           type right
+
+                           val step      : env -> left -> over -> (env, left, over, right) BigStep.case
+                           val side_step : env -> left -> over -> right -> (env * left * over) option
+
+                           val env_html   : env   -> HTMLView.er
+                           val left_html  : left  -> HTMLView.er
+                           val over_html  : over  -> HTMLView.er
+                           val right_html : right -> HTMLView.er
+
+                           val customizer : BigStep.Tree.html_customizer
+                         end
+                    ) =
+          struct
+            module T = BigStep.Tree.Make (C)
+
+            let build ?(limit=(-1)) env left over =
+              let rec inner n acc env left over = 
+                if n = 0 then acc
+                else 
+		  let tree =  T.build env left over in
+		  let acc  = tree :: acc in
+		  match tree with
+		  | BigStep.Tree.Node (env, left, over, Good right, _ , _) -> 
+		      (match C.side_step env left over right with
+		       | Some (env', left', over') -> inner (n-1) acc env' left' over'
+		       | None -> acc
+		      )
+		  | _ -> acc
+              in
+              List.rev (inner limit [] env left over)
+
+	    let html id seq =
+	      HTMLView.table ~attrs:(Printf.sprintf "id=\"%s\"" id) (
+                HTMLView.tr (
+                  HTMLView.seq (
+                    List.mapi 
+                      (fun i t -> HTMLView.td (T.html (Printf.sprintf "__discard_%s_%d" id i) t))
+		      seq
+	          )
+	        )
+              )
+              
+          end
+
       end
 
   end

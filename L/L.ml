@@ -356,7 +356,7 @@ module Program =
     let parse s = 
       let hp = Helpers.highlighting () in
       let he = Helpers.highlighting () in
-      let parse s = Stmt.parse hp (Expr.hparse he) s in
+      let parse s = Stmt.parse hp (Expr.hparse he Expr.nothing) s in
       ostap (p:parse -EOF {p, hp, he}) s
 
     let rec html cbp cbe p = 
@@ -458,7 +458,5 @@ let toplevel =
 	     ]
            )
          method vertical = Program.vertical p
-         method code     = invalid_arg ""
-         method compile  = invalid_arg ""
        end
     )

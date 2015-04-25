@@ -54,9 +54,6 @@ class virtual c =
     method virtual ast      : string -> string
     method virtual vertical : string
     method virtual run      : string -> js -> Wizard.node
-
-    method code    = ""
-    method compile = ""
   end
 
 let make parse body source = parse source -?-> body

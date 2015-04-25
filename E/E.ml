@@ -39,54 +39,56 @@ module Expr =
     module Semantics =
       struct
  
-        module S = Semantics.Deterministic.BigStep
-
-        class virtual ['env, 'left, 'over, 'right, 'a] c =
-          object 
-            inherit ['a, 
-                     'env * 'left * 'over, ('env, 'left, 'over, 'right) S.case, 
-                     'env * 'left * 'over, ('env, 'left, 'over, 'right) S.case
-                    ] @t
-          end
-
-        module Strict (D : Semantics.Domain) =
+        module BigStep =
           struct
-            class virtual ['a] step =
-              object 
-                inherit [unit, D.t State.t, 'a, D.t, 'a] c 
-                method c_Binop (env, state, _) _ s x y =
-                  S.Subgoals (
-                    [env, state, x.GT.x; env, state, y.GT.x], 
-                    (fun [x'; y'] -> S.opt_to_case "" (D.op s  x' y')), "Binop"
-                  )
-              end
-          end
 
-        module NonStrict (D : Semantics.Domain) =
-          struct
-            class virtual ['a] step =
-              object 
-                inherit [unit, D.t State.t, 'a, D.t, 'a] c 
-                method c_Binop (env, state, _) _ s x y =
-                  S.Subgoals (
-                    [env, state, x.GT.x], 
-                    (fun [x'] -> 
-                       match D.dop s x' with 
-		       | `Value   z -> S.opt_to_case "" z 
-		       | `Curried f -> 
-			   S.Subgoals (
-                             [env, state, y.GT.x], 
-                             (fun [y'] -> S.opt_to_case "" (f y')), 
-                             ""
-                           )
-                    ), 
-                    "Binop"
-                  )
-              end
-          end
+            module S = Semantics.Deterministic.BigStep
 
+            class virtual ['env, 'left, 'over, 'right, 'a] c =
+              object 
+                inherit ['a, 
+                         'env * 'left * 'over, ('env, 'left, 'over, 'right) S.case, 
+                         'env * 'left * 'over, ('env, 'left, 'over, 'right) S.case
+                        ] @t
+              end
+
+            module Strict (D : Semantics.Domain) =
+              struct
+                class virtual ['a] step =
+                  object 
+                    inherit [unit, D.t State.t, 'a, D.t, 'a] c 
+                    method c_Binop (env, state, _) _ s x y =
+                      S.Subgoals (
+                        [env, state, x.GT.x; env, state, y.GT.x], 
+                        (fun [x'; y'] -> S.opt_to_case "" (D.op s  x' y')), "Binop"
+                      )
+                  end
+              end
+
+            module NonStrict (D : Semantics.Domain) =
+              struct
+                class virtual ['a] step =
+                  object 
+                    inherit [unit, D.t State.t, 'a, D.t, 'a] c 
+                    method c_Binop (env, state, _) _ s x y =
+                      S.Subgoals (
+                        [env, state, x.GT.x], 
+                        (fun [x'] -> 
+                           match D.dop s x' with 
+                           | `Value   z -> S.opt_to_case "" z 
+                           | `Curried f -> 
+                             S.Subgoals (
+                                [env, state, y.GT.x], 
+                                (fun [y'] -> S.opt_to_case "" (f y')), 
+                                ""
+                             )
+                        ), 
+                        "Binop"
+                      )
+                  end
+              end
+        end
       end
-
   end
 
 module SimpleExpr 
@@ -98,18 +100,20 @@ module SimpleExpr
 
     @type primary = [`Var of string | `Const of int] with html, show, foldl
 
-    let hparse h s =
+    let nothing p x = p x
+
+    let hparse h e s =
       let primary p = ostap (
            x:!(L.ident)   {`Var x}
         |  i:!(L.literal) {`Const i}
         |  -"(" p -")"  
         )
       in
-      Expr.hparse h C.ops primary s
+      Expr.hparse h C.ops (e primary) s
 
-    let parse s =
+    let parse e s =
       let h = Helpers.highlighting () in
-      ostap (e:hparse[h] -EOF {e, h}) s;;
+      ostap (x:hparse[h][e] -EOF {x, h}) s;;
 
     @type 'a expr = ['a Expr.t | primary] with html, show, foldl
 
@@ -181,8 +185,8 @@ module SimpleExpr
             method c_Const (env, stat, _) _ i = S.Just (I.from_int i, "Const")
           end
 
-        module ENS = Expr.Semantics.NonStrict(D)
-        module ES  = Expr.Semantics.Strict(D)
+        module ENS = Expr.Semantics.BigStep.NonStrict(D)
+        module ES  = Expr.Semantics.BigStep.Strict(D)
         
         class ['a] strict_step =
           object 
@@ -265,7 +269,7 @@ let toplevel =
     end)
   in
   Toplevel.make 
-    (Expr.L.fromString Expr.parse)
+    (Expr.L.fromString (Expr.parse Expr.nothing))
     (fun (p, h) ->         
         object inherit Toplevel.c
             method ast cb = View.toString (
@@ -274,7 +278,6 @@ let toplevel =
                               )
                             )
             method vertical  = Expr.vertical p
-            method code      = invalid_arg ""
             method run cb js = 
               let module S = Expr.Semantics (Semantics.NSInt)(struct let from_int x = x end)(struct let cb = (Helpers.interval cb h) end) in
               let state = ref State.empty in	      
@@ -305,7 +308,6 @@ let toplevel =
                   )
                ]
               )
-            method compile = invalid_arg ""
           end
     )
 
