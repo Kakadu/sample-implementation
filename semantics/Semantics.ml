@@ -123,22 +123,23 @@ module Deterministic =
                           HTMLView.seq [
                             if customizer#show_env
                                then HTMLView.seq [
-                                      HTMLView.td ~attrs:"rowspan=\"3\" align=\"center\" valign=\"center\"" (env.GT.fx ());
+                                      HTMLView.td ~attrs:"rowspan=\"3\" align=\"center\" valign=\"center\"" (HTMLView.tag "nobr" (env.GT.fx ()));
                                       HTMLView.td ~attrs:"rowspan=\"3\" align=\"center\" valign=\"center\"" (HTMLView.raw "&vdash;")
                                     ]
                                else View.empty;
-                            HTMLView.td ~attrs:"rowspan=\"3\" align=\"center\" valign=\"center\"" (left.GT.fx ());
+                            HTMLView.td ~attrs:"rowspan=\"3\" align=\"center\" valign=\"center\"" (HTMLView.tag "nobr" (left.GT.fx ()));
                             if customizer#show_over 
-                               then HTMLView.td ~attrs:(Printf.sprintf "width=\"%dpx\"align=\"center\"" customizer#over_width) (over.GT.fx ())
+                               then HTMLView.td ~attrs:(Printf.sprintf "width=\"%dpx\"align=\"center\"" customizer#over_width) 
+                                      (HTMLView.tag "nobr" (over.GT.fx ()))
                                else HTMLView.td (HTMLView.raw "&nbsp;");
                             HTMLView.td ~attrs:"rowspan=\"3\" align=\"center\" valign=\"center\"" 
                               (match right with 
                               | Bad t -> HTMLView.raw (Printf.sprintf "<attr title=\"%s\"><font color=\"red\">&#8224;</font></attr>" t)
-                              | Good r -> orig.GT.t#right () r
+                              | Good r -> HTMLView.tag "nobr" (orig.GT.t#right () r)
                               );
                             if customizer#show_rule && rule <> ""
                                then HTMLView.td ~attrs:"rowspan=\"3\" align=\"center\" valign=\"center\" style=\"font-size:80%\"" 
-                                      (HTMLView.raw ("&nbsp;(<i>by</i>&nbsp;[" ^ rule ^ "])"))
+                                      (HTMLView.tag "nobr" (HTMLView.raw ("&nbsp;(<i>by</i>&nbsp;[" ^ rule ^ "])")))
                                else View.empty
                           ]
                         );

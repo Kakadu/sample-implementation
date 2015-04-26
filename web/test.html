@@ -1,1 +1,276 @@
-<html><head><script type="text/javascript" src="mktree.js"></script><link rel="stylesheet" href="mktree.css" type="text/css"></head><body onload="convertTree(document.getElementById('root'), false)"><div style="transform:scaleY(-1)"><ul id="root" class="mktree"><li><table style="background-color:lavender;transform:scaleY(-1)"><tr><td rowspan="3" align="center" valign="center"><attr style="cursor:pointer" title="[]">s</attr></td><td rowspan="3" align="center" valign="center">&vdash;</td><td rowspan="3" align="center" valign="center"><tt>(&#8226;) + 3</tt></td><td>&nbsp;</td><td rowspan="3" align="center" valign="center">6</td><td rowspan="3" align="center" valign="center" style="font-size:80%">&nbsp;(<i>by</i>&nbsp;[Binop])</td></tr><tr><td width="50px"align="center" valign="center"><span style="display:inline-block;transform:scale(3,1)">&rarr;</span></td></tr><tr><td>&nbsp;</td></tr></table><ul><li><table style="background-color:lavender;transform:scaleY(-1)"><tr><td rowspan="3" align="center" valign="center"><attr style="cursor:pointer" title="[]">s</attr></td><td rowspan="3" align="center" valign="center">&vdash;</td><td rowspan="3" align="center" valign="center"><tt>1 + 2</tt></td><td>&nbsp;</td><td rowspan="3" align="center" valign="center">3</td><td rowspan="3" align="center" valign="center" style="font-size:80%">&nbsp;(<i>by</i>&nbsp;[Binop])</td></tr><tr><td width="50px"align="center" valign="center"><span style="display:inline-block;transform:scale(3,1)">&rarr;</span></td></tr><tr><td>&nbsp;</td></tr></table><ul><li><table style="background-color:lavender;transform:scaleY(-1)"><tr><td rowspan="3" align="center" valign="center"><attr style="cursor:pointer" title="[]">s</attr></td><td rowspan="3" align="center" valign="center">&vdash;</td><td rowspan="3" align="center" valign="center"><tt>1</tt></td><td>&nbsp;</td><td rowspan="3" align="center" valign="center">1</td><td rowspan="3" align="center" valign="center" style="font-size:80%">&nbsp;(<i>by</i>&nbsp;[Const])</td></tr><tr><td width="50px"align="center" valign="center"><span style="display:inline-block;transform:scale(3,1)">&rarr;</span></td></tr><tr><td>&nbsp;</td></tr></table></li><li><table style="background-color:lavender;transform:scaleY(-1)"><tr><td rowspan="3" align="center" valign="center"><attr style="cursor:pointer" title="[]">s</attr></td><td rowspan="3" align="center" valign="center">&vdash;</td><td rowspan="3" align="center" valign="center"><tt>2</tt></td><td>&nbsp;</td><td rowspan="3" align="center" valign="center">2</td><td rowspan="3" align="center" valign="center" style="font-size:80%">&nbsp;(<i>by</i>&nbsp;[Const])</td></tr><tr><td width="50px"align="center" valign="center"><span style="display:inline-block;transform:scale(3,1)">&rarr;</span></td></tr><tr><td>&nbsp;</td></tr></table></li></ul></li><li><table style="background-color:lavender;transform:scaleY(-1)"><tr><td rowspan="3" align="center" valign="center"><attr style="cursor:pointer" title="[]">s</attr></td><td rowspan="3" align="center" valign="center">&vdash;</td><td rowspan="3" align="center" valign="center"><tt>3</tt></td><td>&nbsp;</td><td rowspan="3" align="center" valign="center">3</td><td rowspan="3" align="center" valign="center" style="font-size:80%">&nbsp;(<i>by</i>&nbsp;[Const])</td></tr><tr><td width="50px"align="center" valign="center"><span style="display:inline-block;transform:scale(3,1)">&rarr;</span></td></tr><tr><td>&nbsp;</td></tr></table></li></ul></li></ul></div><body></html>
+<!DOCTYPE html>
+<html>
+<head>
+  <script type="text/javascript" src="mktree.js"></script>
+  <script src="L.js"></script>
+  <script type="text/javascript">
+    var script = null;
+
+    function registerScript (text) {
+      "use strict";
+
+      if (!script) script = document.createElement("script");
+      else document.body.removeChild (script);
+
+      script.innerHTML = text;
+      document.body.appendChild(script);
+    }
+
+    function do_run () {
+      document.getElementById("output").innerHTML = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+    }
+
+    function show_results (root, tree) {
+      clear_run_msg ();
+      document.getElementById ("output").innerHTML = tree;  
+      convertTree (document.getElementById (root), false);      
+    }
+
+    function disable_actions () {
+      document.getElementById ("run_button").disabled = true;
+      document.getElementById ("export_button").disabled = true;
+      document.getElementById ("parsed").innerHTML = "&nbsp;";
+      document.getElementById ("wizard").innerHTML = "&nbsp;";
+      document.getElementById ("output").innerHTML = "&nbsp;";      
+    }
+
+    function enable_actions () {
+      document.getElementById ("run_button").disabled = false;
+      document.getElementById ("export_button").disabled = false;   
+    }
+
+    function parser_msg (text) {
+      document.getElementById ("parsemsg").innerHTML = text;
+    }
+
+    function run_msg (text) {
+      document.getElementById ("runmsg").innerHTML = text;
+    }
+
+    function clear_parser_msg () {
+      document.getElementById ("parsemsg").innerHTML = "&nbsp;";
+    }
+
+    function clear_run_msg () {
+      document.getElementById ("runmsg").innerHTML = "&nbsp;";
+    }
+
+    function do_parse () {
+       document.getElementById ("parsed").innerHTML = "&nbsp;";
+       document.getElementById ("wizard").innerHTML = "&nbsp;";
+       document.getElementById ("output").innerHTML = "&nbsp;";     
+
+       clear_parser_msg ();
+       clear_run_msg ();
+
+       var result = window.parse (document.getElementById ("text").innerText.replace(/\u00a0/g, " "));
+       if (result[0] == "1") {
+          enable_actions ();
+          document.getElementById ("parsed").innerHTML = result[1];
+          convertTrees ();
+          expandTree ("ast");
+          do_highlighting (0, 0, 0, 0);
+       } else {
+          disable_actions ();
+          parser_msg (result[1]);
+          document.getElementById ("text").innerHTML = result[2];
+       }
+    }
+
+    function do_highlighting (x, y, z, t) {
+       document.getElementById ("text").innerHTML = window.highlight (x, y, z, t);
+       event.cancelBubble = true;
+    }
+
+    function handleFile (evt) {
+      var files = evt.target.files; 
+         
+      if (window.File && window.FileReader && window.FileList && window.Blob) {
+        var fr = new FileReader ();
+
+        for (var i = 0, f; f = files[i]; i++) {
+          fr.onload = function (e) {
+            document.getElementById("text").innerHTML = "<pre class=\"inline\">" + e.target.result + "</pre>";
+            disable_actions ();
+          };
+
+          fr.readAsText (f);
+        }                     
+      } 
+      else alert('The File APIs are not fully supported by your browser.');
+    }
+
+    function convert () {
+      var blob = new Blob([window.vertical ? window.vertical () : ""], {type: 'text/plain'});
+
+      window.URL = window.webkitURL || window.URL;
+
+      var href = window.URL.createObjectURL(blob);
+
+      document.getElementById ("save").href = href;
+      document.getElementById ("save").textContent = "Download";
+      document.getElementById ("save").download = "vertical.t";
+    }
+  </script>
+  <link rel="stylesheet" href="mktree.css" type="text/css">
+  <style>
+    pre.inline {
+      display: inline;
+    }
+
+   .editablediv {
+      border-style:solid;
+      border-width:1px;
+      border-color:#bbbbbb;
+      background-color:white;
+      width:50px;
+    }
+
+    textarea {
+      width:98%;
+    }
+
+    body {
+      background-color:#DDDDDD;
+    }
+
+    .main{
+      position:absolute;
+      width:100%;
+      bottom:0;
+      top:0;
+      padding:0px;
+      overflow-x:auto;
+      overflow-y:auto;
+    }
+
+    .maincontent{
+      position:fixed;
+      left:31%;
+      top:8%;
+      width:30%;
+      display:block;
+      height:100%;
+      overflow-x:hidden;
+      overflow-y:hidden;
+    }
+
+    .leftcol{
+      position:fixed; 
+      left:1%;
+      top:8%;
+      display:block;
+      width:29%;
+      padding:0;
+      margin:0px auto;
+      bottom:0;      
+      height:100%;
+      overflow-x:hidden;
+      overflow-y:hidden;
+    }
+
+    .rightcol{
+      position:fixed;
+      left:62%;
+      top:8%;
+      width:37%;
+      display:block;
+      height:100%;
+      overflow-x:hidden;
+      overflow-y:hidden;
+    }
+
+    .header {
+      position:fixed;
+      float:top;
+      top:0%;
+      width:100%;
+      top:0px;
+      display:block;
+    }
+
+    .scrollable {
+      overflow-y:scroll;
+      overflow-x:scroll;
+    }
+</style>
+</head>
+<body>
+
+<div class="main">
+  <div class="header">
+     <h2><center>Operational Semantics Primer</center></h2>
+  </div>
+  <div class="leftcol">
+    <table width="100%">
+      <tr>
+        <td align="left" width="100%">
+          Source code:
+          <hr>
+          <div class="scrollable" style="height:200px;font-family:monospace;line-height:90%;background-color:white" contentEditable="true" id="text"></div>
+          <hr>
+          <div id="parsemsg">&nbsp;</div>
+        </td>
+      </tr>
+      <tr>
+        <td align="center">
+          <hr>
+          <button type="button" onclick="do_parse()">Parse</button>&nbsp;&nbsp;
+          <input type="file" id="loadFile" name="file">&nbsp;&nbsp;
+          <button type="button" onclick="convert()" disabled="true" id="export_button">Export</button>&nbsp;&nbsp;<a href="" id=save></a>&nbsp;&nbsp;
+          <button type="button" onclick="do_run()" id="run_button">Run</button>
+          <hr>
+        </td>
+      </tr>    
+      <tr>
+        <td>
+         Abstract syntax tree:
+         <hr>
+         <div class="scrollable" style="width:100%;height:500px;background-color:white" id="parsed"></div>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="maincontent">
+    <table width="100%">
+      <tr>
+        <td>
+          Semantic settings:
+          <hr>
+          <div id="wizard" style="height:200px" align="center" valign="center">
+          </div>
+          <hr>
+          <div id="runmsg">&nbsp;</div>
+        </td>
+      </tr>  
+      <tr>
+        <td>
+          <hr>
+          Interpretation results:
+          <hr>
+          <div class="scrollable" style="width:100%;height:543px;background-color:white;position:relative" id="output">
+          </div>
+        </td>
+      </tr>
+    </table>
+  </div>
+  
+  <div class="rightcol">
+    <table width="100%">
+      <tr>
+        <td>
+        Semantic description:
+        <hr>
+          <div class="scrollable" style="height:837px;background-color:white" id="description">
+          </div>
+        </td>
+      </tr>
+    </table>
+  </div>
+</div>
+</body>
+<script type="text/javascript">
+  document.getElementById ("loadFile").addEventListener("change", handleFile, false);      
+</script>
+</html>
