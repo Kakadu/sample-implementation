@@ -96,20 +96,28 @@ function expandCollapseList(ul,cName,itemId) {
 
 // Search the document for UL elements with the correct CLASS name, then process them
 function convertTree(ul, bullet) {
-	setDefault("treeClass","mktree");
-	setDefault("nodeClosedClass","liClosed");
-	setDefault("nodeOpenClass","liOpen");          
-	setDefault("nodeBulletClass", bullet ? "liBullet" : "liNoBullet");
-
-        nodeBulletClass = bullet ? "liBullet" : "liNoBullet";
-	
-	setDefault("nodeLinkClass","bullet");
-	setDefault("preProcessTrees",true);
-
-	if (preProcessTrees) {
-           if (!document.createElement) { return; } // Without createElement, we can't do anything
-           processList(ul);
+    setDefault("treeClass","mktree");
+    setDefault("nodeClosedClass","liClosed");
+    setDefault("nodeOpenClass","liOpen");          
+    setDefault("nodeBulletClass", bullet ? "liBullet" : "liNoBullet");
+    
+    nodeBulletClass = bullet ? "liBullet" : "liNoBullet";
+    
+    setDefault("nodeLinkClass","bullet");
+    setDefault("preProcessTrees",true);
+    
+    if (preProcessTrees) {
+        if (!document.createElement) { return; } // Without createElement, we can't do anything
+	if (ul.nodeName == "UL" && ul.className == treeClass) {
+            processList(ul);
 	}
+	else {
+	    var subs = ul.childNodes;
+            for (var i=0; i<subs.length; i++) {
+		convertTree (subs[i], bullet);
+	    }
+	}
+    }
 }
 
 // Search the document for UL elements with the correct CLASS name, then process them

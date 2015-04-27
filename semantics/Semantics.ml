@@ -271,12 +271,16 @@ module Deterministic =
 
 	    let html id seq =
 	      HTMLView.table ~attrs:(Printf.sprintf "id=\"%s\"" id) (
-                HTMLView.tr (
-                  HTMLView.seq (
-                    List.mapi 
-                      (fun i t -> HTMLView.td (T.html (Printf.sprintf "__discard_%s_%d" id i) t))
-		      seq
-	          )
+                HTMLView.seq (
+                  List.mapi 
+                    (fun i t -> 
+		      (fun h -> 
+			if i > 0 
+			then HTMLView.seq [HTMLView.tr (HTMLView.td (HTMLView.raw "<hr>")); h]
+		        else h                        
+                      )
+		      (HTMLView.tr (HTMLView.td (T.html (Printf.sprintf "__discard_%s_%d" id i) t))))
+                    seq
 	        )
               )
               
