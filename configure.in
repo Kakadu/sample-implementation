@@ -96,6 +96,7 @@ common/Makefile
 js/Makefile
 semantics/Makefile
 E/Makefile
+E/Arrays/Makefile
 L/Makefile
 SM/Makefile
 ])

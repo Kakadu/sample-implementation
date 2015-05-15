@@ -1,8 +1,8 @@
-PACKAGE := E
-SUBDIRS = 
+PACKAGE := Arrays
+SUBDIRS =
 
 # type in sources here
-SOURCES = E.ml E.jsf.ml 
+SOURCES = Arrays.ml Arrays.jsf.ml
 MLI = 
 
 include $(top_srcdir)/m4/Makefile.am.vars
@@ -20,16 +20,17 @@ AM_OFLAGS += -rectypes -annot -cclib "-static"
 # overwrite some variables
 PXFLAGS = $(P5FLAGS)
 CAMLPXLIB = $(CAMLP5LIB)
-MODULE_INCLUDES += -I $(CAMLP5LIB) -I ../common -I ../js -I ../semantics
+MODULE_INCLUDES += -I $(CAMLP5LIB) -I ../../common -I ../../js -I ../../semantics -I ..
+
 
 # add extra compiled libraries used for linking
-EXTRA_CMA += Common.cma Semantics.cma Js_frontend.cma 
+EXTRA_CMA += Common.cma Semantics.cma Js_frontend.cma E.cmo
 
-TARGET := $(MLI) $(CMO) META $(BYTE) E.js
+TARGET := $(MLI) $(CMO) META $(BYTE) Arrays.js
 CLEAN_EXTRA += $(BYTE) $(NATIVE)
 
 %.js: %.byte
-	js_of_ocaml -o E.js $<; cp E.js ../web
+	js_of_ocaml -o Arrays.js $<; cp Arrays.js ../../web
 
 include $(top_srcdir)/m4/Makefile.am.targets
 

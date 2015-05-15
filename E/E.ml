@@ -12,7 +12,37 @@ module Expr =
         method c_Binop _ _ s x y = 
           Printf.sprintf "*\n%s\n%s%s" s (x.GT.fx ()) (y.GT.fx ())
       end
-    
+
+    class ['a] pretty prio =
+      object (this)
+        inherit ['a, int, string, int, string] @t
+        method c_Binop p _ s x y = 
+          let p' = prio s in          
+          (if p' > p 
+	   then Printf.sprintf "(%s %s %s)" 
+	   else Printf.sprintf "%s %s %s")
+          (x.GT.fx p') 
+          s 
+          (y.GT.fx p')
+      end    
+
+    class ['a] abbrev_html cb pretty =
+      let w = new Helpers.wrap cb pretty in
+      object (this)
+        inherit ['a, bool, HTMLView.er, bool, HTMLView.er] @t
+        method c_Binop top v s x y = 
+          if top 
+          then 
+	    HTMLView.tag "tt" (
+              HTMLView.seq [
+                x.GT.fx false;
+	        w#wrap v.GT.x (HTMLView.raw (Printf.sprintf " %s " s));
+                y.GT.fx false;
+	      ]
+	    )
+	  else w#wrap v.GT.x w#bullet
+      end
+
     let hparse (h : Helpers.h) ops primary s = 
       let rec parse s =  
         let l = List.map 
@@ -149,6 +179,14 @@ module SimpleExpr
 
     @type primary = [`Var of string | `Const of int] with html, show, foldl
 
+    class primary_abbrev_html cb pretty =
+      let w = new Helpers.wrap cb pretty in
+      object (this)       
+        inherit [bool, HTMLView.er] @primary
+        method c_Var   _ s x = w#wrap s.GT.x (HTMLView.tag "tt" (HTMLView.raw x))
+        method c_Const _ s i = w#wrap s.GT.x (HTMLView.tag "tt" (HTMLView.int i))
+      end
+    
     let nothing p x = p x
 
     let hparse h e s =
@@ -166,11 +204,56 @@ module SimpleExpr
 
     @type 'a expr = ['a Expr.t | primary] with html, show, foldl
 
+    let maxprio = Array.length C.ops 
+
+    exception Index of int 
+
+    let prio s =
+      try 
+	ignore (
+	  Array.mapi 
+	    (fun i (_, ops) -> 
+	      try ignore (List.find (fun s' -> s' = s) ops); raise (Index i)
+	      with Not_found -> ()
+	    ) 
+	    C.ops
+        );
+        maxprio
+      with Index i -> i
+
+    class ['a] pretty prio =
+      object (this)
+        inherit ['a, int, string, int, string] @expr
+        inherit ['a] Expr.pretty prio
+        method c_Var   _ _ x = x
+        method c_Const _ _ i = string_of_int i
+      end
+
+    let rec pretty e = 
+      transform(expr) (lift pretty) (new pretty prio) maxprio e
+   
     class ['a] html =
       object (this)
         inherit ['a] @expr[html]
         inherit Helpers.cname
       end
+
+    let rec html cb e = 
+      HTMLView.li ~attrs:(cb e) (transform(expr) (fun _ -> html cb) (new html) () e)
+
+    let cast f = fun x -> f (x :> 'a expr)
+
+    class ['a] abbrev_html cb pretty =
+      object (this)
+        inherit ['a, bool, HTMLView.er, bool, HTMLView.er] @expr
+        inherit ['a] Expr.abbrev_html (cast cb) (cast pretty)
+        inherit primary_abbrev_html (cast cb) (cast pretty)
+      end
+
+    let abbreviate_html cb e = 
+      let c = new abbrev_html cb pretty in
+      let rec inner top e = transform(expr) inner c top e in
+      inner true e
 
     class ['a] vertical =
       object (this)
@@ -179,31 +262,6 @@ module SimpleExpr
         method c_Var _ _ x = Printf.sprintf "x\n%s\n" x
         method c_Const _ _ i = Printf.sprintf "c\n%d\n" i
       end
-
-    let rec html cb e = 
-      HTMLView.li ~attrs:(cb e)
-        (transform(expr) (fun _ -> html cb) (new html) () e)
-
-    let abbreviate_html cb = 
-      let wrap node html =
-        HTMLView.tag "attr" ~attrs:(Printf.sprintf "%s style=\"cursor:pointer\"" (cb node)) html
-      in
-      let subtree = function
-      | `Const i as node -> wrap node (HTMLView.raw (string_of_int i))
-      | `Var   x as node -> wrap node (HTMLView.raw x)
-      | node -> wrap node (HTMLView.raw "(&#8226;)")
-      in
-      function
-      | `Const i as node -> wrap node (HTMLView.tag "tt" (HTMLView.int i))
-      | `Var   x as node -> wrap node (HTMLView.tag "tt" (HTMLView.raw x))
-      | `Binop (s, x, y) as node -> 
-          HTMLView.tag "tt" (
-            HTMLView.seq [
-              subtree x; 
-              wrap node (HTMLView.raw (Printf.sprintf " %s " s)); 
-              subtree y
-            ]
-          )
 
     let rec vertical e = transform(expr) (fun _ -> vertical) (new vertical) () e      
 
@@ -326,9 +384,7 @@ module SimpleExpr
                   )
                 method c_Const (env, stat, _) _ i = S.Just (h#of_value (I.from_int i), "Const")
               end
-(*
-            module ENS = Expr.Semantics.BigStep.NonStrict(D)
-*)
+
             module ES  = Expr.Semantics.SmallStep.Strict(D)
         
             class ['a] strict_step =
