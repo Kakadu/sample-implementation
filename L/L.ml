@@ -1,22 +1,12 @@
 open GT
 
-module Lexer = Lexer.Make (
+module Expr = E.LExpr (
+  Lexer.Make (
     struct 
       let keywords = ["while"; "do"; "if"; "then"; "else"; "skip"; "read"; "write"] 
     end
   )
-
-module Expr = E.SimpleExpr 
-  (Lexer)
-  (struct
-     let ops = [|
-        `Lefta, ["||"];
-        `Lefta, ["&&"];
-        `Nona , ["=="; "!="; "<="; "<"; ">="; ">"];
-        `Lefta, ["+" ; "-"];
-        `Lefta, ["*" ; "/"; "%"];
-      |] 
-   end)
+)
 
 module Stmt =
   struct
@@ -73,7 +63,7 @@ module Stmt =
 
     let parse (h : Helpers.h) expr s = 
       let ostap (
-        ident    : !(Lexer.ident);
+        ident    : !(Expr.L.ident);
         key[name]: @(name ^ "\\b" : name);
         parse: 
           l:($) x:ident ":=" e:expr                                      r:($) {h#register (`Assign (x, e)) (l :> Helpers.loc) (r :> Helpers.loc)}
@@ -388,7 +378,7 @@ module Program =
 
 let toplevel =  
   Toplevel.make
-    (Lexer.fromString Program.parse)
+    (Expr.L.fromString Program.parse)
     (fun (p, hp, he) ->
        object 
          method ast cb = View.toString (
@@ -430,8 +420,8 @@ let toplevel =
              [(fun page conf ->
                 let stream' = conf "Input stream" in
                 let depth'  = conf "Tree depth"   in
-                match Lexer.fromString (ostap (!(Ostap.Util.list0)[Lexer.literal] -EOF)) stream',
-                      Lexer.fromString (ostap (s:"-"? n:!(Lexer.literal) -EOF {match s with Some _ -> -(n) | _ -> n})) depth'
+                match Expr.L.fromString (ostap (!(Ostap.Util.list0)[Expr.L.literal] -EOF)) stream',
+                      Expr.L.fromString (ostap (s:"-"? n:!(Expr.L.literal) -EOF {match s with Some _ -> -(n) | _ -> n})) depth'
                 with
                 | Checked.Ok input'', Checked.Ok depth'' -> input := input''; depth := depth''; true
                 | Checked.Fail [msg], _ -> js#error page "Input stream" stream' msg; false

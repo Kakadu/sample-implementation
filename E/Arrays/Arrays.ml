@@ -4,17 +4,7 @@ open GT
 module Expr = 
   struct
 
-    module Base = E.SimpleExpr    
-	(Lexer.Make (struct let keywords = [] end))
-	(struct 
-	  let ops = [|
-            `Lefta, ["||"];
-            `Lefta, ["&&"];
-            `Nona , ["=="; "!="; "<="; "<"; ">="; ">"];
-            `Lefta, ["+" ; "-"];
-            `Lefta, ["*" ; "/"; "%"];
-	  |] 
-	 end)
+    module Base = E.LExpr (Lexer.Make (struct let keywords = [] end))
 
     @type 'a aexpr = [
       'a Base.expr 
@@ -97,44 +87,6 @@ let toplevel =
                             )
             method vertical  = invalid_arg "" (* Expr.vertical p *)
             method run cb js = invalid_arg "" 
-(*
-              let module S = Expr.Semantics (Semantics.NSInt)(Expr.DInt)(struct let cb = (Helpers.interval cb h) end) in
-              let state = ref State.empty in	      
-              Toplevel.Wizard.Page ([
-                  HTMLView.Wizard.flag  "strict";
-                  HTMLView.Wizard.combo "type" [
-                    HTMLView.raw "Big-Step"  , "bigstep"  , "selected=\"true\""; 
-                    HTMLView.raw "Small-Step", "smallstep", ""
-                  ];
-                  Toplevel.Wizard.div   "state"
-               ], 
-               [
-                (fun page conf -> 
-                   let st = conf "state" in
-                   match Expr.L.fromString (ostap (!(State.parse)[Expr.L.ident][Expr.L.literal] -EOF)) st with
-		   | Checked.Ok st -> 
-                      state := st; 
-                      true
-		   | Checked.Fail [msg] ->                     
-                      js#error page "state" st msg;
-                      false
-                ), 
-                Toplevel.Wizard.Exit 
-                  (fun conf ->
-                     js#results "root"                   
-		       (View.toString (
-                          if conf "type" = "bigstep"
-                          then
-                            if conf "strict" = "true" 
-                            then S.BigStep.Strict.Tree.html "root" (S.BigStep.Strict.Tree.build () !state p)
-                            else S.BigStep.NonStrict.Tree.html "root" (S.BigStep.NonStrict.Tree.build () !state p)
-                          else S.SmallStep.Strict.html "root" (S.SmallStep.Strict.build () !state p)
-		        )
-                       )
-                  )
-               ]
-              )
-*)
           end
     )
 

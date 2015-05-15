@@ -449,18 +449,20 @@ module SimpleExpr
 
   end
 
+module LExpr (L : Lexer.Sig) = SimpleExpr 
+  (L)
+  (struct
+     let ops = [|
+        `Lefta, ["||"];
+        `Lefta, ["&&"];
+        `Nona , ["=="; "!="; "<="; "<"; ">="; ">"];
+        `Lefta, ["+" ; "-"];
+        `Lefta, ["*" ; "/"; "%"];
+      |] 
+   end)
+
 let toplevel =  
-  let module Expr = SimpleExpr 
-   (Lexer.Make (struct let keywords = [] end))
-   (struct 
-      let ops = [|`Lefta, ["&&"]; 
-                  `Nona , ["=="];  
-                  `Lefta, ["+" ]; 
-                  `Lefta, ["/" ]
-                |]
-      let keywords = []
-    end)
-  in
+  let module Expr = LExpr (Lexer.Make (struct let keywords = [] end)) in
   Toplevel.make 
     (Expr.L.fromString (Expr.parse Expr.nothing))
     (fun (p, h) ->         
