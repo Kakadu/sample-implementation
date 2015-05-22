@@ -1,4 +1,4 @@
-open Ostap.Pretty
+open Ostap
 open GT
 
 module Expr = 
@@ -32,6 +32,22 @@ module Expr =
       let h = Helpers.highlighting () in
       ostap (x:hparse[h][e] -EOF {x, h}) s
 
+    class ['a] pretty prio =
+      object (this)
+        inherit ['a, int, Pretty.printer, int, Pretty.printer] @aexpr
+        inherit ['a] Base.pretty prio
+        method c_Array _ v elems = 
+	  Pretty.cboxed (Pretty.listByComma (List.map (v.GT.t#a Base.maxprio) elems))
+        method c_Indexed _ _ base index = 
+	  Pretty.seq [base.GT.fx Base.maxprio; Pretty.sboxed (index.GT.fx Base.maxprio)]
+      end
+  
+    let pretty e = 
+      let rec inner e = 
+	transform(aexpr) (lift inner) (new pretty Base.prio) Base.maxprio e 
+      in
+      Pretty.toString (inner e)
+
     class ['a] html =
       object (this)
         inherit ['a] @aexpr[html]
@@ -39,7 +55,7 @@ module Expr =
       end
 
     let rec html cb e =
-      HTMLView.li ~attrs:(cb e) (transform(aexpr) (fun _ -> html cb) (new html) () e)
+      HTMLView.li ~attrs:(cb.Helpers.f e) (transform(aexpr) (fun _ -> html cb) (new html) () e)
 
     let cast f = fun x -> f (x :> 'a aexpr)
 
@@ -47,7 +63,7 @@ module Expr =
       let w = new Helpers.wrap cb pretty in
       object (this)
         inherit ['a, bool, HTMLView.er, bool, HTMLView.er] @aexpr
-        inherit ['a] Base.abbrev_html (cast cb) (cast pretty)
+        inherit ['a] Base.abbrev_html cb (cast pretty)
         method c_Indexed top v base index = 
 	  w#wrap v.GT.x 
 	    (if top 
@@ -71,6 +87,20 @@ module Expr =
 	       )
              else w#bullet
             )
+      end
+
+    let abbreviate_html cb e = 
+      let c = new abbrev_html cb pretty in
+      let rec inner top e = transform(aexpr) inner c top e in
+      inner true e
+
+    module TopSemantics = Semantics
+
+    module Semantics (C : sig val cb : Helpers.poly end) =
+      struct
+
+        module BaseSemantics = Base.Semantics (TopSemantics.Int)(Base.DInt)(C)
+
       end
 
   end

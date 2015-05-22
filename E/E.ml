@@ -1,4 +1,4 @@
-open Ostap.Pretty
+open Ostap
 open GT
  
 module Expr =
@@ -15,15 +15,14 @@ module Expr =
 
     class ['a] pretty prio =
       object (this)
-        inherit ['a, int, string, int, string] @t
+        inherit ['a, int, Pretty.printer, int, Pretty.printer] @t
         method c_Binop p _ s x y = 
           let p' = prio s in          
           (if p' > p 
-	   then Printf.sprintf "(%s %s %s)" 
-	   else Printf.sprintf "%s %s %s")
-          (x.GT.fx p') 
-          s 
-          (y.GT.fx p')
+	   then (fun l -> Pretty.rboxed (Pretty.listBySpace l))
+	   else Pretty.listBySpace
+	  )
+          [x.GT.fx p'; Pretty.string s; y.GT.fx p']
       end    
 
     class ['a] abbrev_html cb pretty =
@@ -223,14 +222,15 @@ module SimpleExpr
 
     class ['a] pretty prio =
       object (this)
-        inherit ['a, int, string, int, string] @expr
+        inherit ['a, int, Pretty.printer, int, Pretty.printer] @expr
         inherit ['a] Expr.pretty prio
-        method c_Var   _ _ x = x
-        method c_Const _ _ i = string_of_int i
+        method c_Var   _ _ x = Pretty.string x
+        method c_Const _ _ i = Pretty.int i
       end
 
-    let rec pretty e = 
-      transform(expr) (lift pretty) (new pretty prio) maxprio e
+    let pretty e = 
+      let rec inner e = transform(expr) (lift inner) (new pretty prio) maxprio e in
+      Pretty.toString (inner e)
    
     class ['a] html =
       object (this)
@@ -239,15 +239,15 @@ module SimpleExpr
       end
 
     let rec html cb e = 
-      HTMLView.li ~attrs:(cb e) (transform(expr) (fun _ -> html cb) (new html) () e)
+      HTMLView.li ~attrs:(cb.Helpers.f e) (transform(expr) (fun _ -> html cb) (new html) () e)
 
     let cast f = fun x -> f (x :> 'a expr)
 
     class ['a] abbrev_html cb pretty =
       object (this)
         inherit ['a, bool, HTMLView.er, bool, HTMLView.er] @expr
-        inherit ['a] Expr.abbrev_html (cast cb) (cast pretty)
-        inherit primary_abbrev_html (cast cb) (cast pretty)
+        inherit ['a] Expr.abbrev_html cb (cast pretty)
+        inherit primary_abbrev_html cb (cast pretty)
       end
 
     let abbreviate_html cb e = 
@@ -269,7 +269,7 @@ module SimpleExpr
 
     module Semantics (D : Semantics.Domain)
                      (I : sig val from_int : int -> D.t val to_int : D.t -> int end) 
-                     (C : sig val cb : 'a expr as 'a -> string end) =
+                     (C : sig val cb : Helpers.poly end) =
       struct
 
         module BigStep =
@@ -438,12 +438,12 @@ module SimpleExpr
       end
 
     let eval_strict state e =
-      let module S = Semantics (TopSemantics.Int)(DInt)(struct let cb _ = "" end) in
+      let module S = Semantics (TopSemantics.Int)(DInt)(struct let cb = {Helpers.f = fun _ -> ""} end) in
       match S.BigStep.Strict.Tree.build () state e with
       | TopSemantics.Deterministic.BigStep.Tree.Node (_, _, _, r, _, _) -> r
 
     let eval_non_strict state e =
-      let module S = Semantics (TopSemantics.Int)(DInt)(struct let cb _ = "" end) in  
+      let module S = Semantics (TopSemantics.Int)(DInt)(struct let cb = {Helpers.f = fun _ -> ""} end) in  
       match S.BigStep.NonStrict.Tree.build () state e with
       | TopSemantics.Deterministic.BigStep.Tree.Node (_, _, _, r, _, _) -> r
 

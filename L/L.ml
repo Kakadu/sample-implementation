@@ -168,7 +168,7 @@ module Stmt =
                            val html : expr -> HTMLView.er
                          end
                      )
-                    (C : sig val cb : ('a, E.expr) t as 'a -> string end) =
+                    (C : sig val cb : Helpers.poly end) =
                   struct
                     type env   = unit
                     type left  = conf
@@ -180,7 +180,7 @@ module Stmt =
                     let right_html   = conf_html   
                     let over_html  s = 
 		      let wrap node html =
-			HTMLView.tag "attr" ~attrs:(Printf.sprintf "style=\"cursor:pointer\" %s" (C.cb node)) html
+			HTMLView.tag "attr" ~attrs:(Printf.sprintf "style=\"cursor:pointer\" %s" (C.cb.Helpers.f node)) html
 		      in
 		      wrap s
 			(GT.transform(t) 
@@ -295,7 +295,7 @@ module Stmt =
                            val html : expr -> HTMLView.er
                          end
                      )
-                    (C : sig val cb : ('a, E.expr) k as 'a -> string end) =
+                    (C : sig val cb : Helpers.poly end) =
                   struct
                     type env   = ('a, E.expr) k as 'a
                     type left  = conf
@@ -306,7 +306,7 @@ module Stmt =
    	              let wrap node html =
 			HTMLView.tag "attr" 
                           ~attrs:(Printf.sprintf "style=\"cursor:pointer\" %s"   
-                          (C.cb node)) 
+                          (C.cb.Helpers.f node)) 
                           html
 		      in
 		      wrap s
@@ -350,7 +350,7 @@ module Program =
       ostap (p:parse -EOF {p, hp, he}) s
 
     let rec html cbp cbe p = 
-      HTMLView.li ~attrs:(cbp p)
+      HTMLView.li ~attrs:(cbp.Helpers.f p)
         (transform(Stmt.t) 
            (fun _ -> html cbp cbe) 
            (fun _ -> Expr.html cbe) 
@@ -397,7 +397,7 @@ let toplevel =
                  | Semantics.Bad  reason -> Semantics.Bad reason
 
                let html e = 
-                 HTMLView.tag "attr" ~attrs:(Printf.sprintf "style=\"cursor:pointer\" %s" (Helpers.interval hcb he e))
+                 HTMLView.tag "attr" ~attrs:(Printf.sprintf "style=\"cursor:pointer\" %s" ((Helpers.interval hcb he).Helpers.f e))
                    (match e with 
 	            | `Const i -> HTMLView.raw (string_of_int i)
                     | `Var   x -> HTMLView.raw x

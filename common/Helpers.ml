@@ -1,4 +1,5 @@
-type loc = <loc : Ostap.Msg.Locator.t>
+type loc  = <loc : Ostap.Msg.Locator.t>
+type poly = {f : 'a . 'a -> string}
 
 class h = 
   let t = Trap.empty () in
@@ -21,12 +22,14 @@ class h =
 
 let highlighting () = new h
 
-let interval cb (h : h) t = 
-  if cb = "" then ""
-  else  
-    let ((x, y), (z, t)) = h#retrieve t in
-    Printf.sprintf "onclick=\"%s ('%d', '%d', '%d', '%d')\"" cb x y z t 
-        
+let interval cb (h : h) = {f = 
+  fun t -> 
+    if cb = "" then ""
+    else  
+      let ((x, y), (z, t)) = h#retrieve t in
+      Printf.sprintf "onclick=\"%s ('%d', '%d', '%d', '%d')\"" cb x y z t 
+}
+      
 ostap (
   loc[register][item]: l:($) x:item r:($) {
      register x l r
@@ -49,6 +52,6 @@ class ['a] wrap cb pretty =
     method bullet = HTMLView.raw "(&#8226;)"
     method wrap (node : 'a) html =
       HTMLView.tag "attr" 
-        ~attrs:(Printf.sprintf "%s style=\"cursor:pointer\" title=\"%s\"" (cb node) (pretty node)) 
+        ~attrs:(Printf.sprintf "%s style=\"cursor:pointer\" title=\"%s\"" (cb.f node) (pretty node)) 
          html
   end
