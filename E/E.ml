@@ -475,55 +475,63 @@ module LExpr (L : Lexer.Sig) = SimpleExpr
       |] 
    end)
 
+let wizard context =
+  let state = ref State.empty in	        
+  Toplevel.Wizard.Page ([
+    HTMLView.Wizard.flag  "strict";
+    HTMLView.Wizard.combo "type" [
+      HTMLView.raw "Big-Step"  , "bigstep"  , "selected=\"true\""; 
+      HTMLView.raw "Small-Step", "smallstep", ""
+    ];
+    Toplevel.Wizard.div "state"
+   ], 
+   [
+    (fun page conf -> 
+       let st = conf "state" in
+         match context#parse st with
+         | Checked.Ok st -> 
+             state := st; 
+             true
+         | Checked.Fail [msg] ->                     
+             context#error page "state" st msg;
+             false
+    ), 
+    Toplevel.Wizard.Exit (context#callback !state)
+   ]
+  )
+
+
 let toplevel =  
   let module Expr = LExpr (Lexer.Make (struct let keywords = [] end)) in
   Toplevel.make 
     (Expr.L.fromString (Expr.parse Expr.nothing))
     (fun (p, h) ->         
-        object inherit Toplevel.c
-            method ast cb = View.toString (
-                              HTMLView.ul ~attrs:"id=\"ast\" class=\"mktree\"" (
-                                Expr.html (Helpers.interval cb h) p
-                              )
-                            )
-            method vertical  = Expr.vertical p
-            method run cb js = 
-              let module S = Expr.Semantics (Semantics.NSInt)(Expr.DInt)(struct let cb = (Helpers.interval cb h) end) in
-              let state = ref State.empty in	      
-              Toplevel.Wizard.Page ([
-                  HTMLView.Wizard.flag  "strict";
-                  HTMLView.Wizard.combo "type" [
-                    HTMLView.raw "Big-Step"  , "bigstep"  , "selected=\"true\""; 
-                    HTMLView.raw "Small-Step", "smallstep", ""
-                  ];
-                  Toplevel.Wizard.div   "state"
-               ], 
-               [
-                (fun page conf -> 
-                   let st = conf "state" in
-                   match Expr.L.fromString (ostap (!(State.parse)[Expr.L.ident][Expr.L.literal] -EOF)) st with
-		   | Checked.Ok st -> 
-                      state := st; 
-                      true
-		   | Checked.Fail [msg] ->                     
-                      js#error page "state" st msg;
-                      false
-                ), 
-                Toplevel.Wizard.Exit 
-                  (fun conf ->
-                     js#results "root"                   
-		       (View.toString (
-                          if conf "type" = "bigstep"
-                          then
-                            if conf "strict" = "true" 
-                            then S.BigStep.Strict.Tree.html "root" (S.BigStep.Strict.Tree.build () !state p)
-                            else S.BigStep.NonStrict.Tree.html "root" (S.BigStep.NonStrict.Tree.build () !state p)
-                          else S.SmallStep.Strict.html "root" (S.SmallStep.Strict.build () !state p)
-		        )
-                       )
-                  )
-               ]
-              )
-          end
+       object inherit Toplevel.c
+         method ast cb = View.toString (
+                           HTMLView.ul ~attrs:"id=\"ast\" class=\"mktree\"" (
+                             Expr.html (Helpers.interval cb h) p
+                           )
+                         )
+         method vertical  = Expr.vertical p
+         method run cb js = 
+           let module S = Expr.Semantics (Semantics.NSInt)(Expr.DInt)(struct let cb = (Helpers.interval cb h) end) in
+           wizard 
+             (object 
+                method parse st = Expr.L.fromString (ostap (!(State.parse)[Expr.L.ident][Expr.L.literal] -EOF)) st
+                method error = js#error
+                method callback st conf =
+                  js#results "root"                   
+                    (View.toString (
+                       if conf "type" = "bigstep"
+                       then
+                         if conf "strict" = "true" 
+                         then S.BigStep.Strict.Tree.html "root" (S.BigStep.Strict.Tree.build () st p)
+                         else S.BigStep.NonStrict.Tree.html "root" (S.BigStep.NonStrict.Tree.build () st p)
+                       else S.SmallStep.Strict.html "root" (S.SmallStep.Strict.build () st p)
+	              )
+                    )
+              end
+             )
+       end
     )
 

@@ -194,62 +194,93 @@ module Expr =
         module SmallStep =
           struct
           end
-
       end
+  end
 
-    module IntArrayA =
+module IntArrayA =
+  struct
+
+    type t = I of int | A of t list
+            
+    let op s x y =
+      match x, y with
+      | I x, I y -> Semantics.bind (Semantics.IntA.op s x y) (fun l -> Good (I l))
+      | _  , _   -> Bad "not a scalar value"
+
+    let rec show = function 
+    | I x -> Semantics.IntA.show x
+    | A a -> Printf.sprintf "{%s}" (Helpers.concat (Helpers.intersperse ", " (List.map show a)))
+
+    let html = function
+    | I x -> Semantics.IntA.html x
+    | (A a) as x -> HTMLView.tag "attr" ~attrs:(Printf.sprintf "title=\"%s\"" (show x)) (HTMLView.raw "{&#8226;}")
+
+    module Spec (S : sig val spec : (string * (int -> bool)) list end) =
       struct
-
-        type t = I of int | A of t list
-            
-        let op s x y =
-          match x, y with
-          | I x, I y -> TopSemantics.bind (TopSemantics.IntA.op s x y) (fun l -> Good (I l))
-          | _  , _   -> Bad "not a scalar value"
-
-        let rec show = function 
-        | I x -> TopSemantics.IntA.show x
-        | A a -> Printf.sprintf "{%s}" (Helpers.concat (Helpers.intersperse ", " (List.map show a)))
-
-        let html = function
-        | I x -> TopSemantics.IntA.html x
-        | (A a) as x -> HTMLView.tag "attr" ~attrs:(Printf.sprintf "title=\"%s\"" (show x)) (HTMLView.raw "{&#8226;}")
-
-        module Spec (S : sig val spec : (string * (int -> bool)) list end) =
-          struct
-            let spec = List.map (fun (s, f) -> s, function I x -> f x | _ -> false) S.spec
-          end
-
-        module D =
-          struct
-
-            let from_int x = I x
-            let to_int = function 
-            | I x -> TopSemantics.Good x 
-            | _   -> TopSemantics.Bad "not a scalar value"
-
-          end
-            
+        let spec = List.map (fun (s, f) -> s, function I x -> f x | _ -> false) S.spec
       end
+            
+  end
 
-      module NSIntArray = TopSemantics.MakeDomain (IntArrayA)(IntArrayA.Spec (TopSemantics.NSIntSpec))
-      module IntArray   = TopSemantics.MakeDomain (IntArrayA)(IntArrayA.Spec (TopSemantics.IntSpec))
+module D =
+  struct
+
+    type t = IntArrayA.t = I of int | A of t list
+
+    let from_int x = I x
+    let to_int = function 
+    | I x -> Semantics.Good x 
+    | _   -> Semantics.Bad "not a scalar value"
+
+    let make elems = A elems
+    let index base index =
+      match base with
+      | I _     -> Semantics.Bad "base is not an array"
+      | A elems -> 
+         (match index with
+          | I i -> 
+            if i >= List.length elems 
+            then Semantics.Bad "index out of bounds" 
+            else Semantics.Good (List.nth elems i)
+	  | _ -> Semantics.Bad "index not an integer"
+	 )
 
   end
+
+module NSIntArray = Semantics.MakeDomain (IntArrayA)(IntArrayA.Spec (Semantics.NSIntSpec))
+(*module IntArray   = Semantics.MakeDomain (IntArrayA)(IntArrayA.Spec (Semantics.IntSpec))*)
 
 let toplevel =  
   Toplevel.make 
     (Expr.Base.L.fromString (Expr.parse Expr.Base.nothing))
     (fun (p, h) ->         
-        object inherit Toplevel.c
-            method ast cb = View.toString (
-                              HTMLView.ul ~attrs:"id=\"ast\" class=\"mktree\"" (
-                                Expr.html (Helpers.interval cb h) p
-                              )
-                            )
-            method vertical  = invalid_arg "" (* Expr.vertical p *)
-            method run cb js = invalid_arg "" 
-          end
+       object inherit Toplevel.c
+         method ast cb = View.toString (
+                           HTMLView.ul ~attrs:"id=\"ast\" class=\"mktree\"" (
+                             Expr.html (Helpers.interval cb h) p
+                           )
+                         )
+         method vertical  = invalid_arg "" (* Expr.vertical p *)
+         method run cb js = 
+           let module S = Expr.Semantics (NSIntArray)(D)(struct let cb = (Helpers.interval cb h) end) in
+           E.wizard 
+             (object 
+                method parse st = Expr.Base.L.fromString (ostap (!(State.parse)[Expr.Base.L.ident][ostap(x:!(Expr.Base.L.literal) {IntArrayA.I x})] -EOF)) st
+                method error = js#error
+                method callback st conf =
+                  js#results "root"                   
+                    (View.toString (
+                       if conf "type" = "bigstep"
+                       then
+                         if conf "strict" = "true" 
+                         then S.BigStep.Strict.Tree.html "root" (S.BigStep.Strict.Tree.build () st p)
+                         else S.BigStep.NonStrict.Tree.html "root" (S.BigStep.NonStrict.Tree.build () st p)
+                       else HTMLView.raw "" (* S.SmallStep.Strict.html "root" (S.SmallStep.Strict.build () st p)*)
+	              )
+                    )
+              end
+             )
+       end
     )
 
 
