@@ -292,7 +292,7 @@ module SimpleExpr
             
             class virtual ['a, 'b] base_step =
               object 
-                inherit [unit, D.t State.t, 'b (*'a expr*), D.t, 'a] c
+                inherit [unit, D.t State.t, 'b, D.t, 'a] c
                 method c_Var (env, state, _) _ x = 
                   (try S.Just (State.get state x, "Var") with
                    | _ -> S.Nothing (Printf.sprintf "undefined variable '%s'" x, "Var")
@@ -483,7 +483,7 @@ let wizard context =
       HTMLView.raw "Big-Step"  , "bigstep"  , "selected=\"true\""; 
       HTMLView.raw "Small-Step", "smallstep", ""
     ];
-    Toplevel.Wizard.div "state"
+    Toplevel.Wizard.div ~attrs:("style=\"width:200px\"") "state"
    ], 
    [
     (fun page conf -> 
@@ -496,7 +496,7 @@ let wizard context =
              context#error page "state" st msg;
              false
     ), 
-    Toplevel.Wizard.Exit (context#callback !state)
+    Toplevel.Wizard.Exit (context#callback state)
    ]
   )
 
@@ -525,9 +525,9 @@ let toplevel =
                        if conf "type" = "bigstep"
                        then
                          if conf "strict" = "true" 
-                         then S.BigStep.Strict.Tree.html "root" (S.BigStep.Strict.Tree.build () st p)
-                         else S.BigStep.NonStrict.Tree.html "root" (S.BigStep.NonStrict.Tree.build () st p)
-                       else S.SmallStep.Strict.html "root" (S.SmallStep.Strict.build () st p)
+                         then S.BigStep.Strict.Tree.html "root" (S.BigStep.Strict.Tree.build () !st p)
+                         else S.BigStep.NonStrict.Tree.html "root" (S.BigStep.NonStrict.Tree.build () !st p)
+                       else S.SmallStep.Strict.html "root" (S.SmallStep.Strict.build () !st p)
 	              )
                     )
               end

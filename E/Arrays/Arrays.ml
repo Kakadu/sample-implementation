@@ -85,7 +85,7 @@ module Expr =
                  List.map (fun e -> v.GT.t#a false e) elems @
                  [HTMLView.tag "tt" (HTMLView.raw "}")]
 	       )
-             else w#bullet
+             else HTMLView.seq [HTMLView.raw "{"; w#bullet; HTMLView.raw "}"]
             )
       end
 
@@ -235,20 +235,19 @@ module D =
     let make elems = A elems
     let index base index =
       match base with
-      | I _     -> Semantics.Bad "base is not an array"
+      | I _     -> Semantics.Bad "base value is not an array"
       | A elems -> 
          (match index with
           | I i -> 
             if i >= List.length elems 
-            then Semantics.Bad "index out of bounds" 
+            then Semantics.Bad "index value out of bounds" 
             else Semantics.Good (List.nth elems i)
-	  | _ -> Semantics.Bad "index not an integer"
+	  | _ -> Semantics.Bad "index value not an integer"
 	 )
 
   end
 
 module NSIntArray = Semantics.MakeDomain (IntArrayA)(IntArrayA.Spec (Semantics.NSIntSpec))
-(*module IntArray   = Semantics.MakeDomain (IntArrayA)(IntArrayA.Spec (Semantics.IntSpec))*)
 
 let toplevel =  
   Toplevel.make 
@@ -265,7 +264,14 @@ let toplevel =
            let module S = Expr.Semantics (NSIntArray)(D)(struct let cb = (Helpers.interval cb h) end) in
            E.wizard 
              (object 
-                method parse st = Expr.Base.L.fromString (ostap (!(State.parse)[Expr.Base.L.ident][ostap(x:!(Expr.Base.L.literal) {IntArrayA.I x})] -EOF)) st
+                method parse st = 
+                  let ostap (
+                     value: 
+                       x:!(Expr.Base.L.literal)      {IntArrayA.I x} 
+                     | "{" x:!(Util.list)[value] "}" {IntArrayA.A x}
+                  )
+		  in
+		  Expr.Base.L.fromString (ostap (!(State.parse)[Expr.Base.L.ident][value] -EOF)) st
                 method error = js#error
                 method callback st conf =
                   js#results "root"                   
@@ -273,8 +279,8 @@ let toplevel =
                        if conf "type" = "bigstep"
                        then
                          if conf "strict" = "true" 
-                         then S.BigStep.Strict.Tree.html "root" (S.BigStep.Strict.Tree.build () st p)
-                         else S.BigStep.NonStrict.Tree.html "root" (S.BigStep.NonStrict.Tree.build () st p)
+                         then S.BigStep.Strict.Tree.html "root" (S.BigStep.Strict.Tree.build () !st p)
+                         else S.BigStep.NonStrict.Tree.html "root" (S.BigStep.NonStrict.Tree.build () !st p)
                        else HTMLView.raw "" (* S.SmallStep.Strict.html "root" (S.SmallStep.Strict.build () st p)*)
 	              )
                     )
