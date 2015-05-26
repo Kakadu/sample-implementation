@@ -96,12 +96,144 @@ module Expr =
 
     module TopSemantics = Semantics
 
-    module Semantics (C : sig val cb : Helpers.poly end) =
+    module type A =
+      sig
+        include Base.I
+        val make  : t list -> t      
+        val index : t -> t -> t Semantics.opt
+      end
+
+    module Semantics (D : TopSemantics.Domain)
+                     (A : A with type t = D.t)
+                     (C : Base.C) =
       struct
 
-        module BaseSemantics = Base.Semantics (TopSemantics.Int)(Base.DInt)(C)
+        module BaseSemantics = Base.Semantics (D)(A)(C)
+
+        module BigStep =
+          struct
+           
+            module S = BaseSemantics.BigStep.S 
+
+            class virtual ['env, 'left, 'over, 'right, 'a] c =
+              object
+                inherit ['a, 
+                         'env * 'left * 'over, ('env, 'left, 'over, 'right) S.case, 
+                         'env * 'left * 'over, ('env, 'left, 'over, 'right) S.case
+                        ] @aexpr
+              end
+
+            class virtual ['a, 'b] base_step =
+              object
+                inherit [unit, D.t State.t, 'b, D.t, 'a] c
+                method c_Array (env, state, _) x elems = 
+                  S.Subgoals (
+                    List.map (fun e -> env, state, e) elems, 
+                    (fun elems -> S.Just (A.make elems, "")), 
+                    "Array"
+                  )
+                method c_Indexed (env, state, _) x base index = 
+                  S.Subgoals (
+                    [env, state, base.GT.x; env, state, index.GT.x], 
+                    (fun [base; index] -> S.opt_to_case "" (A.index base index)),
+                    "Index"
+                  )
+              end
+            
+            class ['a, 'b] strict_step =
+              object
+                inherit ['a, 'b] BaseSemantics.BigStep.strict_step
+                inherit ['a, 'b] base_step
+              end
+
+            class ['a, 'b] non_strict_step =
+              object
+                inherit ['a, 'b] BaseSemantics.BigStep.non_strict_step
+                inherit ['a, 'b] base_step
+              end
+
+            module Base = BaseSemantics.BigStep.MakeBase (
+              struct
+                type over  = 'a aexpr as 'a
+                let over_html  = abbreviate_html C.cb
+              end
+	    )
+
+            module Strict =
+              struct
+                module Tree = S.Tree.Make (
+                  struct
+                    include Base
+                    let rec step env state e =
+                      GT.transform(aexpr)
+                        (fun (env, state, _) e -> step env state e)
+                        (new strict_step)
+                        (env, state, e)
+                        e
+                  end
+                )
+              end
+
+            module NonStrict =
+              struct
+                module Tree = S.Tree.Make (
+                  struct
+                    include Base
+                    let rec step env state e =
+                      GT.transform(aexpr)
+                        (fun (env, state, _) e -> step env state e)
+                        (new non_strict_step)
+                        (env, state, e)
+                        e
+                  end
+                )
+              end
+
+          end
+
+        module SmallStep =
+          struct
+          end
 
       end
+
+    module IntArrayA =
+      struct
+
+        type t = I of int | A of t list
+            
+        let op s x y =
+          match x, y with
+          | I x, I y -> TopSemantics.bind (TopSemantics.IntA.op s x y) (fun l -> Good (I l))
+          | _  , _   -> Bad "not a scalar value"
+
+        let rec show = function 
+        | I x -> TopSemantics.IntA.show x
+        | A a -> Printf.sprintf "{%s}" (Helpers.concat (Helpers.intersperse ", " (List.map show a)))
+
+        let html = function
+        | I x -> TopSemantics.IntA.html x
+        | (A a) as x -> HTMLView.tag "attr" ~attrs:(Printf.sprintf "title=\"%s\"" (show x)) (HTMLView.raw "{&#8226;}")
+
+        module Spec (S : sig val spec : (string * (int -> bool)) list end) =
+          struct
+            let spec = List.map (fun (s, f) -> s, function I x -> f x | _ -> false) S.spec
+          end
+
+        module D =
+          struct
+
+            let from_int x = I x
+            let to_int = function 
+            | I x -> TopSemantics.Good x 
+            | _   -> TopSemantics.Bad "not a scalar value"
+
+          end
+            
+      end
+
+      module NSIntArray = TopSemantics.MakeDomain (IntArrayA)(IntArrayA.Spec (TopSemantics.NSIntSpec))
+      module IntArray   = TopSemantics.MakeDomain (IntArrayA)(IntArrayA.Spec (TopSemantics.IntSpec))
 
   end
 

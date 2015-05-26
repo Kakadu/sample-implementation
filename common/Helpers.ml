@@ -55,3 +55,9 @@ class ['a] wrap cb pretty =
         ~attrs:(Printf.sprintf "%s style=\"cursor:pointer\" title=\"%s\"" (cb.f node) (pretty node)) 
          html
   end
+
+let concat = List.fold_left (^) ""
+let rec intersperse x = function 
+| []    -> []
+| [h]   -> [h]
+| h::tl -> h :: x :: intersperse x tl

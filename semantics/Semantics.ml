@@ -75,8 +75,11 @@ module IntA =
 
  end
 
-module NSInt = MakeDomain (IntA)(struct let spec = ["*", (=) 0; "&&", (=) 0; "||", (=) 1] end)
-module Int   = MakeDomain (IntA)(struct let spec = [] end)
+module NSIntSpec = struct let spec = ["*", (=) 0; "&&", (=) 0; "||", (=) 1] end
+module IntSpec   = struct let spec = [] end
+
+module NSInt = MakeDomain (IntA)(NSIntSpec)
+module Int   = MakeDomain (IntA)(IntSpec)
 
 module Deterministic =
   struct 

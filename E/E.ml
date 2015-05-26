@@ -65,6 +65,8 @@ module Expr =
       let h = Helpers.highlighting () in
       ostap (e:hparse[h][ops][primary] -EOF {e, h}) s
 
+    module TopSemantics = Semantics
+
     module Semantics =
       struct
  
@@ -129,7 +131,7 @@ module Expr =
               object
                 method virtual is_value : 'e -> bool
                 method virtual to_value : 'e -> 'v
-                method virtual of_value : 'v -> 'e
+                method virtual of_value : 'v -> 'e TopSemantics.opt
               end
 
             module Strict (D : Semantics.Domain) =
@@ -146,7 +148,7 @@ module Expr =
 			    "Binop" 
 			    (Semantics.bind 
 			       (D.op s (h#to_value x.GT.x) (h#to_value y.GT.x)) 
-			       (fun x -> Semantics.Good (h#of_value x))
+			       (fun x -> h#of_value x)
 			    )
                         else 
                           S.Subgoals (
@@ -267,27 +269,30 @@ module SimpleExpr
 
     module TopSemantics = Semantics
 
+    module type I = sig type t val from_int : int -> t val to_int : t -> int TopSemantics.opt end
+    module type C = sig val cb : Helpers.poly end
+
     module Semantics (D : Semantics.Domain)
-                     (I : sig val from_int : int -> D.t val to_int : D.t -> int end) 
-                     (C : sig val cb : Helpers.poly end) =
+                     (I : I with type t = D.t) 
+                     (C : C) =
       struct
 
         module BigStep =
           struct
 
-            module S = Semantics.Deterministic.BigStep
+            module S = TopSemantics.Deterministic.BigStep
+            module EBS = Expr.Semantics.BigStep
 
             class virtual ['env, 'left, 'over, 'right, 'a] c =
               object 
                 inherit ['a, 
-                         'env * 'left * 'over, ('env, 'left, 'over, 'right) S.case, 
-                         'env * 'left * 'over, ('env, 'left, 'over, 'right) S.case
-                        ] @expr
+                         'env * 'left * 'over, ('env, 'left, 'over, 'right) S.case,
+			 'env * 'left * 'over, ('env, 'left, 'over, 'right) S.case] @expr
               end
-
-            class virtual ['a] base_step =
+            
+            class virtual ['a, 'b] base_step =
               object 
-                inherit [unit, D.t State.t, 'a expr, D.t, 'a] c
+                inherit [unit, D.t State.t, 'b (*'a expr*), D.t, 'a] c
                 method c_Var (env, state, _) _ x = 
                   (try S.Just (State.get state x, "Var") with
                    | _ -> S.Nothing (Printf.sprintf "undefined variable '%s'" x, "Var")
@@ -295,31 +300,31 @@ module SimpleExpr
                 method c_Const (env, stat, _) _ i = S.Just (I.from_int i, "Const")
               end
 
-            module ENS = Expr.Semantics.BigStep.NonStrict(D)
-            module ES  = Expr.Semantics.BigStep.Strict(D)
-        
-            class ['a] strict_step =
+            module ENS = EBS.NonStrict(D)
+            module ES  = EBS.Strict(D)
+                    
+            class ['a, 'b] strict_step =
               object 
-                inherit ['a] base_step
+                inherit ['a, 'b] base_step
                 inherit ['a] ES.step
               end
 
-            class ['a] non_strict_step =
+            class ['a, 'b] non_strict_step =
               object 
-                inherit ['a] base_step
+                inherit ['a, 'b] base_step
                 inherit ['a] ENS.step
               end
 
-            module Base =
+            module MakeBase (O : sig type over val over_html : over -> HTMLView.er end) =
               struct
+                include O
+
                 type env   = unit
                 type left  = D.t State.t
-                type over  = 'a expr as 'a
                 type right = D.t
 
                 let env_html   = HTMLView.unit
                 let left_html  = State.html D.show
-                let over_html  = abbreviate_html C.cb
                 let right_html = D.html
 
                 let customizer =
@@ -329,6 +334,13 @@ module SimpleExpr
                     method over_width = 70
                   end
               end
+
+            module Base = MakeBase (
+	      struct 
+                type over = 'a expr as 'a 
+                let over_html = abbreviate_html C.cb
+              end
+	    ) 
 
             module Strict =
               struct
@@ -372,17 +384,17 @@ module SimpleExpr
                 inherit ['a expr as 'a, D.t] Expr.Semantics.SmallStep.helper
 		method is_value e = match e with `Const _ -> true | _ -> false
                 method to_value (`Const i) = I.from_int i
-                method of_value  i = `Const (I.to_int i)
+                method of_value i = TopSemantics.bind (I.to_int i) (fun i -> TopSemantics.Good (`Const i))
               end
 
             class virtual ['a] base_step h =
               object 
                 inherit [unit, D.t State.t, 'a expr, 'a expr, 'a] BigStep.c
                 method c_Var (env, state, _) _ x = 
-                  (try  S.Just (h#of_value (State.get state x), "Var") with
+                  (try S.opt_to_case "Var" (h#of_value (State.get state x)) with
                    | _ -> S.Nothing (Printf.sprintf "undefined variable '%s'" x, "Var")
                   )
-                method c_Const (env, stat, _) _ i = S.Just (h#of_value (I.from_int i), "Const")
+                method c_Const (env, stat, _) _ i = S.opt_to_case "Const" (h#of_value (I.from_int i))
               end
 
             module ES  = Expr.Semantics.SmallStep.Strict(D)
@@ -433,8 +445,10 @@ module SimpleExpr
 
     module DInt = 
       struct
+        type t = TopSemantics.Int.t 
+
         let from_int x = x 
-        let to_int   x = x
+        let to_int   x = TopSemantics.Good x
       end
 
     let eval_strict state e =
