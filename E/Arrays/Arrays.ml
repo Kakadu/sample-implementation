@@ -99,8 +99,9 @@ module Expr =
     module type A =
       sig
         include Base.I
-        val make  : t list -> t      
-        val index : t -> t -> t Semantics.opt
+        val make     : t list -> t      
+        val index    : t -> t -> t Semantics.opt
+        val of_value : t -> ('a aexpr as 'a) Semantics.opt
       end
 
     module Semantics (D : TopSemantics.Domain)
@@ -154,7 +155,7 @@ module Expr =
 
             module Base = BaseSemantics.BigStep.MakeBase (
               struct
-                type over  = 'a aexpr as 'a
+                type over = 'a aexpr as 'a
                 let over_html  = abbreviate_html C.cb
               end
 	    )
@@ -193,6 +194,41 @@ module Expr =
 
         module SmallStep =
           struct
+
+            module S = BigStep.S
+
+            class helper =
+              object (this)
+                inherit ['a aexpr as 'a, D.t] E.Expr.Semantics.SmallStep.helper
+                method is_value e = 
+		  match e with 
+		  | `Const _     -> true 
+		  | `Array elems -> List.fold_left (fun f e -> f && this#is_value e) true elems
+		  | _            -> false
+		method to_value e =
+		  match e with
+		  | `Const i     -> A.from_int i
+                  | `Array elems -> A.make (List.map this#to_value elems)
+		method of_value v = A.of_value v
+              end
+
+	    class virtual ['a] base_step h =
+              object
+                inherit [unit, D.t State.t, 'a aexpr, 'a aexpr, 'a] BigStep.c
+                method c_Array (env, state, _) x elems = invalid_arg ""
+                method c_Indexed (env, state, _) x base index = invalid_arg ""
+              end
+
+            module ES  = E.Expr.Semantics.SmallStep.Strict(D)
+            module ENS = E.Expr.Semantics.SmallStep.NonStrict(D)
+        
+            class virtual ['a] strict_step =
+              let h = new helper in
+              object 
+                inherit ['a] base_step h
+                (*inherit ['a] BaseSemantics.SmallStep.base_step h*)
+              end
+
           end
       end
   end
@@ -244,7 +280,12 @@ module D =
             else Semantics.Good (List.nth elems i)
 	  | _ -> Semantics.Bad "index value not an integer"
 	 )
-
+    let rec of_value d =
+      match d with
+      | I i     -> Semantics.Good (`Const i)
+      | A elems ->
+          try Semantics.Good (`Array (List.map (fun e -> match of_value e with Semantics.Good v -> v) elems))
+          with _ -> Semantics.Bad "not a value"
   end
 
 module NSIntArray = Semantics.MakeDomain (IntArrayA)(IntArrayA.Spec (Semantics.NSIntSpec))

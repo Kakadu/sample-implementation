@@ -19,7 +19,7 @@ module type Domain =
  sig
 
    include Algebra
-   val dop : string -> t -> [`Value of t opt | `Curried of t -> t opt]
+   val dop : string -> t -> [`Value of t | `Curried of t -> t opt]
 
  end
 
@@ -34,12 +34,12 @@ module MakeDomain (A : Algebra) (S : sig val spec : (string * (A.t -> bool)) lis
    let dop s x =
      try
        let _, p = List.find (fun (s', _) -> s' = s) S.spec in
-       if p x then `Value (Good x) else `Curried (A.op s x)
+       if p x then `Value x else `Curried (A.op s x)
      with Not_found -> `Curried (A.op s x)
 
    let op s x y = 
      match dop s x with 
-     | `Value   z -> z 
+     | `Value   z -> Good z 
      | `Curried f -> f y
 
  end

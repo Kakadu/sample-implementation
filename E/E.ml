@@ -107,7 +107,7 @@ module Expr =
                         [env, state, x.GT.x], 
                         (fun [x'] -> 
                            match D.dop s x' with 
-                           | `Value   z -> S.opt_to_case "" z 
+                           | `Value   z -> S.Just (z, "")
                            | `Curried f -> 
                              S.Subgoals (
                                 [env, state, y.GT.x], 
@@ -156,6 +156,41 @@ module Expr =
                             (fun [y'] -> S.Just (`Binop (s, x.GT.x, y'), "")), 
                             "Binop_Right"
                           )
+                      else
+                        S.Subgoals (
+                          [env, state, x.GT.x], 
+                          (fun [x'] -> S.Just (`Binop (s, x', y.GT.x), "")), 
+                          "Binop_Left"
+                        )
+                  end
+              end
+
+            module NonStrict (D : Semantics.Domain) =
+              struct
+                class virtual ['a] step h =
+                  object 
+                    inherit [unit, D.t State.t, 'a, 'a, 'a] BigStep.c 
+                    method c_Binop (env, state, _) _ s x y =
+                      if h#is_value x.GT.x
+                      then
+                        (match D.dop s (h#to_value x.GT.x) with
+			| `Value   z -> S.opt_to_case "Binop_Left_NS" (h#of_value z)
+			| `Curried f ->
+                            if h#is_value y.GT.x
+                            then 
+                              S.opt_to_case 
+			        "Binop" 
+			        (Semantics.bind 
+			           (D.op s (h#to_value x.GT.x) (h#to_value y.GT.x)) 
+                                   (fun x -> h#of_value x)
+			        )
+                            else 
+                              S.Subgoals (
+                                [env, state, y.GT.x], 
+                                (fun [y'] -> S.Just (`Binop (s, x.GT.x, y'), "")), 
+                                "Binop_Right"
+                              )
+                        )
                       else
                         S.Subgoals (
                           [env, state, x.GT.x], 
@@ -398,12 +433,20 @@ module SimpleExpr
               end
 
             module ES  = Expr.Semantics.SmallStep.Strict(D)
+            module ENS = Expr.Semantics.SmallStep.NonStrict(D)
         
             class ['a] strict_step =
               let h = new helper in
               object 
                 inherit ['a] base_step h
                 inherit ['a] ES.step h
+              end
+
+            class ['a] non_strict_step =
+              let h = new helper in
+              object 
+                inherit ['a] base_step h
+                inherit ['a] ENS.step h
               end
 
             module Base =
@@ -433,6 +476,19 @@ module SimpleExpr
                   GT.transform(expr) 
 	          (fun (env, state, _) e -> step env state e) 
 		  (new strict_step) 
+		  (env, state, e) 
+		  e
+		let side_step env state e = function `Const x -> None | e' -> Some (env, state, e')
+              end
+            )
+
+            module NonStrict = Semantics.Deterministic.SmallStep.Make (
+              struct
+                include Base
+                let rec step env state e = 
+                  GT.transform(expr) 
+	          (fun (env, state, _) e -> step env state e) 
+		  (new non_strict_step) 
 		  (env, state, e) 
 		  e
 		let side_step env state e = function `Const x -> None | e' -> Some (env, state, e')
@@ -527,7 +583,10 @@ let toplevel =
                          if conf "strict" = "true" 
                          then S.BigStep.Strict.Tree.html "root" (S.BigStep.Strict.Tree.build () !st p)
                          else S.BigStep.NonStrict.Tree.html "root" (S.BigStep.NonStrict.Tree.build () !st p)
-                       else S.SmallStep.Strict.html "root" (S.SmallStep.Strict.build () !st p)
+                       else 
+                         if conf "strict" = "true"
+                         then S.SmallStep.Strict.html "root" (S.SmallStep.Strict.build () !st p)
+                         else S.SmallStep.NonStrict.html "root" (S.SmallStep.NonStrict.build () !st p)
 	              )
                     )
               end
