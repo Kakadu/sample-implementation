@@ -422,9 +422,9 @@ module SimpleExpr
                 method of_value i = TopSemantics.bind (I.to_int i) (fun i -> TopSemantics.Good (`Const i))
               end
 
-            class virtual ['a] base_step h =
+            class virtual ['a, 'b] base_step h =
               object 
-                inherit [unit, D.t State.t, 'a expr, 'a expr, 'a] BigStep.c
+                inherit [unit, D.t State.t, 'b, 'b, 'a] BigStep.c
                 method c_Var (env, state, _) _ x = 
                   (try S.opt_to_case "Var" (h#of_value (State.get state x)) with
                    | _ -> S.Nothing (Printf.sprintf "undefined variable '%s'" x, "Var")
@@ -435,31 +435,31 @@ module SimpleExpr
             module ES  = Expr.Semantics.SmallStep.Strict(D)
             module ENS = Expr.Semantics.SmallStep.NonStrict(D)
         
-            class ['a] strict_step =
+            class ['a, 'b] strict_step =
               let h = new helper in
               object 
-                inherit ['a] base_step h
+                inherit ['a, 'b] base_step h
                 inherit ['a] ES.step h
               end
 
-            class ['a] non_strict_step =
+            class ['a, 'b] non_strict_step =
               let h = new helper in
               object 
-                inherit ['a] base_step h
+                inherit ['a, 'b] base_step h
                 inherit ['a] ENS.step h
               end
-
-            module Base =
+            
+            module MakeBase (O : sig type t val html : t -> HTMLView.er end) =
               struct
                 type env   = unit
                 type left  = D.t State.t
-                type over  = 'a expr as 'a
-                type right = 'a expr as 'a
+                type over  = O.t
+                type right = O.t
 
                 let env_html   = HTMLView.unit
                 let left_html  = State.html D.show
-                let over_html  = abbreviate_html C.cb
-                let right_html = abbreviate_html C.cb
+                let over_html  = O.html
+                let right_html = O.html
 
                 let customizer =
                   object 
@@ -469,15 +469,21 @@ module SimpleExpr
                   end
               end
 
+            module Base = MakeBase (
+              struct 
+                type t = 'a expr as 'a 
+                let html = abbreviate_html C.cb 
+              end)
+
             module Strict = Semantics.Deterministic.SmallStep.Make (
               struct
                 include Base
                 let rec step env state e = 
                   GT.transform(expr) 
-	          (fun (env, state, _) e -> step env state e) 
-		  (new strict_step) 
-		  (env, state, e) 
-		  e
+	            (fun (env, state, _) e -> step env state e) 
+		    (new strict_step) 
+		    (env, state, e) 
+		    e
 		let side_step env state e = function `Const x -> None | e' -> Some (env, state, e')
               end
             )

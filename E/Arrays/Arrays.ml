@@ -197,14 +197,15 @@ module Expr =
 
             module S = BigStep.S
 
+            let rec is_value = function
+            | `Const _     -> true 
+	    | `Array elems -> List.fold_left (fun f e -> f && is_value e) true elems
+	    | _            -> false
+
             class helper =
               object (this)
                 inherit ['a aexpr as 'a, D.t] E.Expr.Semantics.SmallStep.helper
-                method is_value e = 
-		  match e with 
-		  | `Const _     -> true 
-		  | `Array elems -> List.fold_left (fun f e -> f && this#is_value e) true elems
-		  | _            -> false
+                method is_value = is_value
 		method to_value e =
 		  match e with
 		  | `Const i     -> A.from_int i
@@ -212,22 +213,94 @@ module Expr =
 		method of_value v = A.of_value v
               end
 
-	    class virtual ['a] base_step h =
+	    class virtual ['a, 'b] base_step h =
               object
-                inherit [unit, D.t State.t, 'a aexpr, 'a aexpr, 'a] BigStep.c
-                method c_Array (env, state, _) x elems = invalid_arg ""
-                method c_Indexed (env, state, _) x base index = invalid_arg ""
+                inherit [unit, D.t State.t, 'b, 'b, 'a] BigStep.c
+                method c_Array (env, state, _) x elems =
+                  let rec inner zip = function
+		  | []    -> S.Just (`Array (List.rev zip), "Array")
+		  | e::es ->
+                      if h#is_value e 
+                      then inner (e::zip) es
+                      else 
+                        S.Subgoals (
+                          [env, state, e],
+                          (fun [e'] -> S.Just (`Array (List.rev (e'::zip) @ es), "")),
+                          "Array_Elem"
+                        )
+                  in
+                  inner [] elems
+                method c_Indexed (env, state, _) x base index =
+                  if h#is_value base.GT.x
+                  then if h#is_value index.GT.x
+                       then 
+                         let bv = h#to_value base.GT.x in
+                         let iv = h#to_value index.GT.x in
+                         S.opt_to_case "Indexed" (TopSemantics.bind (A.index bv iv) h#of_value)
+                       else 
+                         S.Subgoals (
+                           [env, state, index.GT.x],
+                           (fun [index'] -> S.Just (`Indexed (base.GT.x, index'), "")),
+                           "Indexed_Index"
+                         )                    
+                  else 
+                    S.Subgoals (
+                      [env, state, base.GT.x],
+                      (fun [base'] -> S.Just (`Indexed (base', index.GT.x), "")),
+                      "Indexed_Base"
+                    )
               end
 
             module ES  = E.Expr.Semantics.SmallStep.Strict(D)
             module ENS = E.Expr.Semantics.SmallStep.NonStrict(D)
         
-            class virtual ['a] strict_step =
+            class ['a, 'b] strict_step =
               let h = new helper in
               object 
-                inherit ['a] base_step h
-                (*inherit ['a] BaseSemantics.SmallStep.base_step h*)
+                inherit ['a, 'b] base_step h
+                inherit ['a, 'b] BaseSemantics.SmallStep.base_step h
+		inherit ['a] ES.step h
               end
+
+            class ['a, 'b] non_strict_step =
+              let h = new helper in
+              object 
+                inherit ['a, 'b] base_step h
+                inherit ['a, 'b] BaseSemantics.SmallStep.base_step h
+		inherit ['a] ENS.step h
+              end
+
+            module Base = BaseSemantics.SmallStep.MakeBase (
+              struct
+                type t = 'a aexpr as 'a
+                let html = abbreviate_html C.cb
+              end)
+
+            module Strict = Semantics.Deterministic.SmallStep.Make (
+              struct
+                include Base
+                let rec step env state e =
+                  GT.transform(aexpr)
+                    (fun (env, state, _) e -> step env state e)
+                    (new strict_step)
+                    (env, state, e)
+                    e
+                let side_step env state e r = if is_value r then None else Some (env, state, r)
+              end
+            )
+
+            module NonStrict = Semantics.Deterministic.SmallStep.Make (
+              struct
+                include Base
+                let rec step env state e =
+                  GT.transform(aexpr)
+                    (fun (env, state, _) e -> step env state e)
+                    (new non_strict_step)
+                    (env, state, e)
+                    e
+                let side_step env state e r = if is_value r then None else Some (env, state, r)
+              end
+            )
 
           end
       end
@@ -322,7 +395,10 @@ let toplevel =
                          if conf "strict" = "true" 
                          then S.BigStep.Strict.Tree.html "root" (S.BigStep.Strict.Tree.build () !st p)
                          else S.BigStep.NonStrict.Tree.html "root" (S.BigStep.NonStrict.Tree.build () !st p)
-                       else HTMLView.raw "" (* S.SmallStep.Strict.html "root" (S.SmallStep.Strict.build () st p)*)
+                       else 
+			 if conf "strict" = "true"
+			 then S.SmallStep.Strict.html "root" (S.SmallStep.Strict.build () !st p)
+			 else S.SmallStep.NonStrict.html "root" (S.SmallStep.NonStrict.build () !st p)
 	              )
                     )
               end
