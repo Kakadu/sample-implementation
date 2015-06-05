@@ -362,6 +362,7 @@ module D =
   end
 
 module NSIntArray = Semantics.MakeDomain (IntArrayA)(IntArrayA.Spec (Semantics.NSIntSpec))
+module IntArray = Semantics.MakeDomain (IntArrayA)(IntArrayA.Spec (Semantics.IntSpec))
 
 let toplevel =  
   Toplevel.make 
@@ -375,7 +376,8 @@ let toplevel =
                          )
          method vertical  = invalid_arg "" (* Expr.vertical p *)
          method run cb js = 
-           let module S = Expr.Semantics (NSIntArray)(D)(struct let cb = (Helpers.interval cb h) end) in
+           let module NS = Expr.Semantics(NSIntArray)(D)(struct let cb = (Helpers.interval cb h) end) in
+           let module S  = Expr.Semantics(IntArray  )(D)(struct let cb = (Helpers.interval cb h) end) in
            E.wizard 
              (object 
                 method parse st = 
@@ -394,11 +396,11 @@ let toplevel =
                        then
                          if conf "strict" = "true" 
                          then S.BigStep.Strict.Tree.html "root" (S.BigStep.Strict.Tree.build () !st p)
-                         else S.BigStep.NonStrict.Tree.html "root" (S.BigStep.NonStrict.Tree.build () !st p)
+                         else NS.BigStep.NonStrict.Tree.html "root" (NS.BigStep.NonStrict.Tree.build () !st p)
                        else 
 			 if conf "strict" = "true"
 			 then S.SmallStep.Strict.html "root" (S.SmallStep.Strict.build () !st p)
-			 else S.SmallStep.NonStrict.html "root" (S.SmallStep.NonStrict.build () !st p)
+			 else NS.SmallStep.NonStrict.html "root" (NS.SmallStep.NonStrict.build () !st p)
 	              )
                     )
               end
