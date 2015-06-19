@@ -5,7 +5,7 @@
 \input{Syntax}
 
 \vskip1cm
-\textbf{Big-Step Operational Semantics (Strict)}
+\textbf{Small-Step Operational Semantics (Strict)}
 \vskip1cm
 
 $s : X \to \ZZ$~--- partial function from variables to integers (state)
@@ -19,9 +19,21 @@ $$
 $$
 
 $$
-\trule{\trans{s}{\inmath{A}}{a},\:\trans{s}{\inmath{B}}{b}}
-      {\trans{s}{\inmath{A\otimes B}}{a\oplus b}}
-\ruleno{Binop}
+\crule{\trans{s}{\inmath{A}}{A^\prime}}
+      {\trans{s}{\inmath{A\otimes B}}{A^\prime\oplus B}}
+      {A\notin\ZZ}
+\ruleno{Binop\_Left}
+$$
+
+$$
+\crule{\trans{s}{\inmath{B}}{B^\prime}}
+      {\trans{s}{\inmath{a\otimes B}}{a\oplus B^\prime}}
+      {a\in\ZZ,\:B\notin\ZZ}
+\ruleno{Binop\_Right}
+$$
+
+$$
+\ctrans{s}{\inmath{a\otimes b}}{a\oplus b}{a, b\in\ZZ}\ruleno{Binop}
 $$
 \vskip5mm
 
