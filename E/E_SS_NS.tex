@@ -1,0 +1,60 @@
+\documentclass{article}
+\include{common}
+\begin{document}
+\pagestyle{empty}
+\input{Syntax}
+
+\vskip1cm
+\textbf{Small-Step Operational Semantics (Non-Strict)}
+\vskip1cm
+
+$s : X \to \ZZ$~--- partial function from variables to integers (state)
+
+$$
+\ctrans{s}{\llang{x}}{\app{s}{\llang{x}}}{\llang{x}\in X}\ruleno{Var}
+$$
+
+$$
+\ctrans{s}{z}{z}{z\in\ZZ}\ruleno{Const}
+$$
+
+$$
+\crule{\trans{s}{\inmath{A}}{A^\prime}}
+      {\trans{s}{\inmath{A\otimes B}}{A^\prime\oplus B}}
+      {A\notin\ZZ}
+\ruleno{Binop\_Left}
+$$
+
+$$
+\crule{\trans{s}{\inmath{B}}{B^\prime}}
+      {\trans{s}{\inmath{a\otimes B}}{a\oplus B^\prime}}
+      {\begin{array}{cc}
+          a\in\ZZ    & \wedge \\
+          B\notin\ZZ & \wedge \\
+          (\otimes\ne"\llang{||}"\vee a\ne 1) & \wedge \\
+          (\otimes\ne"\llang{&&}"\vee a\ne 0) &
+        \end{array}}
+\ruleno{Binop\_Right}
+$$
+
+$$
+\ctrans{s}{\inmath{a\otimes B}}{a}
+      {\begin{array}{cc}
+         (\otimes = "\llang{||}"\wedge a = 1) & \vee \\
+         (\otimes = "\llang{&&}"\wedge a = 0) &
+       \end{array}}
+\ruleno{Binop\_Left\_NS}
+$$
+
+$$
+\ctrans{s}{\inmath{a\otimes b}}{a\oplus b}{a, b\in\ZZ}\ruleno{Binop}
+$$
+\vskip5mm
+
+\input{StrictOps}
+\textbf{Semantic Function}
+
+$$\sembr{\bullet} : {\cal E}\mapsto(X\to\ZZ)\to\ZZ$$
+$$\app{\sembr{E}}{s} = z \iff \trans{s}{\inmath{E}}{z}$$
+
+\end{document}

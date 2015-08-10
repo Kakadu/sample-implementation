@@ -28,7 +28,7 @@ EXTRA_CMA += Common.cma Semantics.cma Js_frontend.cma
 TARGET := $(MLI) $(CMO) META $(BYTE) tex E.js web_install
 CLEAN_EXTRA += $(BYTE) $(NATIVE)
 
-TEXFILES = E E_BS_S E_SS_S
+TEXFILES = E E_BS_S E_SS_S E_BS_NS E_SS_NS
 tex: 
 	for f in $(TEXFILES) ; do TEXINPUTS=../tex//: pdflatex $$f.tex; done
 

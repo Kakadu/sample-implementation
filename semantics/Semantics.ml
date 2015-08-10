@@ -188,7 +188,8 @@ module Deterministic =
     	          | Nothing (reason, rule) -> Node (env, left, over, Bad reason, [], rule)
                   | Just (right, rule) -> Node (env, left, over, Good right, [], rule)
                   | Subgoals (triples, fright, rule) ->
-                      let rec process_subgoals subnodes subgoals subfun =
+                      let rec process_subgoals subnodes subgoals subfun rule =
+                        let define_rule r = if rule = "" then r else rule in
                         let subnodes' = List.map (fun (env', left', over') -> inner (i-1) env' left' over') subgoals in
 			try
                           let rights = List.map (function 
@@ -197,12 +198,12 @@ module Deterministic =
                                                 ) subnodes'
                           in
                           match subfun rights with
-	  	          | Just     (right  , _)         -> Node (env, left, over, Good right, subnodes@subnodes', rule)
-                          | Nothing  (reason , _)         -> Node (env, left, over, Bad reason, subnodes@subnodes', rule)
-                          | Subgoals (triples, fright, _) -> process_subgoals (subnodes@subnodes') triples fright
+	  	          | Just     (right  , rule)         -> Node (env, left, over, Good right, subnodes@subnodes', define_rule rule)
+                          | Nothing  (reason , rule)         -> Node (env, left, over, Bad reason, subnodes@subnodes', define_rule rule)
+                          | Subgoals (triples, fright, rule) -> process_subgoals (subnodes@subnodes') triples fright (define_rule rule)
 			with SomeBad t -> Node (env, left, over, Bad t, subnodes @ subnodes', rule)
 		      in
-		      process_subgoals [] triples fright
+		      process_subgoals [] triples fright rule
                 else Node (env, left, over, Bad "step limit reached", [], "")
               in
               inner limit env left over

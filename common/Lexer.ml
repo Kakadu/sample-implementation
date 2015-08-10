@@ -72,7 +72,7 @@ module Make (K : sig val keywords : string list end) =
       in
 
       let ident   = Re_str.regexp "[a-zA-Z_]\([a-zA-Z_0-9]\)*\\b" in 
-      let literal = Re_str.regexp "[0-9]+" in
+      let literal = Re_str.regexp "-?[0-9]+" in
       object (self)
         inherit Ostap.Matcher.t s 
         method skip p coord = skip s p coord

@@ -107,15 +107,15 @@ module Expr =
                         [env, state, x.GT.x], 
                         (fun [x'] -> 
                            match D.dop s x' with 
-                           | `Value   z -> S.Just (z, "")
+                           | `Value   z -> S.Just (z, "Binop_Left")
                            | `Curried f -> 
                              S.Subgoals (
                                 [env, state, y.GT.x], 
                                 (fun [y'] -> S.opt_to_case "" (f y')), 
-                                ""
+                                "Binop"
                              )
                         ), 
-                        "Binop"
+                        ""
                       )
                   end
               end
@@ -587,12 +587,12 @@ let toplevel =
                        if conf "type" = "bigstep"
                        then
                          if conf "strict" = "true" 
-                         then S.BigStep.Strict.Tree.html "root" (S.BigStep.Strict.Tree.build () !st p)
-                         else S.BigStep.NonStrict.Tree.html "root" (S.BigStep.NonStrict.Tree.build () !st p)
+                         then (js#descr "E_BS_S"; S.BigStep.Strict.Tree.html "root" (S.BigStep.Strict.Tree.build () !st p))
+                         else (js#descr "E_BS_NS"; S.BigStep.NonStrict.Tree.html "root" (S.BigStep.NonStrict.Tree.build () !st p))
                        else 
                          if conf "strict" = "true"
-                         then S.SmallStep.Strict.html "root" (S.SmallStep.Strict.build () !st p)
-                         else S.SmallStep.NonStrict.html "root" (S.SmallStep.NonStrict.build () !st p)
+                         then (js#descr "E_SS_S"; S.SmallStep.Strict.html "root" (S.SmallStep.Strict.build () !st p))
+                         else (js#descr "E_SS_NS"; S.SmallStep.NonStrict.html "root" (S.SmallStep.NonStrict.build () !st p))
 	              )
                     )
               end
