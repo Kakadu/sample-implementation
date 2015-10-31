@@ -501,7 +501,7 @@ module Program =
 
   end
 
-let toplevel =  
+let toplevel : String.t -> (Toplevel.c, _) Checked.t =
   Toplevel.make
     (Expr.L.fromString Program.parse)
     (fun (p, hp, he) ->

@@ -1,0 +1,22 @@
+OB=ocamlbuild -use-ocamlfind -plugin-tag "package(js_of_ocaml.ocamlbuild)" #-verbose 1
+
+TARGETS=common/Common.cma
+all: common/Common.cma js/Js_frontend.cmo E/E.jsf.js L/Frontend.js
+
+common/Common.cma:
+	$(OB) $@
+
+js/Js_frontend.cmo:
+	$(OB) -Is common $@
+
+js/Js_frontend.js:
+	$(OB) -Is common $@
+
+E/E.jsf.js: js/Js_frontend.cmo
+	$(OB) -Is common -Is semantics -Is js $@
+
+L/Frontend.js: E/E.jsf.js js/Js_frontend.cmo
+	$(OB) -Is common -Is semantics -Is js -Is E $@
+
+clean:
+	$(RM) -r _build

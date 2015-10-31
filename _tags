@@ -1,5 +1,12 @@
 true: rectypes
-true: package(checked,re)
+true: package(checked)
 <common/*.ml>: syntax(camlp5o), package(ostap.syntax,GT.syntax)
 <js/Js_frontend.ml>: syntax(camlp4o), package(js_of_ocaml.syntax,ostap)
-<js/Js_frontend.byte>: package(js_of_ocaml,ostap,re)
+<js/Js_frontend.byte>: package(js_of_ocaml,ostap)
+<E/E.jsf.byte>: package(js_of_ocaml,ostap,re,GT)
+<L/L.ml> or <E/E.ml> or <semantics/Semantics.ml>:   syntax(camlp5o), package(ostap.syntax,GT.syntax), package(GT.syntax.html,GT.syntax.show,GT.syntax.map,GT.syntax.foldl)
+<L/L.ml>: package(GT.syntax.map)
+<L/Frontend.byte>: package(js_of_ocaml,ostap,GT)
+
+#<L/L.*>: package(ostap)
+#<L/Frontend.ml>: package(ostap)
