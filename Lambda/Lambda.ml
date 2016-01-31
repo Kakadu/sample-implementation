@@ -24,7 +24,7 @@ module Term =
           Printf.sprintf "\\\n%s\n%s" v.GT.x (x.GT.fx ())
       end
 
-    type prio = [`Abs | `Left of int | `Right of int]
+    type prio = [`Top | `Abs | `Left of int | `Right of int]
 
     class ['self] pretty =
       object (this)
@@ -32,9 +32,11 @@ module Term =
         method c_Var p _ v = 
 	  match p with `Abs -> HTMLView.seq [HTMLView.string " . "; HTMLView.string v.GT.x] | _ -> HTMLView.string v.GT.x
         method c_Lambda p _ v x = 
+	  let z = HTMLView.seq [HTMLView.string v.GT.x; x.GT.fx `Abs] in
 	  match p with
-	  | `Abs -> HTMLView.seq [HTMLView.string " "; HTMLView.string v.GT.x; x.GT.fx `Abs]
-	  | _    -> HTMLView.seq [HTMLView.raw "&lambda;"; HTMLView.string v.GT.x; x.GT.fx `Abs]
+	  | `Left _ -> HTMLView.seq [HTMLView.string "("; HTMLView.raw "&lambda;"; z; HTMLView.string ")"]
+	  | `Abs    -> HTMLView.seq [HTMLView.string " "; z]
+	  | _       -> HTMLView.seq [HTMLView.raw "&lambda;"; z]
         method c_App p _ x y =
           let xy = HTMLView.seq [x.GT.fx (`Left 9); HTMLView.string " "; y.GT.fx (`Right 9)] in
 	  match p with
@@ -45,7 +47,7 @@ module Term =
 
     let pretty l = 
       let rec pretty' p l = transform(t) (lift HTMLView.string) pretty' (new pretty) p l in
-      pretty' (`Left 0) l
+      pretty' `Top l
 
     class ['self] abbrev_html cb pretty =
       let w = new Helpers.wrap cb pretty in
