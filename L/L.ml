@@ -19,7 +19,7 @@ module Stmt =
       | `If     of 'e * 'self * 'self
       | `While  of 'e * 'self  
       | `Seq    of 'self * 'self 
-    ] with html, show, map
+    ] with html, show, gmap
 
     class ['self, 'e] vertical =
       object (this)

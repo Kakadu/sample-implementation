@@ -57,6 +57,7 @@ AC_CHECK_CAMLP5_MODULE(logger, pa_log.cmo, +camlp5 ../logger/camlp5, http://oops
 AC_CHECK_CAMLP5_MODULE(checked, pa_checked.cmo, +camlp5 ../checked/camlp5, http://oops.math.spbu.ru/projects/checked) dnl GET: svn co http://oops.math.spbu.ru/svn/checked/trunk
 AC_CHECK_CAMLP5_MODULE(ostap, pa_ostap.cmo, +camlp5 ../ostap/camlp5, http://oops.math.spbu.ru/projects/ostap) dnl GET: svn co http://oops.math.spbu.ru/svn/ostap/trunk
 AC_CHECK_CAMLP5_MODULE(GT, pa_gt.cmo, +camlp5 ../ostap/camlp5, http://oops.math.spbu.ru/projects/ostap)
+AC_CHECK_CAMLP5_MODULE(MiniKanren, pa_minikanren.cmo, +camlp5 ../ostap/camlp5, http://oops.math.spbu.ru/projects/ostap)
 AC_CHECK_CAMLP4_MODULE(js_of_ocaml, pa_js.cmo, +camlp4)
 AC_SUBST(PARSER_INCLUDES)
 fi
@@ -73,10 +74,9 @@ AC_CHECK_OCAML_LIBRARY(typeutil, View, ../typeutil/src, http://oops.math.spbu.ru
 AC_CHECK_OCAML_LIBRARY(settings, Settings, ../settings/src, http://oops.math.spbu.ru/projects/settings) dnl GET: svn co http://oops.math.spbu.ru/svn/typeutil/trunk
 AC_CHECK_OCAML_LIBRARY(checked, Checked, ../checked/src, http://oops.math.spbu.ru/projects/checked) dnl GET: svn co http://oops.math.spbu.ru/svn/checked/trunk
 AC_CHECK_OCAML_MODULE(ostap, Ostap, ../ostap/src, http://oops.math.spbu.ru/projects/ostap) dnl GET: svn co http://oops.math.spbu.ru/svn/ostap/trunk
-dnl AC_CHECK_OCAML_LIBRARY(cgi, Cgi, ../cgi, http://oops.math.spbu.ru/projects/ocaml-cgi) dnl GET: svn co http://oops.math.spbu.ru/svn/ocaml-cgi
 AC_CHECK_OCAML_LIBRARY(GT, GT, ../generic-transformers/src, http://oops.math.spbu.ru/projects/checked) dnl GET: svn co http://oops.math.spbu.ru/svn/chec
+AC_CHECK_OCAML_LIBRARY(MiniKanren, MiniKanren, ../miniKanren-ocaml-typef/src, http://oops.math.spbu.ru/projects/checked) dnl GET: svn co http://oops.math.spbu.ru/svn/chec
 AC_CHECK_OCAML_LIBRARY(js_of_ocaml, Js)
-
 
 AC_SUBST(MODULE_INCLUDES)
 AC_SUBST(EXTRA_CMA)
@@ -98,6 +98,7 @@ semantics/Makefile
 E/Makefile
 E/Arrays/Makefile
 L/Makefile
+Lambda/Makefile
 SM/Makefile
 ])
 AC_OUTPUT

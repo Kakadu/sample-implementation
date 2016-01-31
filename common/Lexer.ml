@@ -80,13 +80,17 @@ module Make (K : sig val keywords : string list end) =
         method getLITERAL   = self#get "literal"    literal         
       end
 
+    exception Error of Ostap.Msg.t
+
     let fromString p s =
-      Ostap.Combinators.unwrap (p (new t s)) (fun x -> Checked.Ok x) 
-        (fun (Some err) ->
-           let [loc, m :: _] = err#retrieve (`First 1) (`Desc) in
-           let m =  match m with `Msg m -> m | `Comment (s, _) -> Ostap.Msg.make s [||] loc in
-           Checked.Fail [m]
-        )
+      try
+        Ostap.Combinators.unwrap (p (new t s)) (fun x -> Checked.Ok x) 
+          (fun (Some err) ->
+             let [loc, m :: _] = err#retrieve (`First 1) (`Desc) in
+             let m =  match m with `Msg m -> m | `Comment (s, _) -> Ostap.Msg.make s [||] loc in
+             Checked.Fail [m]
+          )
+      with Error m -> Checked.Fail [m]
 
   end
 

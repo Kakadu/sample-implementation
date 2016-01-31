@@ -1,0 +1,19 @@
+\centering
+
+{\large\textbf{Lambda Calculus}}
+\vskip1.5cm
+
+\textbf{Abstract Syntax}
+\vskip 7mm
+$X=\{\cd{x}, \cd{y}, \cd{z}, \dots\}$~--- variables
+\vskip 7mm
+$C=\{\cd{X}, \cd{Y}, \cd{Z}, \dots\}$~--- constructors
+
+$$
+\begin{array}{rrcl}
+\Lambda = &      & X                   & \mbox{--- variable}\\
+          & \mid & C                   & \mbox{--- constructor}\\
+          & \mid & \lambda X . \Lambda & \mbox{--- abstraction}\\
+          & \mid & \Lambda \Lambda     & \mbox{--- application}
+\end{array}
+$$

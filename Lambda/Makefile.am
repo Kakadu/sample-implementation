@@ -1,8 +1,8 @@
-PACKAGE := Common
-SUBDIRS =
+PACKAGE := Lambda
+SUBDIRS = 
 
 # type in sources here
-SOURCES = Lexer.ml State.ml HTMLHighlighting.ml Trap.ml Helpers.ml Toplevel.ml 
+SOURCES = Lambda.ml Lambda.jsf.ml 
 MLI = 
 
 include $(top_srcdir)/m4/Makefile.am.vars
@@ -13,22 +13,30 @@ include $(top_srcdir)/m4/Makefile.am.vars
 CMO := $(SORTED:.ml=.cmo)
 
 # OCaml parser call with flags
-AM_P5FLAGS := -pp "$(CAMLP5O) $(PARSER_INCLUDES) pa_checked.cmo pa_ostap.cmo pa_log.cmo pa_gt.cmo -L `camlp5o -where` $(LOG) $(DOC)"
+AM_P5FLAGS := -pp "$(CAMLP5O) $(PARSER_INCLUDES) pa_checked.cmo pa_ostap.cmo pa_log.cmo pa_minikanren.cmo pa_gt.cmo -L `camlp5o -where` $(LOG) $(DOC)"
 AM_BFLAGS += -rectypes -annot
 AM_OFLAGS += -rectypes -annot -cclib "-static"
 
 # overwrite some variables
 PXFLAGS = $(P5FLAGS)
 CAMLPXLIB = $(CAMLP5LIB)
-#MODULE_INCLUDES += -I $(CAMLP5LIB)
-
+MODULE_INCLUDES += -I $(CAMLP5LIB) -I ../common -I ../js -I ../semantics
 
 # add extra compiled libraries used for linking
-# EXTRA_CMA += $(addsuffix .cma, str)
-# EXTRA_CMXA += $(addsuffix .cmxa, str)
+EXTRA_CMA += Common.cma Semantics.cma Js_frontend.cma 
 
-TARGET := $(MLI) $(CMO) $(CMA)  META 
-CLEAN_EXTRA += 
+TARGET := $(MLI) $(CMO) META $(BYTE) tex Lambda.js web_install
+CLEAN_EXTRA += $(BYTE) $(NATIVE)
+
+TEXFILES = Lambda Lambda_BS_CBN Lambda_BS_CBV Lambda_SS_CBN Lambda_SS_CBV Lambda_ST
+tex: 
+	for f in $(TEXFILES) ; do TEXINPUTS=../tex//: pdflatex $$f.tex; done
+
+%.js: %.byte
+	js_of_ocaml -o Lambda.js $<
+
+web_install:
+	cp Lambda.js ../web; for f in $(TEXFILES) ; do cp $$f.pdf ../web ; done
 
 include $(top_srcdir)/m4/Makefile.am.targets
 

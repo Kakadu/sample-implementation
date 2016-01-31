@@ -57,7 +57,38 @@ class ['a] wrap cb pretty =
   end
 
 let concat = List.fold_left (^) ""
+
 let rec intersperse x = function 
 | []    -> []
 | [h]   -> [h]
 | h::tl -> h :: x :: intersperse x tl
+
+class names =
+  let letters = Array.to_list (Array.init 26 (fun i -> String.make 1 (Char.chr (Char.code 'a' + i)))) in
+  object (this)
+    val words  = ref [""] 
+    val buffer = ref []   
+    val h      = Hashtbl.create 32
+    method get : int -> string = fun i ->
+      try Hashtbl.find h i with
+	Not_found ->
+	  let n = this#fresh in
+	  Hashtbl.add h i n;
+	  n      
+    method fresh =
+      match !buffer with
+      | [] ->     
+         let new_words =
+           List.rev (
+             List.fold_left (fun acc suffix -> 
+               List.fold_left (fun acc prefix -> (prefix ^ suffix)::acc) acc letters
+             ) 
+             [] 
+             !words
+           )
+         in
+         words  := new_words;
+         buffer := List.tl new_words;
+         List.hd new_words
+      | h::t -> buffer := t; h
+  end

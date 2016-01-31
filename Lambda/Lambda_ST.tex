@@ -1,0 +1,48 @@
+\documentclass{article}
+\include{common}
+\begin{document}
+\pagestyle{empty}
+\input{Syntax}
+
+\centering
+
+\vskip1cm
+\textbf{Simple Typing \'a la Curry}
+\vskip1cm
+
+
+Types:
+
+$$
+{\cal T}= A \mid {\cal T}\to {\cal T}
+$$
+
+where $A$ is a set of primitive types.
+\vskip 7mm
+
+Environment $\Gamma : X \to {\cal T}$ is an assignment of types to
+(some) variables.
+\vskip 7mm
+
+Typing judjements:
+
+$$
+\withenv{\Gamma}{x:\Gamma\;x}
+\ruleno{Var}
+$$
+
+$$
+\trule{\withenv{\Gamma, x:\tau}{M:\rho}}
+      {\withenv{\Gamma}{\lambda x.M:\tau\to\rho}}
+\ruleno{Abstr}
+$$
+
+$$
+\trule{\withenv{\Gamma}{M:\tau\to\rho},\withenv{\Gamma}{N:\tau}}
+      {\withenv{\Gamma}{M\;N:\rho}}
+\ruleno{App}
+$$
+
+
+
+\end{document}

@@ -43,6 +43,7 @@ module Wizard =
       w, inner (fun i _ -> i) 0 (inputs, decisions)
 
   end
+
 class type js =
   object
     method error   : HTMLView.Wizard.page -> string -> string -> Ostap.Msg.t -> unit

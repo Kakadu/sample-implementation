@@ -1,0 +1,47 @@
+\documentclass{article}
+\include{common}
+\begin{document}
+\pagestyle{empty}
+\input{Syntax}
+
+\vskip1cm
+\textbf{Big-Step Operational Semantics (Non-Strict)}
+\vskip1cm
+
+$s : X \to \ZZ$~--- partial function from variables to integers (state)
+
+$$
+\ctrans{s}{\llang{x}}{\app{s}{\llang{x}}}{\llang{x}\in X}\ruleno{Var}
+$$
+
+$$
+\ctrans{s}{z}{z}{z\in\ZZ}\ruleno{Const}
+$$
+
+$$
+\crule{\trans{s}{\inmath{A}}{a}}
+      {\trans{s}{\inmath{A\otimes B}}{a}}
+      {\begin{array}{cc}
+          (\otimes="\llang{||}"\wedge a = 1) & \vee \\
+          (\otimes="\llang{&&}"\wedge a = 0) &
+       \end{array}}
+\ruleno{Binop\_Left}
+$$
+
+$$
+\crule{\trans{s}{\inmath{A}}{a},\:\trans{s}{\inmath{B}}{b}}
+      {\trans{s}{\inmath{A\otimes B}}{a\oplus b}}
+      {\begin{array}{cc}
+          (\otimes\ne"\llang{||}"\vee a\ne 1) & \wedge \\
+          (\otimes\ne"\llang{&&}"\vee a\ne 0) &
+       \end{array}}
+\ruleno{Binop}
+$$
+\vskip5mm
+
+\textbf{Semantic Function}
+
+$$\sembr{\bullet} : {\cal E}\mapsto(X\to\ZZ)\to\ZZ$$
+$$\app{\sembr{E}}{s} = z \iff \trans{s}{\inmath{E}}{z}$$
+
+\end{document}

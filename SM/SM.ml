@@ -10,7 +10,7 @@ open GT
   | C  of int
   | J  of 'l
   | JT of 'l
-  | JF of 'l with show, html, map
+  | JF of 'l with show, html, gmap
 
 module Lexer =
   struct
@@ -54,7 +54,7 @@ let resolve p =
     (fun i -> 
        transform(t) 
   	 (fun _ i -> try List.assoc i !symbols with Not_found -> raise (No_label i)) 
-	 new @t[map] 
+	 new @t[gmap] 
 	 () 
 	 i
     ) 

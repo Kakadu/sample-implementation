@@ -1,4 +1,4 @@
-SUBDIRS = common js semantics E E/Arrays L SM
+SUBDIRS = common js semantics E E/Arrays L Lambda SM 
 
 .PHONY: doc
 doc:

@@ -1,0 +1,38 @@
+\documentclass{article}
+\include{common}
+\begin{document}
+\input{Syntax}
+\vskip 1cm
+\textbf{Concrete Syntax}
+\vskip 7mm
+
+\justify
+
+Variables represented as identifiers, started with lowercase letter; 
+constructors~--- as identifiers, started with uppercase letter; ``$\lambda$'' 
+repsresented by backslash; application is left-associative, abstraction spans 
+to the right as far as possible.
+
+Comments: ``\cd{--}''~--- comments out the rest of the line; ``\cd{(*}'' and 
+``\cd{*)}''~--- regular multiline comments (can be nested).
+
+Macro definitions (substituted in-place, recursion not allowed):
+
+$$
+\begin{array}{ccccc}
+\cd{def}&X_1& \cd{=} &\Lambda_1&\cd{in}\\
+\cd{def}&X_2& \cd{=} &\Lambda_2&\cd{in} \\
+        &   &\ldots & & \\
+\Lambda & & & &
+\end{array}
+$$
+
+Examples:
+
+\begin{itemize}
+\item \cd{(\char`\\x.x)\char`\\x.x}
+\item \cd{\char`\\x y z . x z (y z)}
+\item \cd{def pair = \char`\\x y s.s x y in pair A B}
+\end{itemize}
+
+\end{document}
