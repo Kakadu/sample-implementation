@@ -22,10 +22,13 @@
       window [result[0]] (); 
     }
 
-    function show_results (root, tree) {
+    function show_results (root, tree, descr) {
       clear_run_msg ();
       document.getElementById ("output").innerHTML = tree;  
-      convertTree (document.getElementById (root), false);      
+      convertTree (document.getElementById (root), false);  
+      pdfViewerObject = document.getElementById ("description");
+      pdfViewerObject.setAttribute ("data", descr);  
+      pdfViewerObject.outerHTML = pdfViewerObject.outerHTML.replace(/data="(.+?)"/, 'data="' + descr + '"');
     }
 
     function disable_actions () {
@@ -264,7 +267,7 @@
         <td>
         Description:
         <hr>
-          <object id="description" width="100%" height="837px" data="Lambda.pdf"></object>
+          <object id="description" width="100%" height="837px" data="Lambda.pdf" type="application/pdf"></object> 
         </td>
       </tr>
     </table>

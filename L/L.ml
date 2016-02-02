@@ -429,22 +429,21 @@ let toplevel =
               ),
               Toplevel.Wizard.Exit 
                 (fun conf ->
-		  js#results 
-                    "root"
-                     (View.toString (
-                        if conf "Type" = "normal"
-                        then TS.html "root" (TS.build ~limit:!depth () (State.empty, !input, []) p)
-                        else
-		          TCPS.html "root" (
-		            TCPS.build 
-                              ~limit:!depth 
-                              `L 
-                              (State.empty, !input, []) 
-                              (p :> ('a, 'b Expr.expr as 'b) Program.Semantics.BigStep.CPS.k as 'a)
-		          )
-                     )
-                     )
-                )
+		   let descr, tree = 
+		     if conf "Type" = "normal"
+                     then "", TS.html "root" (TS.build ~limit:!depth () (State.empty, !input, []) p)
+                     else
+		       "",
+		       TCPS.html "root" (
+		         TCPS.build 
+                           ~limit:!depth 
+                           `L 
+                           (State.empty, !input, []) 
+                           (p :> ('a, 'b Expr.expr as 'b) Program.Semantics.BigStep.CPS.k as 'a)
+		        )
+		   in
+		  js#results "root" (View.toString tree) descr
+		)                
 	     ]
            )
          method vertical = Program.vertical p

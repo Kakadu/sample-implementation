@@ -390,19 +390,18 @@ let toplevel =
 		  Expr.Base.L.fromString (ostap (!(State.parse)[Expr.Base.L.ident][value] -EOF)) st
                 method error = js#error
                 method callback st conf =
-                  js#results "root"                   
-                    (View.toString (
-                       if conf "type" = "bigstep"
-                       then
-                         if conf "strict" = "true" 
-                         then S.BigStep.Strict.Tree.html "root" (S.BigStep.Strict.Tree.build () !st p)
-                         else NS.BigStep.NonStrict.Tree.html "root" (NS.BigStep.NonStrict.Tree.build () !st p)
-                       else 
-			 if conf "strict" = "true"
-			 then S.SmallStep.Strict.html "root" (S.SmallStep.Strict.build () !st p)
-			 else NS.SmallStep.NonStrict.html "root" (NS.SmallStep.NonStrict.build () !st p)
-	              )
-                    )
+		  let descr, tree =
+                    if conf "type" = "bigstep"
+                    then
+                      if conf "strict" = "true" 
+                      then "Arrays", S.BigStep.Strict.Tree.html "root" (S.BigStep.Strict.Tree.build () !st p)
+                      else "Arrays", NS.BigStep.NonStrict.Tree.html "root" (NS.BigStep.NonStrict.Tree.build () !st p)
+                    else 
+		      if conf "strict" = "true"
+		      then "Arrays", S.SmallStep.Strict.html "root" (S.SmallStep.Strict.build () !st p)
+		      else "Arrays", NS.SmallStep.NonStrict.html "root" (NS.SmallStep.NonStrict.build () !st p)
+		  in
+                  js#results "root" (View.toString tree) descr
               end
              )
        end

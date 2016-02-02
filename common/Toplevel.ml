@@ -47,8 +47,7 @@ module Wizard =
 class type js =
   object
     method error   : HTMLView.Wizard.page -> string -> string -> Ostap.Msg.t -> unit
-    method descr   : string -> unit
-    method results : string -> string -> unit
+    method results : string -> string -> string -> unit
   end
 
 class virtual c =

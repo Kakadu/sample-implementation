@@ -23,12 +23,12 @@ let error page input source msg =
   setHTML "runmsg" msg; 
   try setHTML (page#id input) source with Not_found _ -> ()
 
-let descr source =
-  let target = Js.Unsafe.fun_call (Js.Unsafe.variable "document.getElementById") [|Js.Unsafe.inject (Js.string "description")|] in
-  target##data <- Js.string (source ^ ".pdf")
-
-let show_results root tree =
-  Js.Unsafe.fun_call (Js.Unsafe.variable "window.show_results") [|Js.Unsafe.inject (Js.string root); Js.Unsafe.inject (Js.string tree)|]
+let show_results root tree descr =
+  Js.Unsafe.fun_call (Js.Unsafe.variable "window.show_results") [|
+    Js.Unsafe.inject (Js.string root); 
+    Js.Unsafe.inject (Js.string tree); 
+    Js.Unsafe.inject (Js.string (descr ^ ".pdf"))
+  |]
 
 module Make (T : sig val toplevel : string -> (Toplevel.c, Ostap.Msg.t) Checked.t end) =
   struct
@@ -50,7 +50,7 @@ module Make (T : sig val toplevel : string -> (Toplevel.c, Ostap.Msg.t) Checked.
           (Js.Unsafe.coerce Dom_html.window)##run <- Js.wrap_callback (
              fun id target ->                
                let id, target  = Js.to_string id, Js.to_string target in
-               let root        = p#run "do_highlighting" (object method results = show_results method error = error method descr = descr end) in
+               let root        = p#run "do_highlighting" (object method results = show_results method error = error end) in
                let wizard, nav = Toplevel.Wizard.make id target "navigate" root in
                (Js.Unsafe.coerce Dom_html.window)##navigate <- Js.wrap_callback (js_nav nav);
                let entry, code = wizard#generate in

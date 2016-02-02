@@ -582,19 +582,19 @@ let toplevel =
                 method parse st = Expr.L.fromString (ostap (!(State.parse)[Expr.L.ident][Expr.L.literal] -EOF)) st
                 method error = js#error
                 method callback st conf =
-                  js#results "root"                   
-                    (View.toString (
-                       if conf "type" = "bigstep"
-                       then
-                         if conf "strict" = "true" 
-                         then (js#descr "E_BS_S"; S.BigStep.Strict.Tree.html "root" (S.BigStep.Strict.Tree.build () !st p))
-                         else (js#descr "E_BS_NS"; S.BigStep.NonStrict.Tree.html "root" (S.BigStep.NonStrict.Tree.build () !st p))
-                       else 
-                         if conf "strict" = "true"
-                         then (js#descr "E_SS_S"; S.SmallStep.Strict.html "root" (S.SmallStep.Strict.build () !st p))
-                         else (js#descr "E_SS_NS"; S.SmallStep.NonStrict.html "root" (S.SmallStep.NonStrict.build () !st p))
-	              )
-                    )
+		  let descr, tree =
+                    if conf "type" = "bigstep"
+                    then
+                      if conf "strict" = "true" 
+                      then "E_BS_S", S.BigStep.Strict.Tree.html "root" (S.BigStep.Strict.Tree.build () !st p)
+                      else "E_BS_NS", S.BigStep.NonStrict.Tree.html "root" (S.BigStep.NonStrict.Tree.build () !st p)
+                    else 
+                      if conf "strict" = "true"
+                      then "E_SS_S", S.SmallStep.Strict.html "root" (S.SmallStep.Strict.build () !st p)
+                      else "E_SS_NS", S.SmallStep.NonStrict.html "root" (S.SmallStep.NonStrict.build () !st p)
+	              
+		  in
+                  js#results "root" (View.toString tree) descr
               end
              )
        end

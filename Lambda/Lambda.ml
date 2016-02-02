@@ -83,9 +83,11 @@ module Term =
         inherit Helpers.cname as helped
 	method c_Var    _ _ v   = HTMLView.string v.GT.x
 	method c_Lambda _ _ v x =
-          View.concat 
-	    (HTMLView.string ("\\ " ^ v.GT.x))
-            (HTMLView.ul (x.GT.fx ()))
+          HTMLView.seq [
+	    HTMLView.raw "&lambda; ";
+	    HTMLView.string v.GT.x;
+            HTMLView.ul (x.GT.fx ())
+	  ]
         method cname name =
           match helped#cname name with
           | "app" -> "@"
@@ -343,8 +345,7 @@ let toplevel =
              [(fun page conf -> true),
               Toplevel.Wizard.Exit 
                 (fun conf ->
-		   js#descr "Lambda_ST";
-		   js#results "root" (View.toString (Term.Semantics.SimpleTyping.infer (Helpers.interval cb h) p))
+		   js#results "root" (View.toString (Term.Semantics.SimpleTyping.infer (Helpers.interval cb h) p)) "Lambda_ST"		  
                 )                
 	     ]
            )
