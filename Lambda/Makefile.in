@@ -290,7 +290,9 @@ AM_OFLAGS = $(MODULE_INCLUDES) -rectypes -annot -cclib "-static"
 CLEAN_CMI := $(CMO:.cmo=.cmi)
 # other extra files to clean up
 CLEAN_EXTRA := .depend $(BYTE) $(NATIVE)
-TEXFILES = Lambda Lambda_BS_CBN Lambda_BS_CBV Lambda_SS_CBN Lambda_SS_CBV Lambda_ST
+TEXFILES = Lambda Lambda_BS_CBN Lambda_BS_CBV Lambda_SS_CBN Lambda_SS_CBV Lambda_ST \
+Lambda_SS_HLR
+
 all: all-recursive
 
 .SUFFIXES:
@@ -578,6 +580,7 @@ uninstall-info: uninstall-info-recursive
 	maintainer-clean-recursive mostlyclean mostlyclean-generic \
 	mostlyclean-recursive pdf pdf-am ps ps-am tags tags-recursive \
 	uninstall uninstall-am uninstall-info-am
+
 
 tex: 
 	for f in $(TEXFILES) ; do TEXINPUTS=../tex//: pdflatex $$f.tex; done

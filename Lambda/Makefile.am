@@ -28,7 +28,9 @@ EXTRA_CMA += Common.cma Semantics.cma Js_frontend.cma
 TARGET := $(MLI) $(CMO) META $(BYTE) tex Lambda.js web_install
 CLEAN_EXTRA += $(BYTE) $(NATIVE)
 
-TEXFILES = Lambda Lambda_BS_CBN Lambda_BS_CBV Lambda_SS_CBN Lambda_SS_CBV Lambda_ST
+TEXFILES = Lambda Lambda_BS_CBN Lambda_BS_CBV Lambda_SS_CBN Lambda_SS_CBV Lambda_ST \
+Lambda_SS_HLR
+
 tex: 
 	for f in $(TEXFILES) ; do TEXINPUTS=../tex//: pdflatex $$f.tex; done
 

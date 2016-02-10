@@ -1,0 +1,42 @@
+\documentclass{article}
+\include{common}
+\begin{document}
+\pagestyle{empty}
+\input{Syntax}
+
+\vskip1cm
+\textbf{Head-Linear Reductions (Small-Step)}
+\vskip1cm
+$$
+\withenv{x:B,\;\Gamma}{\trans{x}{}{B}}
+\ruleno{B-Var}
+$$
+
+
+$$
+\crule{\withenv{x:B,\;\Gamma}{\trans{A}{}{C}}}
+      {\withenv{\Gamma}{\trans{(\lambda x.A)\:B}{}{C}}}
+      {x\notin FV(C)}
+\ruleno{Red-Elim}
+$$
+
+$$
+\crule{\withenv{x:B,\;\Gamma}{\trans{A}{}{C}}}
+      {\withenv{\Gamma}{\trans{(\lambda x.A)\:B}{}{(\lambda x.C)\:B}}}
+      {x\in FV(C)}
+\ruleno{Red-NonElim}
+$$
+
+$$
+\crule{\withenv{\Gamma}{\trans{M}{}{P}}}
+      {\withenv{\Gamma}{\trans{M\:N}{}{P\:N}}}
+      {M\ne \lambda x.A}
+\ruleno{App}
+$$
+
+$$
+\trule{\withenv{\Gamma}{\trans{A}{}{B}}}
+      {\withenv{\Gamma}{\trans{\lambda x.A}{}{\lambda x.B}}}
+\ruleno{Abs}
+$$
+\end{document}
