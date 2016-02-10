@@ -5,7 +5,39 @@ open MiniKanren
 module Term =
   struct
 
-    @type ('var, 'self) t = [`Var of 'var | `App of 'self * 'self | `Lambda of 'var * 'self] with gmap, show, html
+    @type ('var, 'self) t = [`Var of 'var | `App of 'self * 'self | `Lambda of 'var * 'self] with gmap, show, html, foldl
+
+    type glam = (string, glam) t
+
+    module SS = Set.Make (String)
+
+    class var = object inherit [string, glam, SS.t] @t[foldl]
+      method c_Var s _ x = x.fx s
+    end
+
+    let rec fv l = 
+      transform(t)
+        (fun s x -> SS.add x s)
+        (lift fv)
+        object inherit var   
+          method c_Lambda s _ x l = SS.union s (SS.remove x.x (l.fx SS.empty))
+        end 
+	SS.empty
+	l
+
+    type ('a, 'b) env = ('a * 'b) list
+
+    let html_env (a : 'a -> HTMLView.er) (b : 'b -> HTMLView.er) e =
+      transform(list) 
+        (fun _ (x, t) -> HTMLView.seq [a x; HTMLView.string ":"; b t])
+	(object inherit ['a * 'b, unit, HTMLView.er, bool, HTMLView.er] @list 
+	   method c_Nil  _ _      = HTMLView.string ""
+	   method c_Cons f _ x xs =
+	     (fun s -> if f then s else HTMLView.seq [HTMLView.string "; "; s]) 
+	     (HTMLView.seq [x.fx (); xs.fx false])
+	 end) 
+	 true 
+         e
 
     let rec copy (h : Helpers.h) node =
       let (l, r) = h#retrieve node in
@@ -160,6 +192,109 @@ module Term =
 
 	module TopSemantics = Semantics
 
+        module BigStep =
+          struct
+
+            module S = Semantics.Deterministic.BigStep
+
+            class virtual ['env] c =
+              object 
+                inherit [string, 'env, ('env, glam, unit, glam) S.case,
+                         glam  , 'env, ('env, glam, unit, glam) S.case,
+                                 'env, ('env, glam, unit, glam) S.case
+                        ] @t
+              end
+
+          end 
+
+        module HLR = TopSemantics.Deterministic.SmallStep.Make (
+          struct
+            type env   = (string * glam) list * glam list 
+            type left  = glam
+            type over  = unit
+            type right = glam
+
+            let rec step env lam _ = 
+	      transform(t) 
+		(fun (env, _) x -> 
+		  try BigStep.S.Just (List.assoc x env, "B-Var") with
+                    Not_found -> BigStep.S.Just (`Var x, "F-Var")
+		) 
+		(fun env lam -> step env lam ()) 
+		(object 
+		   inherit [env] BigStep.c
+		   method c_Var    env       _ x   = x.fx env
+		   method c_App    (env, st) _ m b =
+                     BigStep.S.Subgoals (
+                       [(env, b.x::st), m.x, ()],
+                       (fun [p] -> BigStep.S.Just (p, "")),
+		       "App"
+                     ) 
+(*
+		     match m.x with
+		     | `Lambda (x, a) ->
+			 BigStep.S.Subgoals (
+                           [(x, b.x)::env, a, ()],
+			   (fun [c] ->
+			      if SS.mem x (fv c) 
+			        then BigStep.S.Just (`App (`Lambda (x, c), b.x), "Red-NonElim")
+			        else BigStep.S.Just (c, "Red-Elim")
+			   ),
+			   ""
+			 )
+		     | _ ->
+			 BigStep.S.Subgoals (
+                           [env, m.x, ()],
+			   (fun [m'] -> BigStep.S.Just (`App (m', b.x), "")),
+			   "App"
+			 )
+*)
+		   method c_Lambda (env, st) _ v m = 
+		     match st with
+		     | [] -> BigStep.S.Subgoals (
+			       [(env, st), m.x, ()],
+                               (fun [m'] -> BigStep.S.Just (`Lambda (v.x, m'), "")),
+                               "Abs-Unbound"
+                             )
+		     | b::st -> BigStep.S.Subgoals (
+                                  [((v.x, b)::env,st), m.x, ()],
+                                  (fun [m'] ->
+                                     if SS.mem v.x (fv m')
+                                     then BigStep.S.Just (`App (`Lambda (v.x, m'), b), "Abs-NonElim")
+                                     else BigStep.S.Just (m', "Abs-Elim")
+                                  ),
+                                  "" 
+                                )
+		 end
+		) 
+		env 
+		lam 
+
+            let side_step _ lam _ lam' = 
+	      if lam = lam' then None else Some (([], []), lam', ())
+
+            let env_html  (e, s) =
+              HTMLView.seq [ 
+	        html_env HTMLView.string pretty e;
+                HTMLView.string ";";
+                HTMLView.string (show(list) (fun x -> View.toString (pretty x)) s)
+              ]
+
+            let left_html   = pretty
+            let over_html _ = HTMLView.string ""
+            let right_html  = pretty
+           
+            let customizer = 
+	      object
+		inherit TopSemantics.Deterministic.BigStep.Tree.html_customizer
+                method show_env   = true
+		method show_over  = false
+		method arrow      = "&#xffeb;"
+		method over_width = 50
+	      end            
+	  end
+        )
+
         module SimpleTyping =
 	  struct
 
@@ -167,8 +302,6 @@ module Term =
 
             type gtyp = (string, gtyp) typ
 	    type ltyp = (string logic, ltyp) typ logic
-
-	    type glam = (string, glam) t
 	    type llam = (int logic, llam) t logic
 
 	    class indexer =
@@ -241,16 +374,7 @@ module Term =
 
             let to_env names indexer l = List.map (fun (x, y) -> indexer#get (to_value x), ltyp_to_gtyp names y) (to_list l)
 
-            let html_env e =
-              transform(list) 
-		(fun _ (x, t) -> HTMLView.seq [HTMLView.string x; HTMLView.string ":"; html_typ t]) 
-		(object inherit [string * gtyp, unit, HTMLView.er, bool, HTMLView.er] @list 
-		   method c_Nil  _ _      = HTMLView.string ""
-		   method c_Cons f _ x xs =
-		     (fun s -> if f then s else HTMLView.seq [HTMLView.string "; "; s]) 
-		       (HTMLView.seq [x.fx (); xs.fx false])
-		 end) 
-		true e
+            let html_env e = html_env HTMLView.string html_typ e
 
             let rec to_tree names indexer t =
               gmap tree (to_env names indexer) (llam_to_glam indexer) (ltyp_to_gtyp names) (to_tree names indexer) (to_value' t)
@@ -340,12 +464,22 @@ let toplevel =
          method run cb js =
            Toplevel.Wizard.Page (
              [                             
-              HTMLView.Wizard.radio "Type" [HTMLView.raw "simple typing", "typing", "checked=\"true\""] (*; HTMLView.raw "evaluation", "evaluation", ""]; *)
+              HTMLView.Wizard.radio "Type" [
+                HTMLView.string "simple typing", "typing", "checked=\"true\"";
+		HTMLView.string "head linear reduction", "HLR", ""
+              ] 
              ],
              [(fun page conf -> true),
               Toplevel.Wizard.Exit 
                 (fun conf ->
-		   js#results "root" (View.toString (Term.Semantics.SimpleTyping.infer (Helpers.interval cb h) p)) "Lambda_ST"		  
+		   if conf "Type" = "typing"
+		   then 
+		     js#results "root" 
+		       (View.toString (Term.Semantics.SimpleTyping.infer (Helpers.interval cb h) p)) "Lambda_ST"
+		   else
+		     js#results "root"
+		       (View.toString (Term.Semantics.HLR.html "root" (Term.Semantics.HLR.build ([], []) p ())))
+		       "Lambda_SS_HLR"
                 )                
 	     ]
            )

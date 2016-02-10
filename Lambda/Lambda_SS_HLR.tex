@@ -8,35 +8,48 @@
 \textbf{Head-Linear Reductions (Small-Step)}
 \vskip1cm
 $$
-\withenv{x:B,\;\Gamma}{\trans{x}{}{B}}
+\withenv{x:B,\;\Gamma;\:\Delta}{\trans{x}{}{B}}
 \ruleno{B-Var}
 $$
 
-
 $$
-\crule{\withenv{x:B,\;\Gamma}{\trans{A}{}{C}}}
-      {\withenv{\Gamma}{\trans{(\lambda x.A)\:B}{}{C}}}
-      {x\notin FV(C)}
-\ruleno{Red-Elim}
+\ctrans{\withenv{\Gamma;\:\Delta}{\trans{x}{}{x}}}
+       {x\ne dom(\Gamma)}
+\ruleno{F-Var}
 $$
 
-$$
-\crule{\withenv{x:B,\;\Gamma}{\trans{A}{}{C}}}
-      {\withenv{\Gamma}{\trans{(\lambda x.A)\:B}{}{(\lambda x.C)\:B}}}
-      {x\in FV(C)}
-\ruleno{Red-NonElim}
-$$
+%$$
+%\crule{\withenv{x:B,\;\Gamma}{\trans{A}{}{C}}}
+%      {\withenv{\Gamma}{\trans{(\lambda x.A)\:B}{}{C}}}
+%      {x\notin FV(C)}
+%\ruleno{Red-Elim}
+%$$
+
+%$$
+%\crule{\withenv{x:B,\;\Gamma}{\trans{A}{}{C}}}
+%      {\withenv{\Gamma}{\trans{(\lambda x.A)\:B}{}{(\lambda x.C)\:B}}}
+%      {x\in FV(C)}
+%\ruleno{Red-NonElim}
+%$$
 
 $$
-\crule{\withenv{\Gamma}{\trans{M}{}{P}}}
-      {\withenv{\Gamma}{\trans{M\:N}{}{P\:N}}}
-      {M\ne \lambda x.A}
+\trule{\withenv{\Gamma;\:N\cdot\Delta}{\trans{M}{}{P}}}
+      {\withenv{\Gamma;\:\Delta}{\trans{M\:N}{}{P}}}
 \ruleno{App}
 $$
 
 $$
-\trule{\withenv{\Gamma}{\trans{A}{}{B}}}
-      {\withenv{\Gamma}{\trans{\lambda x.A}{}{\lambda x.B}}}
-\ruleno{Abs}
+\crule{\withenv{x:B,\Gamma;\:\Delta}{\trans{A}{}{C}}}
+      {\withenv{\Gamma;\:B\cdot\Delta}{\trans{\lambda x.A}{}{(\lambda x.C)\:B}}}
+      {x\in FV(C)}
+\ruleno{Abs-NonElim}
 $$
+
+$$
+\crule{\withenv{x:B,\Gamma;\:\Delta}{\trans{A}{}{C}}}
+      {\withenv{\Gamma;\:B\cdot\Delta}{\trans{\lambda x.A}{}{C}}}
+      {x\notin FV(C)}
+\ruleno{Abs-Elim}
+$$
+
 \end{document}
