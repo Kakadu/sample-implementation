@@ -228,7 +228,7 @@ module Deterministic =
                           ) =
                 struct
                   let build ?(limit=(-1)) = build ~limit:limit C.step
-                  let html id = html id C.customizer (GT.lift C.env_html) (GT.lift C.left_html) (GT.lift C.over_html) (GT.lift C.right_html)
+                  let html id = html id C.customizer (GT.lift C.env_html) (GT.lift C.left_html) (GT.lift C.over_html) (GT.lift C.right_html)		   
                 end
 
           end    

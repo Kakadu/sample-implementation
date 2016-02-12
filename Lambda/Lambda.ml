@@ -25,6 +25,17 @@ module Term =
 	SS.empty
 	l
 
+    let rec subst a x b =
+      transform(t) 
+	(fun _ x -> x)
+	(fun _ a -> subst a x b)
+	(object inherit [string, string, glam, glam, glam] @t[gmap]
+           method c_Var    _ _ y   = if y.x = x then b   else `Var y.x
+           method c_Lambda _ s y a = if y.x = x then s.x else `Lambda (y.x, a.fx ())
+	 end)
+	()
+	a
+
     type ('a, 'b) env = ('a * 'b) list
 
     let html_env (a : 'a -> HTMLView.er) (b : 'b -> HTMLView.er) e =
@@ -192,8 +203,25 @@ module Term =
 
 	module TopSemantics = Semantics
 
-        module BigStep =
+        module Core =
           struct
+
+            type left  = glam
+            type over  = unit
+            type right = glam
+
+            let left_html   = pretty
+            let over_html _ = HTMLView.string ""
+            let right_html  = pretty
+           
+            let customizer = 
+	      object
+		inherit TopSemantics.Deterministic.BigStep.Tree.html_customizer
+                method show_env   = true
+		method show_over  = false
+		method arrow      = "&#xffeb;"
+		method over_width = 50
+	      end            
 
             module S = Semantics.Deterministic.BigStep
 
@@ -207,61 +235,186 @@ module Term =
 
           end 
 
+	module WHR_Core =
+	  struct
+	    include Core
+	    
+	    type env = unit
+
+	    let env_html _ = HTMLView.string ""
+
+	    class whr =
+	      object	inherit [env] c
+		method c_Var    e _ x   = x.fx e
+		method c_App    e _ m n = 
+		  match m.x with
+		  | `Lambda (x, a) -> S.Just (subst a x n.x, "Red")
+		  | _ ->
+		      S.Subgoals (
+		        [(), m.x, ()],
+		        (fun [m'] -> S.Just (`App (m', n.x), "")),
+		        "App"
+		      )
+		method c_Lambda e s x m = S.Just (s.x, "Abs")
+	      end
+	
+	    let rec step' tr _ lam _ =
+	      transform(t)
+		(fun _ x -> S.Just (`Var x, "Var"))
+		(fun _ l -> step' tr () l ())
+		tr
+		()
+		lam		
+
+	    let step = step' (new whr)
+
+            let side_step _ lam _ lam' = 
+	      if lam = lam' then None else Some ((), lam', ())
+
+	  end
+
+	module HR_Core =
+	  struct
+
+	    include WHR_Core
+
+	    class hr =
+	      object inherit whr
+		method c_Lambda _ _ x m =
+		  S.Subgoals (
+		    [(), m.x, ()],
+                    (fun [m'] -> S.Just (`Lambda (x.x, m'), "")),
+                    "Abs"
+                  )
+	      end
+
+	    let step = step' (new hr)
+
+	  end
+
+	module CBV_Core =
+	  struct
+
+	    include WHR_Core
+
+	    class cbv =
+	      object inherit whr
+		method c_App _ _ m n =
+		  match m.x with
+		  | `Lambda (x, m') ->
+		      let S.Just (n', _) = n.fx () in
+		      if n' = n.x 
+		      then S.Just (subst m' x n.x, "Red")
+		      else S.Subgoals (
+			     [(), n.x, ()],
+                             (fun [n'] -> S.Just (`App (m.x, n'), "")),
+		             "Arg"
+                           )
+		  | _ ->
+		      let S.Just (m', _) = m.fx () in
+		      if m' = m.x 
+		      then S.Subgoals (
+			     [(), n.x, ()],
+                             (fun [n'] -> S.Just (`App (m.x, n'), "")),
+			     "Arg"
+		           )
+		      else S.Subgoals (
+                             [(), m.x, ()],
+                             (fun [m'] -> S.Just (`App (m', n.x), "")),
+                             "App"
+                           )
+	      end
+
+	    let step = step' (new cbv)
+
+	  end
+
+	module NR_Core =
+	  struct
+
+	    include HR_Core
+
+	    class nr =
+	      object inherit hr as hr
+		method c_App i s m n =
+		  match m.x with 
+		  | `Lambda (_, _) -> hr#c_App i s m n
+		  | _ -> 
+		      (match m.fx i with
+		       | S.Just (m', _) when m' = m.x -> 
+			   S.Subgoals (
+                             [(), n.x, ()],
+                             (fun [n'] -> S.Just (`App (m.x, n'), "")),
+                             "Arg"
+                           )
+		       | _ -> hr#c_App i s m n
+		      )
+		      
+	      end
+
+	    let step = step' (new nr)
+
+	  end
+
+	module WHR = TopSemantics.Deterministic.SmallStep.Make (WHR_Core)
+	module HR  = TopSemantics.Deterministic.SmallStep.Make (HR_Core)
+	module NR  = TopSemantics.Deterministic.SmallStep.Make (NR_Core)
+	module CBV = TopSemantics.Deterministic.SmallStep.Make (CBV_Core)
+
         module HLR = TopSemantics.Deterministic.SmallStep.Make (
           struct
-            type env   = (string * glam) list * glam list 
-            type left  = glam
-            type over  = unit
-            type right = glam
+	    include Core
+
+            type env = (string * glam) list * glam list 
 
             let rec step env lam _ = 
 	      transform(t) 
 		(fun (env, _) x -> 
-		  try BigStep.S.Just (List.assoc x env, "B-Var") with
-                    Not_found -> BigStep.S.Just (`Var x, "F-Var")
+		  try S.Just (List.assoc x env, "B-Var") with
+                    Not_found -> S.Just (`Var x, "F-Var")
 		) 
 		(fun env lam -> step env lam ()) 
 		(object 
-		   inherit [env] BigStep.c
+		   inherit [env] c
 		   method c_Var    env       _ x   = x.fx env
 		   method c_App    (env, st) _ m b =
-                     BigStep.S.Subgoals (
+                     S.Subgoals (
                        [(env, b.x::st), m.x, ()],
-                       (fun [p] -> BigStep.S.Just (p, "")),
+                       (fun [p] -> S.Just (p, "")),
 		       "App"
                      ) 
 (*
 		     match m.x with
 		     | `Lambda (x, a) ->
-			 BigStep.S.Subgoals (
+			 Core.S.Subgoals (
                            [(x, b.x)::env, a, ()],
 			   (fun [c] ->
 			      if SS.mem x (fv c) 
-			        then BigStep.S.Just (`App (`Lambda (x, c), b.x), "Red-NonElim")
-			        else BigStep.S.Just (c, "Red-Elim")
+			        then Core.S.Just (`App (`Lambda (x, c), b.x), "Red-NonElim")
+			        else Core.S.Just (c, "Red-Elim")
 			   ),
 			   ""
 			 )
 		     | _ ->
-			 BigStep.S.Subgoals (
+			 Core.S.Subgoals (
                            [env, m.x, ()],
-			   (fun [m'] -> BigStep.S.Just (`App (m', b.x), "")),
+			   (fun [m'] -> Core.S.Just (`App (m', b.x), "")),
 			   "App"
 			 )
 *)
 		   method c_Lambda (env, st) _ v m = 
 		     match st with
-		     | [] -> BigStep.S.Subgoals (
+		     | [] -> S.Subgoals (
 			       [(env, st), m.x, ()],
-                               (fun [m'] -> BigStep.S.Just (`Lambda (v.x, m'), "")),
+                               (fun [m'] -> S.Just (`Lambda (v.x, m'), "")),
                                "Abs-Unbound"
                              )
-		     | b::st -> BigStep.S.Subgoals (
+		     | b::st -> S.Subgoals (
                                   [((v.x, b)::env,st), m.x, ()],
                                   (fun [m'] ->
                                      if SS.mem v.x (fv m')
-                                     then BigStep.S.Just (`App (`Lambda (v.x, m'), b), "Abs-NonElim")
-                                     else BigStep.S.Just (m', "Abs-Elim")
+                                     then S.Just (`App (`Lambda (v.x, m'), b), "Abs-NonElim")
+                                     else S.Just (m', "Abs-Elim")
                                   ),
                                   "" 
                                 )
@@ -280,18 +433,6 @@ module Term =
                 HTMLView.string (show(list) (fun x -> View.toString (pretty x)) s)
               ]
 
-            let left_html   = pretty
-            let over_html _ = HTMLView.string ""
-            let right_html  = pretty
-           
-            let customizer = 
-	      object
-		inherit TopSemantics.Deterministic.BigStep.Tree.html_customizer
-                method show_env   = true
-		method show_over  = false
-		method arrow      = "&#xffeb;"
-		method over_width = 50
-	      end            
 	  end
         )
 
@@ -464,19 +605,44 @@ let toplevel =
          method run cb js =
            Toplevel.Wizard.Page (
              [                             
-              HTMLView.Wizard.radio "Type" [
-                HTMLView.string "simple typing", "typing", "checked=\"true\"";
-		HTMLView.string "head linear reduction", "HLR", ""
+              HTMLView.Wizard.combo "Type" [
+                HTMLView.string "Simple Typing"                     , "typing", "selected=\"true\"";
+                HTMLView.string "Head Reduction"                    , "HR", "";
+                HTMLView.string "Weak Head Reduction (Call by Name)", "WHR", "";
+                HTMLView.string "Call by Value"                     , "CBV", "";
+                HTMLView.string "Normal Order Reduction"            , "NR", "";
+		HTMLView.string "Head Linear Reduction"             , "HLR", ""
               ] 
              ],
              [(fun page conf -> true),
               Toplevel.Wizard.Exit 
                 (fun conf ->
-		   if conf "Type" = "typing"
-		   then 
+		   match conf "Type" with
+		   | "typing" ->
 		     js#results "root" 
 		       (View.toString (Term.Semantics.SimpleTyping.infer (Helpers.interval cb h) p)) "Lambda_ST"
-		   else
+
+		   | "WHR" ->
+		     js#results "root"
+		       (View.toString (Term.Semantics.WHR.html "root" (Term.Semantics.WHR.build () p ())))
+		       "Lambda_SS_WHR"
+
+		   | "CBV" ->
+		     js#results "root"
+		       (View.toString (Term.Semantics.CBV.html "root" (Term.Semantics.CBV.build () p ())))
+		       "Lambda_SS_CBV"
+
+		   | "HR" ->
+		     js#results "root"
+		       (View.toString (Term.Semantics.HR.html "root" (Term.Semantics.HR.build () p ())))
+		       "Lambda_SS_HR"
+
+		   | "NR" ->
+		     js#results "root"
+		       (View.toString (Term.Semantics.NR.html "root" (Term.Semantics.NR.build () p ())))
+		       "Lambda_SS_NR"
+
+		   | "HLR" ->
 		     js#results "root"
 		       (View.toString (Term.Semantics.HLR.html "root" (Term.Semantics.HLR.build ([], []) p ())))
 		       "Lambda_SS_HLR"

@@ -5,7 +5,7 @@
 \input{Syntax}
 
 \vskip1cm
-\textbf{Call by Value (Small-Step)}
+\textbf{Weak Head Reductions/Call by Name (Small-Step)}
 \vskip1cm
 
 Substitution:
@@ -51,22 +51,15 @@ $$
 $$
 
 $$
-\ctrans{\trans{(\lambda x.A)\:B}{}{A[x\gets B]}}
-       {B\mbox{ is in a normal form}}
+\trans{(\lambda x.A)\:B}{}{A[x\gets B]}
 \ruleno{Red}
 $$
 
 $$
-\trule{\trans{M}{}{M^\prime}}
+\crule{\trans{M}{}{M^\prime}}
       {\trans{M\:N}{}{M^\prime\:N}}
+      {M\ne \lambda x.A}
 \ruleno{App}
-$$
-
-$$
-\crule{\trans{N}{}{N^\prime}}
-      {\trans{M\:N}{}{M:N^\prime}}
-      {M\mbox{ is in a normal form}}
-\ruleno{Arg}
 $$
 
 \end{document}
