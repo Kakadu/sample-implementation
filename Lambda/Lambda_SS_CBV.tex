@@ -36,21 +36,6 @@ $$
 Reduction rules:
 
 $$
-\trans{x}{}{x}
-\ruleno{Var}
-$$
-
-$$
-\trans{X}{}{X}
-\ruleno{Cnstr}
-$$
-
-$$
-\trans{\lambda x.A}{}{\lambda x.A}
-\ruleno{Abs}
-$$
-
-$$
 \ctrans{\trans{(\lambda x.A)\:B}{}{A[x\gets B]}}
        {B\mbox{ is in a normal form}}
 \ruleno{Red}
@@ -64,7 +49,7 @@ $$
 
 $$
 \crule{\trans{N}{}{N^\prime}}
-      {\trans{M\:N}{}{M:N^\prime}}
+      {\trans{M\:N}{}{M\:N^\prime}}
       {M\mbox{ is in a normal form}}
 \ruleno{Arg}
 $$

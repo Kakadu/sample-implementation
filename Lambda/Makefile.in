@@ -291,7 +291,7 @@ CLEAN_CMI := $(CMO:.cmo=.cmi)
 # other extra files to clean up
 CLEAN_EXTRA := .depend $(BYTE) $(NATIVE)
 TEXFILES = Lambda Lambda_BS_CBV Lambda_SS_CBV Lambda_ST \
-Lambda_SS_HLR Lambda_SS_WHR Lambda_SS_HR Lambda_SS_NR
+Lambda_SS_HLR Lambda_SS_CBN Lambda_SS_HR Lambda_SS_NR
 
 all: all-recursive
 

@@ -244,9 +244,17 @@ module Term =
 	    let env_html _ = HTMLView.string ""
 
 	    class whr =
-	      object	inherit [env] c
-		method c_Var    e _ x   = x.fx e
-		method c_App    e _ m n = 
+	      object inherit [env] c
+		method nf (lam :  (env, glam, (env, glam, GT.unit, glam) S.case,
+                                   < self : env -> glam -> (env, glam, GT.unit, glam) S.case;
+                                     var  : env -> GT.string -> (env, glam, GT.unit, glam) S.case >)
+                                   GT.a
+                          ) =
+		  match S.unfold (fun (e, l, _) -> lam.f e l) (lam.fx ()) with
+		  | S.Nothing _ -> true
+		  | _ -> false
+		method c_Var e _ x   = S.Nothing ("normal form", "")
+		method c_App e _ m n = 
 		  match m.x with
 		  | `Lambda (x, a) -> S.Just (subst a x n.x, "Red")
 		  | _ ->
@@ -255,7 +263,7 @@ module Term =
 		        (fun [m'] -> S.Just (`App (m', n.x), "")),
 		        "App"
 		      )
-		method c_Lambda e s x m = S.Just (s.x, "Abs")
+		method c_Lambda e s x m = S.Nothing ("normal form", "")
 	      end
 	
 	    let rec step' tr _ lam _ =
@@ -298,21 +306,19 @@ module Term =
 	    include WHR_Core
 
 	    class cbv =
-	      object inherit whr
+	      object(this) inherit whr
 		method c_App _ _ m n =
 		  match m.x with
-		  | `Lambda (x, m') ->
-		      let S.Just (n', _) = n.fx () in
-		      if n' = n.x 
+		  | `Lambda (x, m') ->		      
+		      if this#nf n
 		      then S.Just (subst m' x n.x, "Red")
 		      else S.Subgoals (
 			     [(), n.x, ()],
                              (fun [n'] -> S.Just (`App (m.x, n'), "")),
 		             "Arg"
                            )
-		  | _ ->
-		      let S.Just (m', _) = m.fx () in
-		      if m' = m.x 
+		  | _ ->                     
+		      if this#nf m
 		      then S.Subgoals (
 			     [(), n.x, ()],
                              (fun [n'] -> S.Just (`App (m.x, n'), "")),
@@ -335,28 +341,26 @@ module Term =
 	    include HR_Core
 
 	    class nr =
-	      object inherit hr as hr
+	      object(this) inherit hr as hr
 		method c_App i s m n =
 		  match m.x with 
 		  | `Lambda (_, _) -> hr#c_App i s m n
 		  | _ -> 
-		      (match m.fx i with
-		       | S.Just (m', _) when m' = m.x -> 
-			   S.Subgoals (
-                             [(), n.x, ()],
-                             (fun [n'] -> S.Just (`App (m.x, n'), "")),
-                             "Arg"
-                           )
-		       | _ -> hr#c_App i s m n
-		      )
-		      
+		      if this#nf m 
+		      then
+		        S.Subgoals (
+                           [(), n.x, ()],
+                           (fun [n'] -> S.Just (`App (m.x, n'), "")),
+                           "Arg"
+                        )
+		       else hr#c_App i s m n
 	      end
 
 	    let step = step' (new nr)
 
 	  end
 
-	module WHR = TopSemantics.Deterministic.SmallStep.Make (WHR_Core)
+	module CBN = TopSemantics.Deterministic.SmallStep.Make (WHR_Core)
 	module HR  = TopSemantics.Deterministic.SmallStep.Make (HR_Core)
 	module NR  = TopSemantics.Deterministic.SmallStep.Make (NR_Core)
 	module CBV = TopSemantics.Deterministic.SmallStep.Make (CBV_Core)
@@ -603,35 +607,63 @@ let toplevel =
                          )
          method vertical  = Term.vertical p
          method run cb js =
+	   let depth = ref (-1) in
            Toplevel.Wizard.Page (
              [                             
-              HTMLView.Wizard.combo "Type" [
-                HTMLView.string "Simple Typing"                     , "ST", "selected=\"true\"";
-                HTMLView.string "Head Reduction"                    , "HR", "";
-                HTMLView.string "Weak Head Reduction (Call by Name)", "WHR", "";
-                HTMLView.string "Call by Value"                     , "CBV", "";
-                HTMLView.string "Normal Order Reduction"            , "NR", "";
-		HTMLView.string "Head Linear Reduction"             , "HLR", ""
+              HTMLView.Wizard.radio "Type" [
+                HTMLView.string "typing"    , "typing"    , "checked=\"true\"";
+                HTMLView.string "evaluation", "evaluation", ""
               ] 
              ],
-             [(fun page conf -> true),
-             Toplevel.Wizard.Exit 
-               (fun conf ->
-	          let kind = conf "Type" in
-	          let f =
-	            List.assoc kind
-	              ["ST" , (fun () -> Term.Semantics.SimpleTyping.infer (Helpers.interval cb h) p);
-                       "WHR", (fun () -> Term.Semantics.WHR.build_html ()       p () "root");
-                       "CBV", (fun () -> Term.Semantics.CBV.build_html ()       p () "root");
-                       "HR" , (fun () -> Term.Semantics.HR .build_html ()       p () "root");
-                       "NR" , (fun () -> Term.Semantics.NR .build_html ()       p () "root");
-                       "HLR", (fun () -> Term.Semantics.HLR.build_html ([], []) p () "root");
-	              ]
-	          in
-		  js#results "root" (View.toString (f ())) ("Lambda_SS_" ^ kind)
-                )
+	     [(fun page conf -> conf "Type" = "typing"),
+	      Toplevel.Wizard.Exit 
+                (fun conf -> 
+	           js#results "root" (View.toString (Term.Semantics.SimpleTyping.infer (Helpers.interval cb h) p)) "Lambda_ST"
+                );
+              (fun page conf -> conf "Type" = "evaluation"),
+              Toplevel.Wizard.Page (
+                [
+                 HTMLView.Wizard.radio "Semantic Type" [
+                   HTMLView.string "Small-Step", "SS", "checked=\"true\"";
+	           HTMLView.string "Big-Step"  , "BS", ""
+                 ];
+                 HTMLView.Wizard.combo "Reduction order" [
+                   HTMLView.string "Normal Order"         , "NR" , "selected=\"true\"";
+                   HTMLView.string "Call by Name"         , "CBN", "";
+                   HTMLView.string "Call by Value"        , "CBV", "";
+                   HTMLView.string "Head Reduction"       , "HR" , "";
+		   HTMLView.string "Head Linear Reduction", "HLR", ""
+                 ];
+                 Toplevel.Wizard.div ~default:"-1" "Tree depth"		  
+		],
+                [(fun page conf -> 
+                    let depth'  = conf "Tree depth" in
+                    match
+                      Term.Lexer.fromString (ostap (s:"-"? n:!(Term.Lexer.literal) -EOF {match s with Some _ -> -(n) | _ -> n})) depth'
+                    with
+                    | Checked.Ok depth'' -> depth := depth''; true
+                    | Checked.Fail [msg] -> js#error page "Tree depth" depth' msg; false
+		 ),
+                 Toplevel.Wizard.Exit 
+                   (fun conf ->
+	              let kind = conf "Reduction order" in
+	              let f =
+	                List.assoc kind
+	                  ["ST" , (fun () -> Term.Semantics.SimpleTyping.infer (Helpers.interval cb h) p);
+                           "CBN", (fun () -> Term.Semantics.CBN.build_html ~limit:depth.contents ()       p () "root");
+                           "CBV", (fun () -> Term.Semantics.CBV.build_html ~limit:depth.contents ()       p () "root");
+                           "HR" , (fun () -> Term.Semantics.HR .build_html ~limit:depth.contents ()       p () "root");
+                           "NR" , (fun () -> Term.Semantics.NR .build_html ~limit:depth.contents ()       p () "root");
+                           "HLR", (fun () -> Term.Semantics.HLR.build_html ~limit:depth.contents ([], []) p () "root");
+	                  ]
+	              in
+		      js#results "root" (View.toString (f ())) ("Lambda_" ^ conf "Semantic Type" ^ "_" ^ kind)
+                   )
+                 ]
+               )               
 	     ]
            )
        end
     )
+
 

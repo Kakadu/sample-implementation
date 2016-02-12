@@ -92,6 +92,22 @@ module Deterministic =
         | Just     of 'right * string
         | Subgoals of ('env * 'left * 'over) list * ('right list -> ('env, 'left, 'over, 'right) case) * string	
 
+	let rec unfold f = function
+	| Subgoals (l, g, _) -> 
+	    let l' =
+	      List.map 
+		(fun triple -> 
+		  match f triple with
+		  | Subgoals _ as s -> unfold f s
+		  | x -> x
+		) 
+		l
+	    in
+	    (try g (List.map (function Just (r, _) -> r) l') with
+	       Match_failure _ -> Nothing ("", "")
+	    )
+	| x -> x
+
         let opt_to_case rule = function
 	| Good x     -> Just (x, rule)
 	| Bad reason -> Nothing (reason, rule)
@@ -185,7 +201,7 @@ module Deterministic =
               let rec inner i env left over =
                 if i != 0 then 
                   match step env left over with
-    	          | Nothing (reason, rule) -> Node (env, left, over, Bad reason, [], rule)
+    	          | Nothing (reason, rule) -> Node (env, left, over, Bad reason, [], "")
                   | Just (right, rule) -> Node (env, left, over, Good right, [], rule)
                   | Subgoals (triples, fright, rule) ->
                       let rec process_subgoals subnodes subgoals subfun rule =
@@ -199,9 +215,9 @@ module Deterministic =
                           in
                           match subfun rights with
 	  	          | Just     (right  , rule)         -> Node (env, left, over, Good right, subnodes@subnodes', define_rule rule)
-                          | Nothing  (reason , rule)         -> Node (env, left, over, Bad reason, subnodes@subnodes', define_rule rule)
+                          | Nothing  (reason , rule)         -> Node (env, left, over, Bad reason, subnodes@subnodes', "")
                           | Subgoals (triples, fright, rule) -> process_subgoals (subnodes@subnodes') triples fright (define_rule rule)
-			with SomeBad t -> Node (env, left, over, Bad t, subnodes @ subnodes', rule)
+			with SomeBad t -> Node (env, left, over, Bad t, subnodes @ subnodes', "")
 		      in
 		      process_subgoals [] triples fright rule
                 else Node (env, left, over, Bad "step limit reached", [], "")
@@ -244,7 +260,7 @@ module Deterministic =
                            type over
                            type right
 
-                           val step      : env -> left -> over -> (env, left, over, right) BigStep.case
+                           val step      :  env -> left -> over -> (env, left, over, right) BigStep.case
                            val side_step : env -> left -> over -> right -> (env * left * over) option
 
                            val env_html   : env   -> HTMLView.er

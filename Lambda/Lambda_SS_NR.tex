@@ -36,16 +36,6 @@ $$
 Reduction rules:
 
 $$
-\trans{x}{}{x}
-\ruleno{Var}
-$$
-
-$$
-\trans{X}{}{X}
-\ruleno{Cnstr}
-$$
-
-$$
 \trule{\trans{A}{}{A^\prime}}
       {\trans{\lambda x.A}{}{\lambda x.A^\prime}}
 \ruleno{Abs}
@@ -59,14 +49,14 @@ $$
 $$
 \crule{\trans{M}{}{M^\prime}}
       {\trans{M\:N}{}{M^\prime\:N}}
-      {M\ne \lambda x.A,\,M\mbox{ is not a normal form}}
+      {M\ne \lambda x.A,\,M\mbox{ is not in a normal form}}
 \ruleno{App}
 $$
 
 $$
 \crule{\trans{N}{}{N^\prime}}
       {\trans{M\:N}{}{M\:N^\prime}}
-      {M\mbox{ is a normal form}}
+      {M\mbox{ is in a normal form}}
 \ruleno{Arg}
 $$
 

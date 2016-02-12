@@ -14,7 +14,7 @@ module Wizard =
     let make id target navigate (Page (inputs, decisions)) as root =
       let w = HTMLView.Wizard.create id target navigate in
       let i =
-        let i = ref 0 in
+        let i = ref 1 in
         (fun () -> let k = !i in incr i; k)
       in
       let rec inner nav index (inputs, decisions) =
@@ -22,12 +22,13 @@ module Wizard =
         let decisions' = List.map (function 
 	                           | (_, Page _) as d -> i  (), d
 				   | (_, Exit _) as d -> index, d
-                                  ) decisions in
+                                  ) decisions 
+	in
         let nav' i obj = 
           if i = index 
           then 
             try 
-              let next,( _, node) = List.find (fun (_, (test, _)) -> test page obj) decisions' in
+              let next, ( _, node) = List.find (fun (_, (test, _)) -> test page obj) decisions' in
               (match node with Exit f -> f obj | _ -> ());
               next
             with Not_found -> -1
@@ -36,7 +37,7 @@ module Wizard =
         List.fold_left 
           (fun nav (i, (_, node)) -> 
 	     match node with
-	     | Page (inp, dec)  -> inner nav i (inp, dec)
+	     | Page (inp, dec) -> inner nav i (inp, dec)
 	     | Exit _ -> nav
           ) nav' decisions'
       in
