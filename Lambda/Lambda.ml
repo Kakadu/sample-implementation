@@ -606,7 +606,7 @@ let toplevel =
            Toplevel.Wizard.Page (
              [                             
               HTMLView.Wizard.combo "Type" [
-                HTMLView.string "Simple Typing"                     , "typing", "selected=\"true\"";
+                HTMLView.string "Simple Typing"                     , "ST", "selected=\"true\"";
                 HTMLView.string "Head Reduction"                    , "HR", "";
                 HTMLView.string "Weak Head Reduction (Call by Name)", "WHR", "";
                 HTMLView.string "Call by Value"                     , "CBV", "";
@@ -615,38 +615,21 @@ let toplevel =
               ] 
              ],
              [(fun page conf -> true),
-              Toplevel.Wizard.Exit 
-                (fun conf ->
-		   match conf "Type" with
-		   | "typing" ->
-		     js#results "root" 
-		       (View.toString (Term.Semantics.SimpleTyping.infer (Helpers.interval cb h) p)) "Lambda_ST"
-
-		   | "WHR" ->
-		     js#results "root"
-		       (View.toString (Term.Semantics.WHR.html "root" (Term.Semantics.WHR.build () p ())))
-		       "Lambda_SS_WHR"
-
-		   | "CBV" ->
-		     js#results "root"
-		       (View.toString (Term.Semantics.CBV.html "root" (Term.Semantics.CBV.build () p ())))
-		       "Lambda_SS_CBV"
-
-		   | "HR" ->
-		     js#results "root"
-		       (View.toString (Term.Semantics.HR.html "root" (Term.Semantics.HR.build () p ())))
-		       "Lambda_SS_HR"
-
-		   | "NR" ->
-		     js#results "root"
-		       (View.toString (Term.Semantics.NR.html "root" (Term.Semantics.NR.build () p ())))
-		       "Lambda_SS_NR"
-
-		   | "HLR" ->
-		     js#results "root"
-		       (View.toString (Term.Semantics.HLR.html "root" (Term.Semantics.HLR.build ([], []) p ())))
-		       "Lambda_SS_HLR"
-                )                
+             Toplevel.Wizard.Exit 
+               (fun conf ->
+	          let kind = conf "Type" in
+	          let f =
+	            List.assoc kind
+	              ["ST" , (fun () -> Term.Semantics.SimpleTyping.infer (Helpers.interval cb h) p);
+                       "WHR", (fun () -> Term.Semantics.WHR.build_html ()       p () "root");
+                       "CBV", (fun () -> Term.Semantics.CBV.build_html ()       p () "root");
+                       "HR" , (fun () -> Term.Semantics.HR .build_html ()       p () "root");
+                       "NR" , (fun () -> Term.Semantics.NR .build_html ()       p () "root");
+                       "HLR", (fun () -> Term.Semantics.HLR.build_html ([], []) p () "root");
+	              ]
+	          in
+		  js#results "root" (View.toString (f ())) ("Lambda_SS_" ^ kind)
+                )
 	     ]
            )
        end
