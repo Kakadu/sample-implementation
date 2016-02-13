@@ -335,6 +335,9 @@ module Term =
 		        ""
 		      )
 		  end
+
+		let step = step' (new nr)
+
 	      end
 
 	    module CBV_Core =
