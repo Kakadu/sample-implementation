@@ -5,7 +5,7 @@
 \input{Syntax}
 
 \vskip1cm
-\textbf{Call by Value (Big-Step)}
+\textbf{Normal Order Reductions (Big-Step)}
 \vskip1cm
 
 Substitution:
@@ -37,12 +37,18 @@ Reduction rules:
 
 $$
 \ctrans{\trans{x}{}{x}}
-       {x\in X\cup C}
+      {x\in X\cup C}
 \ruleno{Var}
 $$
 
 $$
-\trule{\trans{M}{}{\lambda x.A},\;\trans{N}{}{N^\prime},\;\trans{A[x\gets N^\prime]}{}{K}}
+\trule{\trans{A}{}{A^\prime}}
+      {\trans{\lambda x.A}{}{\lambda x.A^\prime}}
+\ruleno{Abs}
+$$
+
+$$
+\trule{\trans{M}{}{\lambda x.A},\;\trans{A[x\gets N]}{}{K}}
       {\trans{M\:N}{}{K}}
 \ruleno{Red}
 $$
@@ -53,5 +59,4 @@ $$
       {M^\prime\ne \lambda x.A}
 \ruleno{App}
 $$
-
 \end{document}

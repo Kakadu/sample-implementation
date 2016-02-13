@@ -5,7 +5,7 @@
 \input{Syntax}
 
 \vskip1cm
-\textbf{Call by Value (Big-Step)}
+\textbf{Head Reductions (Big-Step)}
 \vskip1cm
 
 Substitution:
@@ -42,14 +42,20 @@ $$
 $$
 
 $$
-\trule{\trans{M}{}{\lambda x.A},\;\trans{N}{}{N^\prime},\;\trans{A[x\gets N^\prime]}{}{K}}
+\trule{\trans{A}{}{A^\prime}}
+      {\trans{\lambda x.A}{}{\lambda x.A^\prime}}
+\ruleno{Abs}
+$$
+
+$$
+\trule{\trans{M}{}{\lambda x.A},\;\trans{A[x\gets N]}{}{K}}
       {\trans{M\:N}{}{K}}
 \ruleno{Red}
 $$
 
 $$
-\crule{\trans{M}{}{M^\prime},\,\trans{N}{}{N^\prime}}
-      {\trans{M\:N}{}{M^\prime\:N^\prime}}
+\crule{\trans{M}{}{M^\prime}}
+      {\trans{M\:N}{}{M^\prime\:N}}
       {M^\prime\ne \lambda x.A}
 \ruleno{App}
 $$
