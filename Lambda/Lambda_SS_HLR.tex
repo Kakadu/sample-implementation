@@ -8,48 +8,26 @@
 \textbf{Head-Linear Reductions (Small-Step)}
 \vskip1cm
 $$
-\withenv{x:B,\;\Gamma;\:\Delta}{\trans{x}{}{B}}
-\ruleno{B-Var}
+\withenv{x:A,\Gamma;\:\Delta}{\trans{x}{}{A}}
+\ruleno{Var}
 $$
 
 $$
-\ctrans{\withenv{\Gamma;\:\Delta}{\trans{x}{}{x}}}
-       {x\ne dom(\Gamma)}
-\ruleno{F-Var}
-$$
-
-%$$
-%\crule{\withenv{x:B,\;\Gamma}{\trans{A}{}{C}}}
-%      {\withenv{\Gamma}{\trans{(\lambda x.A)\:B}{}{C}}}
-%      {x\notin FV(C)}
-%\ruleno{Red-Elim}
-%$$
-
-%$$
-%\crule{\withenv{x:B,\;\Gamma}{\trans{A}{}{C}}}
-%      {\withenv{\Gamma}{\trans{(\lambda x.A)\:B}{}{(\lambda x.C)\:B}}}
-%      {x\in FV(C)}
-%\ruleno{Red-NonElim}
-%$$
-
-$$
-\trule{\withenv{\Gamma;\:N\cdot\Delta}{\trans{M}{}{P}}}
-      {\withenv{\Gamma;\:\Delta}{\trans{M\:N}{}{P}}}
+\trule{\withenv{\Gamma;\:N\cdot\Delta}{\trans{M}{}{M^\prime}}}
+      {\withenv{\Gamma;\:\Delta}{\trans{M\:N}{}{M^\prime\:N}}}
 \ruleno{App}
 $$
 
 $$
-\crule{\withenv{x:B,\Gamma;\:\Delta}{\trans{A}{}{C}}}
-      {\withenv{\Gamma;\:B\cdot\Delta}{\trans{\lambda x.A}{}{(\lambda x.C)\:B}}}
-      {x\in FV(C)}
-\ruleno{Abs-NonElim}
+\trule{\withenv{x:B,\Gamma;\:\Delta}{\trans{A}{}{A^\prime}}}
+      {\withenv{\Gamma;\:B\cdot\Delta}{\trans{\lambda x.A}{}{\lambda x.A^\prime}}}
+\ruleno{Abs-Empty}
 $$
 
 $$
-\crule{\withenv{x:B,\Gamma;\:\Delta}{\trans{A}{}{C}}}
-      {\withenv{\Gamma;\:B\cdot\Delta}{\trans{\lambda x.A}{}{C}}}
-      {x\notin FV(C)}
-\ruleno{Abs-Elim}
+\trule{\withenv{\Gamma;\:\epsilon}{\trans{A}{}{A^\prime}}}
+      {\withenv{\Gamma;\:\epsilon}{\trans{\lambda x.A}{}{\lambda x.A^\prime}}}
+\ruleno{Abs}
 $$
 
 \end{document}

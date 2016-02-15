@@ -234,6 +234,15 @@ module Term =
                          glam  , 'env, ('env, glam, unit, glam) S.case,
                                  'env, ('env, glam, unit, glam) S.case
                         ] @t
+                method nf (e : 'env) 
+                          (lam :  ('env, glam, ('env, glam, GT.unit, glam) S.case,
+                                   < self : 'env -> glam -> ('env, glam, GT.unit, glam) S.case;
+                                     var  : 'env -> GT.string -> ('env, glam, GT.unit, glam) S.case >
+                                ) GT.a
+                          ) =
+                  match S.unfold (fun (e, l, _) -> lam.f e l) (lam.fx e) with
+                  | S.Nothing _ -> true
+                  | _ -> false
               end
 
           end 
@@ -387,14 +396,6 @@ module Term =
 
                 class whr =
                   object inherit [env] c
-                    method nf (lam :  (env, glam, (env, glam, GT.unit, glam) S.case,
-                                       < self : env -> glam -> (env, glam, GT.unit, glam) S.case;
-                                         var  : env -> GT.string -> (env, glam, GT.unit, glam) S.case >)
-                                       GT.a
-                              ) =
-                      match S.unfold (fun (e, l, _) -> lam.f e l) (lam.fx ()) with
-                      | S.Nothing _ -> true
-                      | _ -> false
                     method c_Var e _ x   = S.Nothing ("normal form", "")
                     method c_App e _ m n = 
                       match m.x with
@@ -449,10 +450,10 @@ module Term =
 
                 class cbv =
                   object(this) inherit whr
-                    method c_App _ _ m n =
+                    method c_App e _ m n =
                       match m.x with
                       | `Lambda (x, m') ->                
-                          if this#nf n
+                          if this#nf e n
                           then S.Just (subst m' x n.x, "Red")
                           else S.Subgoals (
                                  [(), n.x, ()],
@@ -460,7 +461,7 @@ module Term =
                                  "Arg"
                                )
                       | _ ->                     
-                          if this#nf m
+                          if this#nf e m
                           then S.Subgoals (
                                  [(), n.x, ()],
                                  (fun [n'] -> S.Just (`App (m.x, n'), "")),
@@ -488,7 +489,7 @@ module Term =
                       match m.x with 
                       | `Lambda (_, _) -> hr#c_App i s m n
                       | _ -> 
-                          if this#nf m 
+                          if this#nf i m 
                           then
                             S.Subgoals (
                                [(), n.x, ()],
@@ -506,48 +507,35 @@ module Term =
             module HR  = TopSemantics.Deterministic.SmallStep.Make (HR_Core)
             module NR  = TopSemantics.Deterministic.SmallStep.Make (NR_Core)
             module CBV = TopSemantics.Deterministic.SmallStep.Make (CBV_Core)
-
             module HLR = TopSemantics.Deterministic.SmallStep.Make (
               struct
                 include Core
 
                 type env = (string * glam) list * glam list 
 
+		class html_customizer' =
+		  object
+                    inherit html_customizer
+                    method show_env = true
+		  end            
+
+		let customizer = new html_customizer'
+
                 let rec step env lam _ = 
                   transform(t) 
-                    (fun (env, _) x -> 
-                      try S.Just (List.assoc x env, "B-Var") with
-                        Not_found -> S.Just (`Var x, "F-Var")
-                    ) 
+                    (fun _ x -> S.Just (`Var x, ""))
                     (fun env lam -> step env lam ()) 
                     (object 
                        inherit [env] c
-                       method c_Var    env       _ x   = x.fx env
-                       method c_App    (env, st) _ m b =
+                       method c_Var (env, _) _ x = 
+                         try S.Just (List.assoc x.x env, "B-Var") with
+                           Not_found -> S.Nothing ("quasi-normal form", "")                     
+                       method c_App (env, st) _ m b =
                          S.Subgoals (
                            [(env, b.x::st), m.x, ()],
-                           (fun [p] -> S.Just (p, "")),
+                           (fun [p] -> S.Just (`App (p, b.x), "")),
                            "App"
                          ) 
-(*
-                     match m.x with
-                     | `Lambda (x, a) ->
-                         Core.S.Subgoals (
-                           [(x, b.x)::env, a, ()],
-                           (fun [c] ->
-                              if SS.mem x (fv c) 
-                                then Core.S.Just (`App (`Lambda (x, c), b.x), "Red-NonElim")
-                                else Core.S.Just (c, "Red-Elim")
-                           ),
-                           ""
-                         )
-                     | _ ->
-                         Core.S.Subgoals (
-                           [env, m.x, ()],
-                           (fun [m'] -> Core.S.Just (`App (m', b.x), "")),
-                           "App"
-                         )
-*)
                        method c_Lambda (env, st) _ v m = 
                          match st with
                          | [] -> S.Subgoals (
@@ -557,11 +545,7 @@ module Term =
                                  )
                          | b::st -> S.Subgoals (
                                       [((v.x, b)::env,st), m.x, ()],
-                                      (fun [m'] ->
-                                         if SS.mem v.x (fv m')
-                                         then S.Just (`App (`Lambda (v.x, m'), b), "Abs-NonElim")
-                                         else S.Just (m', "Abs-Elim")
-                                      ),
+                                      (fun [m'] -> S.Just (`Lambda (v.x, m'), "Abs")),
                                       "" 
                                     )
                      end
@@ -573,12 +557,18 @@ module Term =
                   if lam = lam' then None else Some (([], []), lam', ())
 
                 let env_html  (e, s) =
+		  let hl l e =
+		    if List.length l = 0 then HTMLView.raw "&epsilon;" else e
+		  in
                   HTMLView.seq [ 
-                    html_env HTMLView.string pretty e;
-                    HTMLView.string ";";
-                    HTMLView.string (show(list) (fun x -> View.toString (pretty x)) s)
+		    hl e (HTMLView.seq [
+		            HTMLView.string "["; 
+		            html_env HTMLView.string pretty e; 
+		            HTMLView.string "]"
+                         ]);
+                    HTMLView.raw ";&nbsp;";
+                    hl s (HTMLView.raw (show(list) (fun x -> View.toString (pretty x)) s))
                   ]
-
               end
             )
           end
