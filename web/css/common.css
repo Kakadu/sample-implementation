@@ -134,6 +134,12 @@ pre.inline {
   bottom: 0;
 }
 
+#wizard {
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 /*Right column*/
 
 

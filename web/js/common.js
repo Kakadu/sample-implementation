@@ -22,7 +22,7 @@ function show_results (root, tree, descr) {
   convertTree (document.getElementById (root), false);  
   pdfViewerObject = document.getElementById ("description");
   pdfViewerObject.setAttribute ("data", descr);  
-  pdfViewerObject.outerHTML = pdfViewerObject.outerHTML.replace(/data="(.+?)"/, 'data="' + descr + '"');
+  pdfViewerObject.outerHTML = pdfViewerObject.outerHTML.replace(/data="(.+?)"/, 'data="pdf/' + descr + '"');
 }
 
 function disable_actions () {
