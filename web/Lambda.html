@@ -7,9 +7,9 @@
     <link rel="stylesheet" href="css/Lambda.css" type="text/css">
 </head>
 <body>
-    <div class="main">
+    <div id="main">
         <h2 class="header">Operational Semantics Primer</h2>
-        <div class="leftcol">
+        <div class="aside leftcol">
             <div id="source-code">
                 Source code:
                 <hr>
@@ -40,19 +40,15 @@
                 <div id="runmsg">&nbsp;</div>
             </div>
             <div id="interpretation-results">
-                <hr>
                 Interpretation results:
                 <hr>
                 <div class="scrollable" id="output"></div>
             </div>
         </div>
     
-        <div class="rightcol">
-            <div id="pdf">
-                Description:
-                <hr>
-                <object id="description" width="100%" height="837px" data="Lambda.pdf" type="application/pdf"></object> 
-            </div>
+        <div class="aside rightcol">
+            Description:
+            <object id="description" width="100%" height="837px" data="Lambda.pdf" type="application/pdf"></object> 
         </div>
     </div>
 
