@@ -1,0 +1,108 @@
+html, body {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+body {
+  background-color:#DDDDDD;
+}
+
+/*Common css*/
+textarea {
+  width:98%;
+}
+
+
+.scrollable {
+/*  // overflow-y:scroll;
+  // overflow-x:scroll;*/
+  overflow: scroll;
+  margin: 2px;
+}
+
+pre.inline {
+  display: inline;
+}
+
+.editablediv {
+  border-style:solid;
+  border-width:1px;
+  border-color:#bbbbbb;
+  background-color:white;
+  width:50px;
+}
+
+.main {
+  position: absolute;
+  width:100%;
+  bottom:0;
+  top:0;
+  padding:0px;
+  overflow-x:auto;
+  overflow-y:auto;
+}
+.header {
+  text-align: center;
+}
+
+/* Left column */
+.leftcol {
+  position:fixed; 
+  left:1%;
+  top:50px;
+  display:block;
+  width:29%;
+  padding:0;
+  margin:0px auto;
+  bottom:0;      
+  height:100%;
+  overflow-x:hidden;
+  overflow-y:hidden;
+}
+
+#text {
+  height: 200px;
+  font-family:monospace;
+  line-height:0.9;
+  background-color:white;
+}
+
+#parsed {
+  height:500px;
+  background-color:white;
+}
+
+/*Center column*/
+.maincontent{
+  position:fixed;
+  left:31%;
+  top:50px;
+  width:30%;
+  display:block;
+  height:100%;
+  overflow-x:hidden;
+  overflow-y:hidden;
+}
+
+#output {
+  width:100%;
+  height:543px;
+  background-color:white;
+  position:relative;
+}
+
+/*Right column*/
+.rightcol{
+  position:fixed;
+  left:62%;
+  top:50px;
+  width:37%;
+  display:block;
+  height:100%;
+  overflow-x:hidden;
+  overflow-y:hidden;
+}
+
+
+
