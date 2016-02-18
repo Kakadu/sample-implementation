@@ -576,7 +576,7 @@ module Term =
         module SimpleTyping =
           struct
 
-            @type ('var, 'self) typ = [ `V of 'var | `Arr of 'self * 'self] with gmap, show, html
+            @type ('var, 'self) typ = [`V of 'var | `Arr of 'self * 'self] with gmap, show, html
 
             type gtyp = (string, gtyp) typ
             type ltyp = (string logic, ltyp) typ logic
