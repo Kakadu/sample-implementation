@@ -35,7 +35,7 @@ function disable_actions () {
 
 function enable_actions () {
   document.getElementById ("run_button").disabled = false;
-  document.getElementById ("export_button").disabled = false;   
+  document.getElementById ("export_button").disabled = false;  
 }
 
 function parser_msg (text) {
@@ -62,6 +62,8 @@ function do_parse () {
    clear_parser_msg ();
    clear_run_msg ();
    var textWrapper = document.getElementById("text");
+   console.log(textWrapper.textContent);
+   console.log(textWrapper.innerText);
    var textForParsing = textWrapper.textContent || textWrapper.innerText;
    var result = window.parse (textForParsing.replace(/\u00a0/g, " "));
    if (result[0] == "1") {
@@ -79,7 +81,8 @@ function do_parse () {
 
 function do_highlighting (x, y, z, t) {
    document.getElementById ("text").innerHTML = window.highlight (x, y, z, t);
-   event.cancelBubble = true;
+   // where is event?
+   // event.cancelBubble = true;
 }
 
 function handleFile (evt) {
@@ -113,3 +116,11 @@ function convert () {
 }
 
 document.getElementById ("loadFile").addEventListener("change", handleFile, false);
+
+
+var abstractSyntaxTreeWrapper = document.getElementById('interpretation-results');
+document.getElementById('interpretation-results-fullscreen').addEventListener('click', function () {
+    if (screenfull.enabled) {
+        screenfull.request(abstractSyntaxTreeWrapper);
+    }
+});

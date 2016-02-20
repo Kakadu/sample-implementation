@@ -3,18 +3,40 @@ html, body {
   width: 100%;
   margin: 0;
   padding: 0;
+  color: #333;
 }
+
 body {
-  background-color:#DDDDDD;
+  background-color:#F4F3F0;
 }
 
-/*Common css*/
-textarea {
-  width:98%;
+/* GRID */
+body {
+display: -webkit-box;
+  display: -moz-box;
+  display: -ms-flexbox;
+  display: -webkit-flex;
+  display: flex;  
+  
+  -webkit-flex-flow: column nowrap;
+  flex-flow: column nowrap;
+
+  -webkit-align-items: stretch;
+  align-items: stretch;
+
 }
 
-/* Grid */
-#main, #main > * {
+.header {
+    -webkit-box-flex: 0;
+    -webkit-flex: none;
+    -ms-flex: none;
+    flex: none;
+}
+
+
+
+
+#main > * {
   display: -webkit-box;
   display: -moz-box;
   display: -ms-flexbox;
@@ -26,55 +48,42 @@ textarea {
 
    -webkit-align-items: stretch;
    align-items: stretch;
-
-}
-#main {
-  height: 100%;
-}
-#main > * {
   padding: 10px;
-  flex: 1 100%;
+  flex: 2;
 
   -webkit-flex-flow: column nowrap;
   flex-flow: column nowrap;
-}
 
-#main > .header {
-    -webkit-justify-content: center;
-    -ms-flex-pack: center;
-    justify-content: center;
 }
 
 #main > .rightcol > #description {
   flex: 1 auto;
 }
 /* center column grid */
-#main > * > #semantic-settings {
-  height: 350px;
-}
+
 #main > * > #interpretation-results {
   flex: 1 auto;
-  position: relative;
-  min-height: 300px;
 }
 /* left column grid*/
-#main > * > #source-code {
-  height: 350px;
-}
 #main > * > #abstract-syntax-tree {
   flex: 1 auto;
-  position: relative;
-  min-height: 300px;
 }
 
-@media all and (min-width: 600px) {
-  /* We tell both sidebars to share a row */
-  #main .aside { flex: 1 auto;}
-}
-
-/* Large screens */
 @media all and (min-width: 800px) {
-  #main .maincontent { flex: 4 auto; }
+  /* We tell both sidebars to share a row */
+  #main {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-flex: 1;
+    -webkit-flex: 1 0 auto;
+    -ms-flex: 1 0 auto;
+    flex: 1 0 auto;
+    -webkit-flex-flow: row nowrap;
+    flex-flow: row nowrap;
+  }
+  #main .maincontent { flex: 3; }
 }
 
 
@@ -102,7 +111,9 @@ pre.inline {
 }
 
 /* Left column */
-
+#source-code {
+  height: 350px;
+}
 
 #text {
   height: 200px;
@@ -121,7 +132,27 @@ pre.inline {
 }
 
 /*Center column*/
+#semantic-settings {
+  height: 350px;
+}
 
+#interpretation-results {
+  position: relative;
+  min-height: 200px;
+}
+
+/*#interpretation-results-fullscreen {
+  display: none;
+}*/
+
+
+#abstract-syntax-tree {
+  position: relative;
+  min-height: 200px;
+}
+#abstract-syntax-tree-fullscreen {
+  display: none;
+}
 
 #output {
 
