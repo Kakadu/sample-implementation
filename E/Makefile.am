@@ -36,7 +36,7 @@ tex:
 	js_of_ocaml -o E.js $<
 
 web_install:
-	cp E.js ../web; for f in $(TEXFILES) ; do cp $$f.pdf ../web ; done
+	cp E.js ../web/js; for f in $(TEXFILES) ; do cp $$f.pdf ../web/js ; done
 
 include $(top_srcdir)/m4/Makefile.am.targets
 

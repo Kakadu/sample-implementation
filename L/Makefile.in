@@ -581,7 +581,7 @@ uninstall-info: uninstall-info-recursive
 
 
 %.js: %.byte
-	js_of_ocaml -o L.js $<; cp L.js ../web
+	js_of_ocaml -o L.js $<; cp L.js ../web/js
 
 # default build:
 # - update timestamp
