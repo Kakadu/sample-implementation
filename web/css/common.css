@@ -12,7 +12,7 @@ body {
 
 /* GRID */
 body {
-display: -webkit-box;
+  display: -webkit-box;
   display: -moz-box;
   display: -ms-flexbox;
   display: -webkit-flex;
@@ -144,6 +144,20 @@ pre.inline {
 /*#interpretation-results-fullscreen {
   display: none;
 }*/
+
+#root li {
+  display: -webkit-box;
+  display: -moz-box;
+  display: -ms-flexbox;
+  display: -webkit-flex;
+  display: flex;  
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
+  flex-direction: column;
+}
+#root li > span.bullet { -webkit-order: 2; -ms-flex-order: 2; order: 2; }
+#root li > table { -webkit-order: 1; -ms-flex-order: 1; order: 1; }
+#root li > ul { -webkit-order: 3; -ms-flex-order: 3; order: 3; }
 
 
 #abstract-syntax-tree {

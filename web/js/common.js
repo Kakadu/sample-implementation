@@ -62,8 +62,6 @@ function do_parse () {
    clear_parser_msg ();
    clear_run_msg ();
    var textWrapper = document.getElementById("text");
-   console.log(textWrapper.textContent);
-   console.log(textWrapper.innerText);
    var textForParsing = textWrapper.textContent || textWrapper.innerText;
    var result = window.parse (textForParsing.replace(/\u00a0/g, " "));
    if (result[0] == "1") {
