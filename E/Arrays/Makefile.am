@@ -30,7 +30,7 @@ TARGET := $(MLI) $(CMO) META $(BYTE) Arrays.js
 CLEAN_EXTRA += $(BYTE) $(NATIVE)
 
 %.js: %.byte
-	js_of_ocaml -o Arrays.js $<; cp Arrays.js ../../web
+	js_of_ocaml -o Arrays.js $<; cp Arrays.js ../../web/js
 
 include $(top_srcdir)/m4/Makefile.am.targets
 

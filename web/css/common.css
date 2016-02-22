@@ -1,0 +1,192 @@
+html, body {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  color: #333;
+}
+
+body {
+  background-color:#F4F3F0;
+}
+
+/* GRID */
+body {
+  display: -webkit-box;
+  display: -moz-box;
+  display: -ms-flexbox;
+  display: -webkit-flex;
+  display: flex;  
+  
+  -webkit-flex-flow: column nowrap;
+  flex-flow: column nowrap;
+
+  -webkit-align-items: stretch;
+  align-items: stretch;
+
+}
+
+.header {
+    -webkit-box-flex: 0;
+    -webkit-flex: none;
+    -ms-flex: none;
+    flex: none;
+}
+
+
+
+
+#main > * {
+  display: -webkit-box;
+  display: -moz-box;
+  display: -ms-flexbox;
+  display: -webkit-flex;
+  display: flex;  
+  
+  -webkit-flex-flow: row wrap;
+  flex-flow: row wrap;
+
+   -webkit-align-items: stretch;
+   align-items: stretch;
+  padding: 10px;
+  flex: 2;
+
+  -webkit-flex-flow: column nowrap;
+  flex-flow: column nowrap;
+
+}
+
+#main > .rightcol > #description {
+  flex: 1 auto;
+}
+/* center column grid */
+
+#main > * > #interpretation-results {
+  flex: 1 auto;
+}
+/* left column grid*/
+#main > * > #abstract-syntax-tree {
+  flex: 1 auto;
+}
+
+@media all and (min-width: 800px) {
+  /* We tell both sidebars to share a row */
+  #main {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-flex: 1;
+    -webkit-flex: 1 0 auto;
+    -ms-flex: 1 0 auto;
+    flex: 1 0 auto;
+    -webkit-flex-flow: row nowrap;
+    flex-flow: row nowrap;
+  }
+  #main .maincontent { flex: 3; }
+}
+
+
+.scrollable {
+  overflow-y:scroll;
+  overflow-x:scroll;
+  margin: 2px;
+}
+
+pre.inline {
+  display: inline;
+}
+
+.editablediv {
+  border-style:solid;
+  border-width:1px;
+  border-color:#bbbbbb;
+  background-color:white;
+  width:50px;
+}
+
+
+.header {
+  text-align: center;
+}
+
+/* Left column */
+#source-code {
+  height: 350px;
+}
+
+#text {
+  height: 200px;
+  font-family:monospace;
+  line-height:0.9;
+  background-color:white;
+}
+
+#parsed {
+  background-color:white;
+  position:absolute;
+  top: 30px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+/*Center column*/
+#semantic-settings {
+  height: 350px;
+}
+
+#interpretation-results {
+  position: relative;
+  min-height: 200px;
+}
+
+/*#interpretation-results-fullscreen {
+  display: none;
+}*/
+
+#root li {
+  display: -webkit-box;
+  display: -moz-box;
+  display: -ms-flexbox;
+  display: -webkit-flex;
+  display: flex;  
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
+  flex-direction: column;
+}
+#root li > span.bullet { -webkit-order: 2; -ms-flex-order: 2; order: 2; }
+#root li > table { -webkit-order: 1; -ms-flex-order: 1; order: 1; }
+#root li > ul { -webkit-order: 3; -ms-flex-order: 3; order: 3; }
+
+
+#abstract-syntax-tree {
+  position: relative;
+  min-height: 200px;
+}
+#abstract-syntax-tree-fullscreen {
+  display: none;
+}
+
+#output {
+
+  width:100%;
+  background-color:white;
+  position:absolute;
+  top: 30px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+#wizard {
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+/*Right column*/
+
+
+
+
