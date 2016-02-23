@@ -72,10 +72,10 @@ class names =
     method get : int -> string = fun i ->
       try Hashtbl.find h i with
 	Not_found ->
-	  let n = this#fresh in
+	  let n = this#fresh_name in
 	  Hashtbl.add h i n;
 	  n      
-    method fresh =
+    method fresh_name =
       match !buffer with
       | [] ->     
          let new_words =

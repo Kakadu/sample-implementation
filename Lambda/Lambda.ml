@@ -26,15 +26,34 @@ module Term =
         l
 
     let rec subst a x b =
-      transform(t) 
-        (fun _ x -> x)
-        (fun _ a -> subst a x b)
-        (object inherit [string, string, glam, glam, glam] @t[gmap]
-           method c_Var    _ _ y   = if y.x = x then b   else `Var y.x
-           method c_Lambda _ s y a = if y.x = x then s.x else `Lambda (y.x, a.fx ())
-         end)
-        ()
-        a
+      let fv = fv b in
+      let fresh_name s =
+	let n = new Helpers.names in
+	let rec spin () =
+	  let name = n#fresh_name in
+	  if SS.mem name s then spin () else name
+	in
+	spin ()
+      in
+      let rec inner a x b =
+        transform(t) 
+          (fun _ x -> x)
+          (fun _ a -> inner a x b)
+          (object inherit [string, string, glam, glam, glam] @t[gmap]
+             method c_Var    _ _ y   = if y.x = x then b   else `Var y.x
+             method c_Lambda _ s y a = 
+	       if y.x = x 
+	       then s.x 
+	       else 
+		 if SS.mem y.x fv 
+		 then let y' = fresh_name (SS.add y.x fv) in
+                      `Lambda (y', inner (subst a.x y.x (`Var y')) x b)
+		 else `Lambda (y.x, a.fx ())
+           end)
+           ()
+          a
+      in
+      inner a x b
 
     type ('a, 'b) env = ('a * 'b) list
 
@@ -67,7 +86,7 @@ module Term =
           Printf.sprintf "\\\n%s\n%s" v.GT.x (x.GT.fx ())
       end
 
-    type prio = [`Top | `Abs | `Left of int | `Right of int]
+    type prio = [`Top | `Abs | `Left | `Right of bool]
 
     class ['self] pretty =
       object (this)
@@ -77,14 +96,14 @@ module Term =
         method c_Lambda p _ v x = 
           let z = HTMLView.seq [HTMLView.string v.GT.x; x.GT.fx `Abs] in
           match p with
-          | `Left _ -> HTMLView.seq [HTMLView.string "("; HTMLView.raw "&lambda;"; z; HTMLView.string ")"]
-          | `Abs    -> HTMLView.seq [HTMLView.string " "; z]
-          | _       -> HTMLView.seq [HTMLView.raw "&lambda;"; z]
+          | `Left | `Right true -> HTMLView.seq [HTMLView.string "("; HTMLView.raw "&lambda;"; z; HTMLView.string ")"]
+          | `Abs  -> HTMLView.seq [HTMLView.string " "; z]
+          | _     -> HTMLView.seq [HTMLView.raw "&lambda;"; z]
         method c_App p _ x y =
-          let xy = HTMLView.seq [x.GT.fx (`Left 9); HTMLView.string " "; y.GT.fx (`Right 9)] in
+          let xy = HTMLView.seq [x.GT.fx `Left; HTMLView.string " "; y.GT.fx (match p with `Left -> `Right true | `Right f -> `Right f | _ -> `Right false)] in
           match p with
           | `Abs     -> HTMLView.seq [HTMLView.string " . "; xy]
-          | `Right 9 -> HTMLView.seq [HTMLView.string "("; xy; HTMLView.string ")"]
+          | `Right _ -> HTMLView.seq [HTMLView.string "("; xy; HTMLView.string ")"]
           | _        -> xy
       end    
 
@@ -324,25 +343,33 @@ module Term =
 		class nr = 
 		  object inherit hr
 		    method c_App _ _ m n =
-		      S.Subgoals (
-		        [(), m.x, ()],
-		        (fun [m'] -> 
-			   match m' with
-			   | `Lambda (x, a) ->
-			       S.Subgoals (
-                                 [(), subst a x n.x, ()],
-			         (fun [m] -> S.Just (m, "Red")),
-			         ""
-                               )
-			   | _ ->
-			      S.Subgoals (
-			         [(), n.x, ()],
-                                 (fun [n'] -> S.Just (`App (m', n'), "App")),
-			         ""
-                              )
-			),
-		        ""
-		      )
+		      match m.x with
+		      | `Lambda (x, a) ->
+                         S.Subgoals (
+                           [(), subst a x n.x, ()],
+                           (fun [m] -> S.Just (m, "Red")),
+                           ""
+                         )
+		      | _ ->
+		         S.Subgoals (
+		           [(), m.x, ()],
+		           (fun [m'] -> 
+			      match m' with
+			      | `Lambda (x, a) ->
+			          S.Subgoals (
+                                    [(), subst a x n.x, ()],
+			            (fun [m] -> S.Just (m, "App")),
+			            ""
+                                  )
+			      | _ ->
+			         S.Subgoals (
+			            [(), n.x, ()],
+                                    (fun [n'] -> S.Just (`App (m', n'), "Arg")),
+			            ""
+                                 )
+		   	   ),
+		           ""
+		         )
 		  end
 
 		let step = step' (new nr)

@@ -48,15 +48,21 @@ $$
 $$
 
 $$
+\trule{\trans{A[x\gets N]}{}{K}}
+      {\trans{(\lambda x.A)\:N}{}{K}}
+\ruleno{Red}
+$$
+
+$$
 \trule{\trans{M}{}{\lambda x.A},\;\trans{A[x\gets N]}{}{K}}
       {\trans{M\:N}{}{K}}
-\ruleno{Red}
+\ruleno{App}
 $$
 
 $$
 \crule{\trans{M}{}{M^\prime},\,\trans{N}{}{N^\prime}}
       {\trans{M\:N}{}{M^\prime\:N^\prime}}
       {M^\prime\ne \lambda x.A}
-\ruleno{App}
+\ruleno{Arg}
 $$
 \end{document}
