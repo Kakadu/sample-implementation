@@ -120,10 +120,17 @@ function convert () {
 
 document.getElementById ("loadFile").addEventListener("change", handleFile, false);
 
-
-var abstractSyntaxTreeWrapper = document.getElementById('interpretation-results');
+// Show fullscreen events
 document.getElementById('interpretation-results-fullscreen').addEventListener('click', function () {
     if (screenfull.enabled) {
+        var abstractSyntaxTreeWrapper = 
+            document.getElementById('interpretation-results');
         screenfull.request(abstractSyntaxTreeWrapper);
+    }
+});
+document.getElementById('pdf-fullscreen').addEventListener('click', function () {
+    if (screenfull.enabled) {
+        var pdfDescriptionWrapper = document.getElementById('description');
+        screenfull.request(pdfDescriptionWrapper);
     }
 });
