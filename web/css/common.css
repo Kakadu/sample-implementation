@@ -141,9 +141,9 @@ pre.inline {
   min-height: 200px;
 }
 
-/*#interpretation-results-fullscreen {
-  display: none;
-}*/
+#interpretation-results-fullscreen {
+  visibility: hidden;
+}
 
 #root li {
   display: -webkit-box;
@@ -164,12 +164,8 @@ pre.inline {
   position: relative;
   min-height: 200px;
 }
-#abstract-syntax-tree-fullscreen {
-  display: none;
-}
 
 #output {
-
   width:100%;
   background-color:white;
   position:absolute;

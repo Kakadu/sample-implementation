@@ -19,7 +19,8 @@ function do_run () {
 function show_results (root, tree, descr) {
   clear_run_msg ();
   document.getElementById ("output").innerHTML = tree;  
-  convertTree (document.getElementById (root), false);  
+  convertTree (document.getElementById (root), false);
+  document.getElementById ("interpretation-results-fullscreen").style.visibility = "visible";  
   pdfViewerObject = document.getElementById ("description");
   pdfViewerObject.setAttribute ("data", descr);  
   pdfViewerObject.outerHTML = pdfViewerObject.outerHTML.replace(/data="(.+?)"/, 'data="pdf/' + descr + '"');
@@ -30,7 +31,8 @@ function disable_actions () {
   document.getElementById ("export_button").disabled = true;
   document.getElementById ("parsed").innerHTML = "&nbsp;";
   document.getElementById ("wizard").innerHTML = "&nbsp;";
-  document.getElementById ("output").innerHTML = "&nbsp;";      
+  document.getElementById ("output").innerHTML = "&nbsp;";
+  document.getElementById ("interpretation-results-fullscreen").style.visibility = "hidden";  
 }
 
 function enable_actions () {
@@ -62,8 +64,11 @@ function do_parse () {
    clear_parser_msg ();
    clear_run_msg ();
    var textWrapper = document.getElementById("text");
-   var textForParsing = textWrapper.textContent || textWrapper.innerText;
-   var result = window.parse (textForParsing.replace(/\u00a0/g, " "));
+   var textForParsing = 
+      (textWrapper.innerText === "undefined") 
+        ? textWrapper.innerHTML.replace(/<br>/g, " ")
+        : textWrapper.innerText.replace(/\u00a0/g, " ");
+   var result = window.parse (textForParsing);
    if (result[0] == "1") {
       enable_actions ();
       document.getElementById ("parsed").innerHTML = result[1];
