@@ -68,7 +68,7 @@ function do_parse () {
    if (textWrapper.innerText !== undefined) {
       textForParsing = textWrapper.innerText;
    } else {
-      textWrapper.innerHTML = textWrapper.innerHTML.replace(/<br>/g, "\n").trim();
+      textWrapper.innerHTML = textWrapper.innerHTML.replace(/<br>/gi, "\n").trim();
       textForParsing = textWrapper.textContent;
    }
    textForParsing = textForParsing.replace(/\u00a0/g, " "); // \u00a0 - &nbsp;
