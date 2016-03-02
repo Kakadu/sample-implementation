@@ -1,4 +1,4 @@
-PACKAGE := E
+1PACKAGE := E
 SUBDIRS = 
 
 # type in sources here
@@ -36,7 +36,7 @@ tex:
 	js_of_ocaml -o E.js $<
 
 web_install:
-	cp E.js ../web/js; for f in $(TEXFILES) ; do cp $$f.pdf ../web/js ; done
+	cp E.js ../web/js; for f in $(TEXFILES) ; do cp $$f.pdf ../web/pdf ; done
 
 include $(top_srcdir)/m4/Makefile.am.targets
 

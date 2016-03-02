@@ -39,7 +39,7 @@ tex:
 	js_of_ocaml -o Lambda.js $<
 
 web_install:
-	cp Lambda.js ../web/js; for f in $(TEXFILES) ; do cp $$f.pdf ../web/js ; done
+	cp Lambda.js ../web/js; for f in $(TEXFILES) ; do cp $$f.pdf ../web/pdf ; done
 
 include $(top_srcdir)/m4/Makefile.am.targets
 
