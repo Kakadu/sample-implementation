@@ -65,7 +65,7 @@ function do_parse () {
    clear_run_msg ();
    var textWrapper = document.getElementById("text");
    var textForParsing = 
-      (textWrapper.innerText === "undefined") 
+      (textWrapper.innerText === undefined) 
         ? textWrapper.innerHTML.replace(/<br>/g, " ")
         : textWrapper.innerText.replace(/\u00a0/g, " ");
    var result = window.parse (textForParsing);
