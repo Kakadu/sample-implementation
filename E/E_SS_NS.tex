@@ -20,14 +20,14 @@ $$
 
 $$
 \crule{\trans{s}{\inmath{A}}{A^\prime}}
-      {\trans{s}{\inmath{A\otimes B}}{A^\prime\oplus B}}
+      {\trans{s}{\inmath{A\otimes B}}{A^\prime\otimes B}}
       {A\notin\ZZ}
 \ruleno{Binop\_Left}
 $$
 
 $$
 \crule{\trans{s}{\inmath{B}}{B^\prime}}
-      {\trans{s}{\inmath{a\otimes B}}{a\oplus B^\prime}}
+      {\trans{s}{\inmath{a\otimes B}}{a\otimes B^\prime}}
       {\begin{array}{cc}
           a\in\ZZ    & \wedge \\
           B\notin\ZZ & \wedge \\
@@ -38,7 +38,7 @@ $$
 $$
 
 $$
-\ctrans{s}{\inmath{a\otimes B}}{a}
+\ctrans{\trans{s}{\inmath{a\otimes B}}{a}}
       {\begin{array}{cc}
          (\otimes = "\llang{||}"\wedge a = 1) & \vee \\
          (\otimes = "\llang{&&}"\wedge a = 0) &
@@ -47,7 +47,7 @@ $$
 $$
 
 $$
-\ctrans{s}{\inmath{a\otimes b}}{a\oplus b}{a, b\in\ZZ}\ruleno{Binop}
+\ctrans{\trans{s}{\inmath{a\otimes b}}{a\oplus b}}{a, b\in\ZZ}\ruleno{Binop}
 $$
 \vskip5mm
 
