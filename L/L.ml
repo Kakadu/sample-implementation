@@ -431,7 +431,7 @@ let toplevel =
                 (fun conf ->
 		   let descr, tree = 
 		     if conf "Type" = "normal"
-                     then "", TS.html "root" (TS.build ~limit:!depth () (State.empty, !input, []) p)
+                     then "L_BS", TS.html "root" (TS.build ~limit:!depth () (State.empty, !input, []) p)
                      else
 		       "",
 		       TCPS.html "root" (

@@ -1,0 +1,28 @@
+\centering
+
+\textbf{L: Abstract Syntax}
+
+$$
+X \mbox{ --- a set of variables}
+$$
+$$
+\otimes=\{\llang{+}, \llang{-}, \llang{*}, \llang{/}, \llang{\%}, \llang{==}, \llang{!=}, 
+\llang{>}, \llang{>=}, \llang{<}, \llang{<=}, \llang{\&\&}, \llang{||}\}
+$$
+
+\begin{itemize}
+\item Expressions: $\fancy{E}=X\cup\NN\cup(\fancy{E}\otimes\fancy{E})$
+\item Statements: 
+$$
+\begin{array}{rll}
+  \fancy{S}=&\llang{skip}&\cup\\
+            &X\;\llang{:=}\;\fancy{E}&\cup\\
+            &\fancy{S}\;\llang{;}\;\fancy{S}&\cup\\
+            &\llang{write}\;\fancy{E}&\cup\\
+            &\llang{read}\;X&\cup\\
+            &\llang{while}\;\fancy{E}\;\llang{do}\;\fancy{S}&\cup\\
+            &\llang{if}\;\fancy{E}\;\llang{then}\;\fancy{S}\;\llang{else}\;\fancy{S}
+\end{array}
+$$
+\item Programs: $\fancy{P}=\fancy{S}$
+\end{itemize}

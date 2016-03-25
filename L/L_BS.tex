@@ -1,0 +1,83 @@
+\documentclass{article}
+\include{common}
+\begin{document}
+\pagestyle{empty}
+\input{Syntax}
+
+\vskip1cm
+\textbf{Big-Step Operational Semantics}
+\vskip1cm
+
+\begin{enumerate}
+
+\item State: a partial function $S=X\to\ZZ$.
+
+\item Semantics of expressions: $\sembr{\bullet}: \fancy{E}\to(S\to\ZZ)$.
+
+\item Initial state: $\perp$ (undefined for every variable).
+
+\item State substitution: 
+
+$$
+s[x\gets z]=\lambda y.\left\{
+                         \begin{array}{rcl}
+                            z&,&y=x\\
+                            s\; y&,&\mbox{otherwise}
+                         \end{array}
+                      \right.
+$$
+
+\item Configurations: $C=S\times\ZZ^*\times\ZZ^*$ (state, input stream, output stream).
+
+\item Transition rules:
+
+$$
+\trans{c}{\llang{skip}}{c}\ruleno{Skip$_{bs}$}
+$$
+
+$$
+\trans{\inbr{s,i,o}}{\mbox{$x\llang{:=}e$}}{\inbr{s[x\gets\sembr{e}\;s],i,o}}\ruleno{Assign$_{bs}$}
+$$
+
+$$
+\trans{\inbr{s,zi,o}}{\mbox{$\llang{read}\;x$}}{\inbr{s[x\gets z],i,o}}\ruleno{Read$_{bs}$}
+$$
+
+$$
+\trans{\inbr{s,i,o}}{\mbox{$\llang{write}\;e$}}{\inbr{s,i,o(\sembr{e}\;s)}}\ruleno{Write$_{bs}$}
+$$
+
+$$
+\trule{\trans{c}{\mbox{$S_1$}}{c^\prime},\; \trans{c^\prime}{\mbox{$S_2$}}{c^{\prime\prime}}} 
+      {\trans{c}{\mbox{$S_1\llang{;}S_2$}}{c^{\prime\prime}}}\ruleno{Seq$_{bs}$}
+$$
+
+$$
+\crule{\trans{c}{\mbox{$S_1$}}{c^\prime}}
+      {\trans{c}{\llang{if $\;e\;$ then $\;S_1\;$ else $\;S_2\;$}}{c^\prime}}
+      {\sembr{e}\;s=1}\ruleno{If-True$_{bs}$}
+$$
+
+$$
+\crule{\trans{c}{\mbox{$S_2$}}{c^\prime}}
+      {\trans{c}{\llang{if $\;e\;$ then $\;S_1\;$ else $\;S_2\;$}}{c^\prime}}
+      {\sembr{e}\;s=0}\ruleno{If-False$_{bs}$}
+$$
+
+$$
+\crule{\trans{c}{\llang{$S$}}{c^\prime},\;\trans{c^\prime}{\llang{while $\;e\;$ do $\;S\;$}}{c^{\prime\prime}}}
+      {\trans{c}{\llang{while $\;e\;$ do $\;S\;$}}{c^{\prime\prime}}}
+      {\sembr{e}\;s=1}\ruleno{While-True$_{bs}$}
+$$
+
+$$
+\ctrans{\trans{c}{\llang{while $\;e\;$ do $\;S\;$}}{c}}{\sembr{e}\;s=0}\ruleno{While-False$_{bs}$}
+$$
+
+\item Program semantics: $\sembr{\bullet}_P:\fancy{P}\to(\ZZ^*\to\ZZ^*)$
+
+$\sembr{P}_P=\lambda i.o$, where $\trans{\inbr{\perp,i,\epsilon}}{\llang{$P$}}{\inbr{s,\epsilon,o}}$
+
+\end{enumerate}
+
+\end{document}

@@ -267,7 +267,7 @@ CMO4CMA = $(CMO)
 # sources for .cmxa linking
 CMX4CMXA = $(CMO4CMA:.cmo=.cmx)
 DOCFILES = $(PACKAGE).ps $(PACKAGE).html
-TARGET := $(MLI) $(CMO) META $(BYTE) L.js
+TARGET := $(MLI) $(CMO) META $(BYTE) tex L.js web_install
 
 # OCaml parser called with flags
 AM_P4FLAGS = -pp "$(CAMLP4OF) $(PARSER_INCLUDES)"
@@ -291,6 +291,7 @@ AM_OFLAGS = $(MODULE_INCLUDES) -rectypes -annot -cclib "-static"
 CLEAN_CMI := $(CMO:.cmo=.cmi)
 # other extra files to clean up
 CLEAN_EXTRA := .depend $(BYTE) $(NATIVE)
+TEXFILES = L L_BS L_SS
 all: all-recursive
 
 .SUFFIXES:
@@ -579,9 +580,14 @@ uninstall-info: uninstall-info-recursive
 	mostlyclean-recursive pdf pdf-am ps ps-am tags tags-recursive \
 	uninstall uninstall-am uninstall-info-am
 
+tex: 
+	for f in $(TEXFILES) ; do TEXINPUTS=../tex//: pdflatex $$f.tex; done
 
 %.js: %.byte
 	js_of_ocaml -o L.js $<; cp L.js ../web/js
+
+web_install:
+	cp L.js ../web/js; for f in $(TEXFILES) ; do cp $$f.pdf ../web/pdf ; done
 
 # default build:
 # - update timestamp

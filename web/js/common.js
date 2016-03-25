@@ -88,8 +88,7 @@ function do_parse () {
 
 function do_highlighting (x, y, z, t) {
    document.getElementById ("text").innerHTML = window.highlight (x, y, z, t);
-   // where is event?
-   // event.cancelBubble = true;
+   event.cancelBubble = true;
 }
 
 function handleFile (evt) {

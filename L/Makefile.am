@@ -26,11 +26,18 @@ MODULE_INCLUDES += -I $(CAMLP5LIB) -I ../common -I ../js -I ../semantics -I ../E
 # add extra compiled libraries used for linking
 EXTRA_CMA += $(addsuffix .cma, str) Common.cma Js_frontend.cma Semantics.cma E.cmo
 
-TARGET := $(MLI) $(CMO) META $(BYTE) L.js
+TARGET := $(MLI) $(CMO) META $(BYTE) tex L.js web_install
 CLEAN_EXTRA += $(BYTE) $(NATIVE)
+
+TEXFILES = L L_BS L_SS
+tex: 
+	for f in $(TEXFILES) ; do TEXINPUTS=../tex//: pdflatex $$f.tex; done
 
 %.js: %.byte
 	js_of_ocaml -o L.js $<; cp L.js ../web/js
+
+web_install:
+	cp L.js ../web/js; for f in $(TEXFILES) ; do cp $$f.pdf ../web/pdf ; done
 
 include $(top_srcdir)/m4/Makefile.am.targets
 

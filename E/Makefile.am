@@ -1,4 +1,4 @@
-1PACKAGE := E
+PACKAGE := E
 SUBDIRS = 
 
 # type in sources here

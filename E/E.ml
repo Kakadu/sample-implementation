@@ -562,7 +562,6 @@ let wizard context =
    ]
   )
 
-
 let toplevel =  
   let module Expr = LExpr (Lexer.Make (struct let keywords = [] end)) in
   Toplevel.make 
@@ -591,8 +590,7 @@ let toplevel =
                     else 
                       if conf "strict" = "true"
                       then "E_SS_S", S.SmallStep.Strict.html "root" (S.SmallStep.Strict.build () !st p)
-                      else "E_SS_NS", S.SmallStep.NonStrict.html "root" (S.SmallStep.NonStrict.build () !st p)
-	              
+                      else "E_SS_NS", S.SmallStep.NonStrict.html "root" (S.SmallStep.NonStrict.build () !st p)	              
 		  in
                   js#results "root" (View.toString tree) descr
               end
