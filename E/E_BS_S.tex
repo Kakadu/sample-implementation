@@ -11,16 +11,16 @@
 $s : X \to \ZZ$~--- partial function from variables to integers (state)
 
 $$
-\ctrans{\trans{s}{\llang{x}}{\app{s}{\llang{x}}}}{\llang{x}\in X}\ruleno{Var}
+\ctrans{\Trans{s}{\llang{x}}{\app{s}{\llang{x}}}}{\llang{x}\in X}\ruleno{Var}
 $$
 
 $$
-\ctrans{\trans{s}{z}{z}}{z\in\ZZ}\ruleno{Const}
+\ctrans{\Trans{s}{\inmath{z}}{z}}{z\in\ZZ}\ruleno{Const}
 $$
 
 $$
-\trule{\trans{s}{\inmath{A}}{a},\:\trans{s}{\inmath{B}}{b}}
-      {\trans{s}{\inmath{A\otimes B}}{a\oplus b}}
+\trule{\Trans{s}{\inmath{A}}{a},\:\Trans{s}{\inmath{B}}{b}}
+      {\Trans{s}{\inmath{A\otimes B}}{a\oplus b}}
 \ruleno{Binop}
 $$
 \vskip5mm

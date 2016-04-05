@@ -291,7 +291,7 @@ AM_OFLAGS = $(MODULE_INCLUDES) -rectypes -annot -cclib "-static"
 CLEAN_CMI := $(CMO:.cmo=.cmi)
 # other extra files to clean up
 CLEAN_EXTRA := .depend $(BYTE) $(NATIVE)
-TEXFILES = L L_BS L_SS
+TEXFILES = L L_BS L_SS L_CPS
 all: all-recursive
 
 .SUFFIXES:

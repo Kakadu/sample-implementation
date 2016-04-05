@@ -29,7 +29,7 @@ EXTRA_CMA += $(addsuffix .cma, str) Common.cma Js_frontend.cma Semantics.cma E.c
 TARGET := $(MLI) $(CMO) META $(BYTE) tex L.js web_install
 CLEAN_EXTRA += $(BYTE) $(NATIVE)
 
-TEXFILES = L L_BS L_SS
+TEXFILES = L L_BS L_SS L_CPS
 tex: 
 	for f in $(TEXFILES) ; do TEXINPUTS=../tex//: pdflatex $$f.tex; done
 

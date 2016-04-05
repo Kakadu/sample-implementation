@@ -367,6 +367,7 @@ module SimpleExpr
                     inherit S.Tree.html_customizer
                     method show_env   = false
                     method over_width = 70
+		    method arrow      = "&rArr;"
                   end
               end
 

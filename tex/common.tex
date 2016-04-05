@@ -5,6 +5,7 @@
 \usepackage{stmaryrd}
 \usepackage{graphicx}
 \usepackage{euscript}
+\usepackage{mathtools}
 
 \usepackage[utf8]{inputenc}
 \usepackage[english,russian]{babel}
@@ -16,7 +17,7 @@ keywords={skip, do, while, read, write, if, then, else},
 sensitive=true,
 %%basicstyle=\small,
 commentstyle=\scriptsize\rmfamily,
-keywordstyle=\ttfamily\underbar,
+keywordstyle=\ttfamily\bf,
 identifierstyle=\ttfamily,
 basewidth={0.5em,0.5em},
 columns=fixed,
@@ -40,6 +41,7 @@ language=llang
 \newcommand{\crule}[3]{\frac{#1}{#2},\;{#3}}
 \newcommand{\withenv}[2]{{#1}\vdash{#2}}
 \newcommand{\trans}[3]{{#1}\xrightarrow{#2}{#3}}
+\newcommand{\Trans}[3]{{#1}\xRightarrow{#2}{#3}}
 \newcommand{\ctrans}[2]{{#1},\;{#2}}
 \newcommand{\llang}[1]{\mbox{\lstinline[mathescape]|#1|}}
 \newcommand{\pair}[2]{\inbr{{#1}\mid{#2}}}

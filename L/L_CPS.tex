@@ -1,0 +1,103 @@
+\documentclass{article}
+\include{common}
+\begin{document}
+\pagestyle{empty}
+\input{Syntax}
+
+\vskip1cm
+\textbf{Continuation-Passing Semantics (Big-Step Style)}
+\vskip1cm
+
+\begin{enumerate}
+
+\item State: a partial function $S=X\to\ZZ$.
+
+\item Semantics of expressions: $\sembr{\bullet}: \fancy{E}\to(S\to\ZZ)$.
+
+\item Initial state: $\perp$ (undefined for every variable).
+
+\item State substitution: 
+
+$$
+s[x\gets z]=\lambda y.\left\{
+                         \begin{array}{rcl}
+                            z&,&y=x\\
+                            s\; y&,&\mbox{otherwise}
+                         \end{array}
+                      \right.
+$$
+
+\item Configurations: $C=S\times\ZZ^*\times\ZZ^*$ (state, input stream, output stream).
+
+\item $\Lambda$~--- meta-statement, ``$\diamond$''~--- meta-operator:
+   \begin{enumerate}
+      \item $S\diamond\Lambda = S$;
+      \item $S_1\diamond S_2 = S_1\llang{;}S_2$.
+   \end{enumerate}
+
+\item Transition rules:
+
+$$
+\withenv{\Lambda}{\Trans{c}{\inmath{\Lambda}}{c}}
+\ruleno{$\Lambda$-$\Lambda$-CPS}
+$$
+
+$$
+\trule{\withenv{\Lambda}{\Trans{c}{\inmath{K}}{c^\prime}}}
+      {\withenv{K}{\Trans{c}{\inmath{\Lambda}}{c^\prime}}}
+\ruleno{$\Lambda$-CPS}
+$$
+
+$$
+\trule{\withenv{\Lambda}{\Trans{c}{\inmath{K}}{c^\prime}}}
+      {\withenv{K}{\Trans{c}{\llang{skip}}{c^\prime}}}\ruleno{Skip-CPS}
+$$
+
+$$
+\trule{\withenv{\Lambda}{\Trans{\inbr{s[x\gets\sembr{e}\;s],i,o}}{\inmath{K}}{c^\prime}}}
+      {\withenv{K}{\Trans{\inbr{s,i,o}}{\mbox{$x\llang{:=}e$}}{c^\prime}}}\ruleno{Assign-CPS}
+$$
+
+$$
+\trule{\withenv{\Lambda}{\Trans{\inbr{s[x\gets z],i,o}}{\inmath{K}}{c^\prime}}}
+      {\withenv{K}{\Trans{\inbr{s,zi,o}}{\mbox{$\llang{read}\;x$}}{c^\prime}}}\ruleno{Read-CPS}
+$$
+
+$$
+\trule{\withenv{\Lambda}{\Trans{\inbr{s,i,o(\sembr{e}\;s)}}{\inmath{K}}{c^\prime}}}
+      {\withenv{K}{\Trans{\inbr{s,i,o}}{\mbox{$\llang{write}\;e$}}{c^\prime}}}\ruleno{Write-CPS}
+$$
+
+$$
+\trule{\withenv{\llang{$S_2\diamond K$}}{\Trans{c}{\inmath{S_1}}{c^\prime}}}
+      {\withenv{K}{\Trans{c}{\llang{$S_1\;$;$\;S_2$}}{c^\prime}}}\ruleno{Seq-CPS}
+$$
+
+$$
+\crule{\withenv{K}{\Trans{c}{\inmath{S_1}}{c^\prime}}} 
+      {\withenv{K}{\Trans{c}{\llang{if$\;e\;$then$\;S_1\;$else$\;S_2$}}{c^\prime}}}
+      {\sembr{e}\;c.s= 1}\ruleno{If-True-CPS}
+$$
+
+$$
+\crule{\withenv{K}{\Trans{c}{\inmath{S_2}}{c^\prime}}} 
+      {\withenv{K}{\Trans{c}{\llang{if$\;e\;$then$\;S_1\;$else$\;S_2$}}{c^\prime}}}
+      {\sembr{e}\;c.s= 0}\ruleno{If-False-CPS}
+$$
+
+$$
+\crule{\withenv{\llang{\{while$\;e\;$do$\;S$\}$\diamond K$}}{\Trans{c}{\inmath{S}}{c^\prime}}}
+      {\withenv{K}{\Trans{c}{\llang{while$\;e\;$do$\;S$}}{c^\prime}}}
+      {\sembr{e}\;c.s= 1}\ruleno{While-True-CPS}
+$$
+
+$$
+\crule{\withenv{\Lambda}{\Trans{c}{\inmath{K}}{c^\prime}}}
+      {\withenv{K}{\Trans{c}{\llang{while$\;e\;$do$\;S$}}{c^\prime}}}
+      {\sembr{e}\;c.s= 0}\ruleno{While-False-CPS}
+$$
+
+
+\end{enumerate}
+
+\end{document}

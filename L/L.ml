@@ -198,6 +198,7 @@ module Stmt =
                         inherit S.Tree.html_customizer
                         method show_env   = false
                         method over_width = 100
+			method arrow      = "&rArr;"
                       end
                   end
 
@@ -244,7 +245,7 @@ module Stmt =
 		      | `L -> S.Just (conf, "&Lambda;-&Lambda;-CPS") 
 		      |  _ -> S.Subgoals ([`L, conf, k], return, "&Lambda;-CPS")
 
-                    method c_Skip (k, conf, _) _ = S.Subgoals ([`L, conf, k], return , "Skip-CPS")
+                    method c_Skip (k, conf, _) _ = S.Subgoals ([`L, conf, k], return, "Skip-CPS")
 
                     method c_Assign ((k, (s, i, o), _) as inh) _ x e = 
                       expr e inh (fun d -> S.Subgoals ([`L, (State.modify s x d, i, o), k], return, "Assn-CPS"))
@@ -329,6 +330,7 @@ module Stmt =
                         inherit S.Tree.html_customizer
                         method show_env   = true
                         method over_width = 100
+			method arrow      = "&rArr;"
                       end
                   end
 
@@ -433,7 +435,7 @@ let toplevel =
 		     if conf "Type" = "normal"
                      then "L_BS", TS.html "root" (TS.build ~limit:!depth () (State.empty, !input, []) p)
                      else
-		       "",
+		       "L_CPS",
 		       TCPS.html "root" (
 		         TCPS.build 
                            ~limit:!depth 
