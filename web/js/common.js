@@ -127,7 +127,7 @@ document.getElementById ("loadFile").addEventListener("change", handleFile, fals
 document.getElementById('interpretation-results-fullscreen').addEventListener('click', function () {
     if (screenfull.enabled) {
         var abstractSyntaxTreeWrapper = 
-            document.getElementById('interpretation-results');
+            document.getElementById('output');
         screenfull.request(abstractSyntaxTreeWrapper);
     }
 });
