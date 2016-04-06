@@ -404,15 +404,7 @@ module Stmt =
                   expr e inh 
                     (fun d ->
                        match B.boolean d with
-		       | `True  -> S.Subgoals (
-                                       [env, conf, s.GT.x], 
-                                       (fun [s'] -> 
-					  match s' with
-					  | Result c     -> S.Just (Rest (w.GT.x, c), "While-True-Compl")
-					  | Rest (s', c) -> S.Just (Rest (`Seq (s', w.GT.x), c), "While-True-Incompl")
-				       ), 
-                                       ""
-                                   )
+		       | `True  -> S.Just (Rest (`Seq (s.GT.x, w.GT.x), conf), "While-True")
                        | `False -> S.Just    (Result conf, "While-False")
                        |  _     -> S.Nothing ("not a boolean value", "")
                     )

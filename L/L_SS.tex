@@ -75,15 +75,8 @@ $$
 $$
 
 $$
-\crule{\trans{c}{\llang{$S$}}{\inbr{S^\prime,c^\prime}}}
-      {\trans{c}{\llang{while $\;e\;$ do $\;S\;$}}{\inbr{S^\prime\llang{; while $\;e\;$ do $\;S\;$},c^{\prime}}}}
-      {\sembr{e}\;c.s=1}\ruleno{While-True-InCompl$_{ss}$}
-$$
-
-$$
-\crule{\trans{c}{\llang{$S$}}{c^\prime}}
-      {\trans{c}{\llang{while $\;e\;$ do $\;S\;$}}{\inbr{\llang{while $\;e\;$ do $\;S\;$},c^{\prime}}}}
-      {\sembr{e}\;c.s=1}\ruleno{While-True-Compl$_{ss}$}
+\ctrans{\trans{c}{\llang{while $\;e\;$ do $\;S\;$}}{\inbr{\llang{$S$; while $\;e\;$ do $\;S\;$},c}}}
+      {\sembr{e}\;c.s=1}\ruleno{While-True$_{ss}$}
 $$
 
 $$
