@@ -285,7 +285,7 @@ module Expr =
                     (new strict_step)
                     (env, state, e)
                     e
-                let side_step env state e r = if is_value r then None else Some (env, state, r)
+                let rewrite env state e r = if is_value r then None else Some (env, state, r)
               end
             )
 
@@ -298,7 +298,7 @@ module Expr =
                     (new non_strict_step)
                     (env, state, e)
                     e
-                let side_step env state e r = if is_value r then None else Some (env, state, r)
+                let rewrite env state e r = if is_value r then None else Some (env, state, r)
               end
             )
 

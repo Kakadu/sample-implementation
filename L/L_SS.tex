@@ -5,51 +5,95 @@
 \input{Syntax}
 
 \vskip1cm
-\textbf{Small-Step Operational Semantics (Non-Strict)}
+\textbf{Small-Step Operational Semantics}
 \vskip1cm
 
-$s : X \to \ZZ$~--- partial function from variables to integers (state)
+\begin{enumerate}
+
+\item State: a partial function $S=X\to\ZZ$.
+
+\item Semantics of expressions: $\sembr{\bullet}: \fancy{E}\to(S\to\ZZ)$.
+
+\item Initial state: $\perp$ (undefined for every variable).
+
+\item State substitution: 
 
 $$
-\ctrans{\trans{s}{\llang{x}}{\app{s}{\llang{x}}}}{\llang{x}\in X}\ruleno{Var}
+s[x\gets z]=\lambda y.\left\{
+                         \begin{array}{rcl}
+                            z&,&y=x\\
+                            s\; y&,&\mbox{otherwise}
+                         \end{array}
+                      \right.
 $$
 
-$$
-\ctrans{\trans{s}{z}{z}}{z\in\ZZ}\ruleno{Const}
-$$
+\item Configurations: $C=S\times\ZZ^*\times\ZZ^*$ (state, input stream, output stream).
+
+\item Two types of execution outcome:
+
+  \begin{enumerate}
+     \item a configuration (as in a big-step case);
+     \item a pair $\inbr{S,c}$ of \emph{residual} program $S$ and some configuration $c$.
+  \end{enumerate}
+
+\item Transition rules:
 
 $$
-\crule{\trans{s}{\inmath{A}}{A^\prime}}
-      {\trans{s}{\inmath{A\otimes B}}{A^\prime\otimes B}}
-      {A\notin\ZZ}
-\ruleno{Binop\_Left}
-$$
-
-$$
-\crule{\trans{s}{\inmath{B}}{B^\prime}}
-      {\trans{s}{\inmath{a\otimes B}}{a\otimes B^\prime}}
-      {\begin{array}{cc}
-          a\in\ZZ    & \wedge \\
-          B\notin\ZZ & \wedge \\
-          (\otimes\ne"\llang{||}"\vee a\ne 1) & \wedge \\
-          (\otimes\ne"\llang{&&}"\vee a\ne 0) &
-        \end{array}}
-\ruleno{Binop\_Right}
-$$
-
-$$
-\ctrans{\trans{s}{\inmath{a\otimes B}}{a}}
-      {\begin{array}{cc}
-         (\otimes = "\llang{||}"\wedge a = 1) & \vee \\
-         (\otimes = "\llang{&&}"\wedge a = 0) &
-       \end{array}}
-\ruleno{Binop\_Left\_NS}
+\trans{c}{\llang{skip}}{c}\ruleno{Skip$_{ss}$}
 $$
 
 $$
-\ctrans{\trans{s}{\inmath{a\otimes b}}{a\oplus b}}{a, b\in\ZZ}\ruleno{Binop}
+\trans{\inbr{s,i,o}}{\mbox{$x\llang{:=}e$}}{\inbr{s[x\gets\sembr{e}\;s],i,o}}\ruleno{Assign$_{ss}$}
 $$
-\vskip5mm
 
+$$
+\trans{\inbr{s,zi,o}}{\mbox{$\llang{read}\;x$}}{\inbr{s[x\gets z],i,o}}\ruleno{Read$_{ss}$}
+$$
+
+$$
+\trans{\inbr{s,i,o}}{\mbox{$\llang{write}\;e$}}{\inbr{s,i,o(\sembr{e}\;s)}}\ruleno{Write$_{ss}$}
+$$
+
+$$
+\trule{\trans{c}{\mbox{$S_1$}}{c^\prime}}
+      {\trans{c}{\mbox{$S_1\llang{;}S_2$}}{\inbr{S_2,c^\prime}}}\ruleno{Seq-Compl$_{ss}$}
+$$
+
+$$
+\trule{\trans{c}{\mbox{$S_1$}}{\inbr{S^\prime,c^\prime}}}
+      {\trans{c}{\mbox{$S_1\llang{;}S_2$}}{\inbr{S^\prime\llang{;}S_2,c^\prime}}}\ruleno{Seq-Incompl$_{ss}$}
+$$
+
+$$
+\ctrans{\trans{c}{\llang{if $\;e\;$ then $\;S_1\;$ else $\;S_2\;$}}{\inbr{S_1,c}}}
+       {\sembr{e}\;c.s=1}\ruleno{If-True$_{ss}$}
+$$
+
+$$
+\ctrans{\trans{c}{\llang{if $\;e\;$ then $\;S_1\;$ else $\;S_2\;$}}{\inbr{S_2,c}}}
+       {\sembr{e}\;c.s=0}\ruleno{If-False$_{ss}$}
+$$
+
+$$
+\crule{\trans{c}{\llang{$S$}}{\inbr{S^\prime,c^\prime}}}
+      {\trans{c}{\llang{while $\;e\;$ do $\;S\;$}}{\inbr{S^\prime\llang{; while $\;e\;$ do $\;S\;$},c^{\prime}}}}
+      {\sembr{e}\;c.s=1}\ruleno{While-True-InCompl$_{ss}$}
+$$
+
+$$
+\crule{\trans{c}{\llang{$S$}}{c^\prime}}
+      {\trans{c}{\llang{while $\;e\;$ do $\;S\;$}}{\inbr{\llang{while $\;e\;$ do $\;S\;$},c^{\prime}}}}
+      {\sembr{e}\;c.s=1}\ruleno{While-True-Compl$_{ss}$}
+$$
+
+$$
+\ctrans{\trans{c}{\llang{while $\;e\;$ do $\;S\;$}}{c}}{\sembr{e}\;c.s=0}\ruleno{While-False$_{ss}$}
+$$
+
+\item Program semantics: $\sembr{\bullet}_P:\fancy{P}\to(\ZZ^*\to\ZZ^*)$
+
+$\sembr{P}_P=\lambda i.o$, where $\trans{\inbr{\perp,i,\epsilon}}{\llang{$P$}}{\inbr{s,\epsilon,o}}$
+
+\end{enumerate}
 
 \end{document}

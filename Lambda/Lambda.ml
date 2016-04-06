@@ -446,7 +446,7 @@ module Term =
 
                 let step = step' (new whr)
 
-                let side_step _ lam _ lam' = 
+                let rewrite _ lam _ lam' = 
                   if lam = lam' then None else Some ((), lam', ())
 
               end
@@ -580,7 +580,7 @@ module Term =
                     env 
                     lam 
  
-                let side_step _ lam _ lam' = 
+                let rewrite _ lam _ lam' = 
                   if lam = lam' then None else Some (([], []), lam', ())
 
                 let env_html  (e, s) =

@@ -485,7 +485,7 @@ module SimpleExpr
 		    (new strict_step) 
 		    (env, state, e) 
 		    e
-		let side_step env state e = function `Const x -> None | e' -> Some (env, state, e')
+		let rewrite env state e = function `Const x -> None | e' -> Some (env, state, e')
               end
             )
 
@@ -494,11 +494,11 @@ module SimpleExpr
                 include Base
                 let rec step env state e = 
                   GT.transform(expr) 
-	          (fun (env, state, _) e -> step env state e) 
-		  (new non_strict_step) 
-		  (env, state, e) 
-		  e
-		let side_step env state e = function `Const x -> None | e' -> Some (env, state, e')
+	            (fun (env, state, _) e -> step env state e) 
+		    (new non_strict_step) 
+		    (env, state, e) 
+		    e
+		let rewrite env state e = function `Const x -> None | e' -> Some (env, state, e')
               end
             )
 

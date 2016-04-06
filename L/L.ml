@@ -1,4 +1,4 @@
-open GT
+1open GT
 
 module Expr = E.LExpr (
   Lexer.Make (
@@ -338,6 +338,137 @@ module Stmt =
 
           end
 
+	module SmallStep =
+          struct
+
+            module S = BigStep.S
+
+	    type    conf  = BigStep.Standard.conf 
+	    type 's right = Result of conf | Rest of 's * conf 
+
+	    let right_html fs = 
+	      let fc = BigStep.Standard.conf_html in
+	      function
+              | Result c    -> fc c
+              | Rest (s, c) -> 
+		  HTMLView.seq [
+		    HTMLView.raw "&lang;"; 
+		    fs s; 
+		    HTMLView.raw ",&nbsp;"; 
+		    fc c; 
+		    HTMLView.raw "&rang;"
+		  ]
+
+            class ['self, 'e] step =
+              let expr e inh f =
+                match e.GT.fx inh with
+	        | Semantics.Good (_, _, d) -> f d
+                | Semantics.Bad reason -> S.Nothing (reason, "")
+              in
+              object 
+                inherit [unit, conf, ('self, 'e) t, ('self, 'e) t right, 'self, 'e] BigStep.c
+                method c_Skip (_, conf, _) _ =  S.Just (Result conf, "Skip")
+
+                method c_Assign ((_, (s, i, o), _) as inh) _ x e = 
+                  expr e inh (fun d -> S.Just (Result (State.modify s x d, i, o), "Assn")) 
+
+                method c_Read (_, (s, i, o), _) _ x =
+                  match i with
+	          | []    -> S.Nothing ("empty input", "")
+                  | y::i' -> S.Just (Result (State.modify s x y, i', o), "Read")
+
+                method c_Write ((_, (s, i, o), _) as inh) _ e =
+                  expr e inh (fun d -> S.Just (Result (s, i, o@[d]), "Write")) 
+
+                method c_Seq  (e, conf, _) _ s1 s2 = 
+                  S.Subgoals (
+                    [e, conf, s1.GT.x], 
+                    (fun [s1'] -> 
+		       match s1' with
+		       | Result c     -> S.Just (Rest (s2.GT.x, c), "Seq-Compl")
+		       | Rest (s1, c) -> S.Just (Rest (`Seq (s1, s2.GT.x), c), "Seq-Incompl")
+		    ),
+                    ""
+                 )
+
+                method c_If ((env, conf, _) as inh) _ e s1 s2 =
+                  expr e inh 
+                    (fun d -> 
+                       match B.boolean d with
+                       | `True  -> S.Just (Rest (s1.GT.x, conf), "If-True")
+                       | `False -> S.Just (Rest (s2.GT.x, conf), "If-False")
+                       |  _     -> S.Nothing  ("not a boolean value", "")
+                    )
+
+                method c_While ((env, conf, _) as inh) w e s =
+                  expr e inh 
+                    (fun d ->
+                       match B.boolean d with
+		       | `True  -> S.Subgoals (
+                                       [env, conf, s.GT.x], 
+                                       (fun [s'] -> 
+					  match s' with
+					  | Result c     -> S.Just (Rest (w.GT.x, c), "While-True-Compl")
+					  | Rest (s', c) -> S.Just (Rest (`Seq (s', w.GT.x), c), "While-True-Incompl")
+				       ), 
+                                       ""
+                                   )
+                       | `False -> S.Just    (Result conf, "While-False")
+                       |  _     -> S.Nothing ("not a boolean value", "")
+                    )
+
+            end
+
+            let rec step fe env conf stmt = 
+              GT.transform(t) (fun (env, conf, _) stmt -> step fe env conf stmt) fe (new step) (env, conf, stmt) stmt
+
+            module Instantiate 
+                (E : sig 
+                       type expr 
+                       val eval : unit * conf * (('a, expr) t as 'a) -> expr -> (unit * conf * D.t) Semantics.opt 
+                       val html : expr -> HTMLView.er
+                     end
+                 )
+                (C : sig val cb : Helpers.poly end) =
+              struct
+                type env   = unit
+                type left  = conf
+                type over  = ('a, E.expr) t as 'a
+		type 's right' = 's right
+                type right = (('a, E.expr) t as 'a) right'
+
+                let env_html   = HTMLView.unit
+                let left_html  = BigStep.Standard.conf_html
+                let over_html s = 
+                  let wrap node html =
+	            HTMLView.tag "attr" ~attrs:(Printf.sprintf "style=\"cursor:pointer\" %s" (C.cb.Helpers.f node)) html
+		  in
+		  wrap s
+		    (GT.transform(t) 
+		        (fun _ stmt -> wrap stmt (HTMLView.raw "&#8226;"))
+		        (GT.lift E.html)
+		        (new html') 
+		        ()
+		        s
+		    )
+                let right_html r = right_html over_html r
+
+                let step = step (fun all expr -> Semantics.bind (E.eval all expr) (fun (e, c, v) -> Semantics.Good (e, Result c, v)))
+
+		let rewrite env c s = function 
+		| Result _ -> None 
+                | Rest (s', c') -> Some (env, c', s')
+
+                let customizer =
+                  object 
+                    inherit S.Tree.html_customizer
+                    method show_env   = false
+                    method over_width = 100
+                  end
+              end
+
+	  end
+
       end
 
   end
@@ -409,13 +540,22 @@ let toplevel =
 	   in
            let module S    = Program.Semantics.BigStep.Standard.Instantiate (E)(struct let cb = Helpers.interval hcb hp end) in
            let module CPS  = Program.Semantics.BigStep.CPS     .Instantiate (E)(struct let cb = Helpers.interval hcb hp end) in
-           let module TS   = Semantics.Deterministic.BigStep.Tree.Make (S  ) in
-           let module TCPS = Semantics.Deterministic.BigStep.Tree.Make (CPS) in
+	   let module SS   = Program.Semantics.SmallStep       .Instantiate (E)(struct let cb = Helpers.interval hcb hp end) in
+
+           let module TS   = Semantics.Deterministic.BigStep   .Tree.Make (S  ) in
+           let module TCPS = Semantics.Deterministic.BigStep   .Tree.Make (CPS) in
+           let module TSS  = Semantics.Deterministic.SmallStep      .Make (SS)  in
+
            let input = ref []   in
            let depth = ref (-1) in
+
            Toplevel.Wizard.Page (
              [                             
-              HTMLView.Wizard.radio "Type" [HTMLView.raw "normal", "normal", "checked=\"true\""; HTMLView.raw "CPS", "CPS", ""]; 
+              HTMLView.Wizard.combo "Type" [
+                HTMLView.raw "Big Step"  , "normal", "selected=\"true\""; 
+                HTMLView.raw "Small Step", "smallstep", "";
+                HTMLView.raw "CPS", "CPS", ""
+              ]; 
               Toplevel.Wizard.div "Input stream";
               Toplevel.Wizard.div ~default:"-1" "Tree depth"
              ],
@@ -434,15 +574,17 @@ let toplevel =
 		   let descr, tree = 
 		     if conf "Type" = "normal"
                      then "L_BS", TS.html "root" (TS.build ~limit:!depth () (State.empty, !input, []) p)
-                     else
-		       "L_CPS",
-		       TCPS.html "root" (
-		         TCPS.build 
-                           ~limit:!depth 
-                           `L 
-                           (State.empty, !input, []) 
-                           (p :> ('a, 'b Expr.expr as 'b) Program.Semantics.BigStep.CPS.k as 'a)
-		        )
+                     else if conf "Type" = "smallstep"
+                          then "L_SS", TSS.html "root" (TSS.build ~limit:!depth () (State.empty, !input, []) p)
+                          else
+		            "L_CPS",
+		            TCPS.html "root" (
+		              TCPS.build 
+                                ~limit:!depth 
+                                `L 
+                                (State.empty, !input, []) 
+                                (p :> ('a, 'b Expr.expr as 'b) Program.Semantics.BigStep.CPS.k as 'a)
+		            )
 		   in
 		  js#results "root" (View.toString tree) descr
 		)                

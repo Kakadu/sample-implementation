@@ -260,8 +260,8 @@ module Deterministic =
                            type over
                            type right
 
-                           val step      :  env -> left -> over -> (env, left, over, right) BigStep.case
-                           val side_step : env -> left -> over -> right -> (env * left * over) option
+                           val step       : env -> left -> over -> (env, left, over, right) BigStep.case
+                           val rewrite    : env -> left -> over -> right -> (env * left * over) option
 
                            val env_html   : env   -> HTMLView.er
                            val left_html  : left  -> HTMLView.er
@@ -282,7 +282,7 @@ module Deterministic =
 		  let acc  = tree :: acc in
 		  match tree with
 		  | BigStep.Tree.Node (env, left, over, Good right, _ , _) -> 
-		      (match C.side_step env left over right with
+		      (match C.rewrite env left over right with
 		       | Some (env', left', over') -> inner (n-1) acc env' left' over'
 		       | None -> acc
 		      )
