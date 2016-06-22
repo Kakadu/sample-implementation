@@ -11,7 +11,7 @@ module type Algebra =
    type t
    val op   : string -> t -> t -> t opt
    val show : t -> string
-   val html : t -> HTMLView.er
+   val html : t -> HTML.er
 
  end
 
@@ -71,7 +71,7 @@ module IntA =
      | "||" -> lift (fun x y -> ib x + ib y)
 
    let show = string_of_int
-   let html = HTMLView.int
+   let html = HTML.int
 
  end
 
@@ -136,49 +136,49 @@ module Deterministic =
               object(this)
                 inherit ['env, 'left, 'over, 'right] @t[html]
                 method c_Node s orig env left over right subnodes rule =
-                  let node = HTMLView.table ~attrs:(Printf.sprintf "style=\"background-color:%s;transform:scaleY(-1)\"" customizer#background) (
-                      HTMLView.seq [ 
-                        HTMLView.tr (
-                          HTMLView.seq [
+                  let node = HTML.table ~attrs:(Printf.sprintf "style=\"background-color:%s;transform:scaleY(-1)\"" customizer#background) (
+                      HTML.seq [ 
+                        HTML.tr (
+                          HTML.seq [
                             if customizer#show_env
-                               then HTMLView.seq [
-                                      HTMLView.td ~attrs:"rowspan=\"3\" align=\"center\" valign=\"center\"" (HTMLView.tag "nobr" (env.GT.fx ()));
-                                      HTMLView.td ~attrs:"rowspan=\"3\" align=\"center\" valign=\"center\"" (HTMLView.raw "&vdash;")
+                               then HTML.seq [
+                                      HTML.td ~attrs:"rowspan=\"3\" align=\"center\" valign=\"center\"" (HTML.tag "nobr" (env.GT.fx ()));
+                                      HTML.td ~attrs:"rowspan=\"3\" align=\"center\" valign=\"center\"" (HTML.raw "&vdash;")
                                     ]
                                else View.empty;
-                            HTMLView.td ~attrs:"rowspan=\"3\" align=\"center\" valign=\"center\"" (HTMLView.tag "nobr" (left.GT.fx ()));
+                            HTML.td ~attrs:"rowspan=\"3\" align=\"center\" valign=\"center\"" (HTML.tag "nobr" (left.GT.fx ()));
                             if customizer#show_over 
-                               then HTMLView.td ~attrs:(Printf.sprintf "width=\"%dpx\"align=\"center\"" customizer#over_width) 
-                                      (HTMLView.tag "nobr" (over.GT.fx ()))
-                               else HTMLView.td (HTMLView.raw "&nbsp;");
-                            HTMLView.td ~attrs:"rowspan=\"3\" align=\"center\" valign=\"center\"" 
+                               then HTML.td ~attrs:(Printf.sprintf "width=\"%dpx\"align=\"center\"" customizer#over_width) 
+                                      (HTML.tag "nobr" (over.GT.fx ()))
+                               else HTML.td (HTML.raw "&nbsp;");
+                            HTML.td ~attrs:"rowspan=\"3\" align=\"center\" valign=\"center\"" 
                               (match right with 
-                              | Bad t -> HTMLView.raw (Printf.sprintf "<attr title=\"%s\"><font color=\"red\">&#8224;</font></attr>" t)
-                              | Good r -> HTMLView.tag "nobr" (orig.GT.t#right () r)
+                              | Bad t -> HTML.raw (Printf.sprintf "<attr title=\"%s\"><font color=\"red\">&#8224;</font></attr>" t)
+                              | Good r -> HTML.tag "nobr" (orig.GT.t#right () r)
                               );
                             if customizer#show_rule && rule <> ""
-                               then HTMLView.td ~attrs:"rowspan=\"3\" align=\"center\" valign=\"center\" style=\"font-size:80%\"" 
-                                      (HTMLView.tag "nobr" (HTMLView.raw ("&nbsp;(<i>by</i>&nbsp;[" ^ rule ^ "])")))
+                               then HTML.td ~attrs:"rowspan=\"3\" align=\"center\" valign=\"center\" style=\"font-size:80%\"" 
+                                      (HTML.tag "nobr" (HTML.raw ("&nbsp;(<i>by</i>&nbsp;[" ^ rule ^ "])")))
                                else View.empty
                           ]
                         );
-                        HTMLView.tr (
-                          HTMLView.td ~attrs:(Printf.sprintf "width=\"%dpx\"align=\"center\" valign=\"center\"" customizer#over_width) (
-                            HTMLView.tag ~attrs:(Printf.sprintf "style=\"display:inline-block;transform:scale(%d,1)\"" customizer#arrow_scale)
-                              "span" (HTMLView.raw customizer#arrow)
+                        HTML.tr (
+                          HTML.td ~attrs:(Printf.sprintf "width=\"%dpx\"align=\"center\" valign=\"center\"" customizer#over_width) (
+                            HTML.tag ~attrs:(Printf.sprintf "style=\"display:inline-block;transform:scale(%d,1)\"" customizer#arrow_scale)
+                              "span" (HTML.raw customizer#arrow)
                           )
                         );
-                        HTMLView.tr (HTMLView.td (HTMLView.raw "&nbsp;"))
+                        HTML.tr (HTML.td (HTML.raw "&nbsp;"))
                       ]
                     )
                   in
                   if List.length subnodes = 0 
-                  then HTMLView.li node
-                  else HTMLView.li (
-                         HTMLView.seq [
+                  then HTML.li node
+                  else HTML.li (
+                         HTML.seq [
                            node;
-                           HTMLView.ul (
-                             HTMLView.seq (
+                           HTML.ul (
+                             HTML.seq (
                                List.map 
                                  (GT.transform(t) orig.GT.t#env orig.GT.t#left orig.GT.t#over orig.GT.t#right this ()) 
                                  subnodes
@@ -190,8 +190,8 @@ module Deterministic =
               end
 
             let html id customizer env left over right tree = 
-              HTMLView.tag "div" ~attrs:"style=\"transform:scaleY(-1)\"" (
-                HTMLView.ul ~attrs:(Printf.sprintf "id=\"%s\" class=\"mktree\"" id)
+              HTML.tag "div" ~attrs:"style=\"transform:scaleY(-1)\"" (
+                HTML.ul ~attrs:(Printf.sprintf "id=\"%s\" class=\"mktree\"" id)
                   (GT.transform(t) env left over right (new custom_html customizer) () tree)
               )
 
@@ -233,10 +233,10 @@ module Deterministic =
 
                                  val step : env -> left -> over -> (env, left, over, right) case
 
-                                 val env_html   : env   -> HTMLView.er
-                                 val left_html  : left  -> HTMLView.er
-                                 val over_html  : over  -> HTMLView.er
-                                 val right_html : right -> HTMLView.er
+                                 val env_html   : env   -> HTML.viewer
+                                 val left_html  : left  -> HTML.viewer
+                                 val over_html  : over  -> HTML.viewer
+                                 val right_html : right -> HTML.viewer
 
                                  val customizer : html_customizer
 
@@ -263,10 +263,10 @@ module Deterministic =
                            val step       : env -> left -> over -> (env, left, over, right) BigStep.case
                            val rewrite    : env -> left -> over -> right -> (env * left * over) option
 
-                           val env_html   : env   -> HTMLView.er
-                           val left_html  : left  -> HTMLView.er
-                           val over_html  : over  -> HTMLView.er
-                           val right_html : right -> HTMLView.er
+                           val env_html   : env   -> HTML.viewer
+                           val left_html  : left  -> HTML.viewer
+                           val over_html  : over  -> HTML.viewer
+                           val right_html : right -> HTML.viewer
 
                            val customizer : BigStep.Tree.html_customizer
                          end
@@ -291,16 +291,16 @@ module Deterministic =
               List.rev (inner limit [] env left over)
 
 	    let html id seq =
-	      HTMLView.table ~attrs:(Printf.sprintf "id=\"%s\"" id) (
-                HTMLView.seq (
+	      HTML.table ~attrs:(Printf.sprintf "id=\"%s\"" id) (
+                HTML.seq (
                   List.mapi 
                     (fun i t -> 
 		      (fun h -> 
 			if i > 0 
-			then HTMLView.seq [HTMLView.tr (HTMLView.td (HTMLView.raw "<hr>")); h]
+			then HTML.seq [HTML.tr (HTML.td (HTML.raw "<hr>")); h]
 		        else h                        
                       )
-		      (HTMLView.tr (HTMLView.td (T.html (Printf.sprintf "__discard_%s_%d" id i) t))))
+		      (HTML.tr (HTML.td (T.html (Printf.sprintf "__discard_%s_%d" id i) t))))
                     seq
 	        )
               )

@@ -6,13 +6,13 @@ module Wizard =
   struct
 
     type node = 
-    | Page of (HTMLView.Wizard.page -> HTMLView.Wizard.page) list * ((HTMLView.Wizard.page -> proxy -> bool) * node) list
+    | Page of (HTML.Wizard.page -> HTML.Wizard.page) list * ((HTML.Wizard.page -> proxy -> bool) * node) list
     | Exit of (proxy -> unit)
 
-    let div ?(attrs="") = HTMLView.Wizard.div ~attrs:(Printf.sprintf "%s class=\"editablediv\"" attrs)
+    let div ?(attrs="") = HTML.Wizard.div ~attrs:(Printf.sprintf "%s class=\"editablediv\"" attrs)
 
     let make id target navigate (Page (inputs, decisions)) as root =
-      let w = HTMLView.Wizard.create id target navigate in
+      let w = HTML.Wizard.create id target navigate in
       let i =
         let i = ref 1 in
         (fun () -> let k = !i in incr i; k)
@@ -47,7 +47,7 @@ module Wizard =
 
 class type js =
   object
-    method error   : HTMLView.Wizard.page -> string -> string -> Ostap.Msg.t -> unit
+    method error   : HTML.Wizard.page -> string -> string -> Ostap.Msg.t -> unit
     method results : string -> string -> string -> unit
   end
 

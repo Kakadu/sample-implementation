@@ -55,24 +55,24 @@ module Expr =
       end
 
     let rec html cb e =
-      HTMLView.li ~attrs:(cb.Helpers.f e) (transform(aexpr) (fun _ -> html cb) (new html) () e)
+      HTML.li ~attrs:(cb.Helpers.f e) (transform(aexpr) (fun _ -> html cb) (new html) () e)
 
     let cast f = fun x -> f (x :> 'a aexpr)
 
     class ['a] abbrev_html cb pretty =
       let w = new Helpers.wrap cb pretty in
       object (this)
-        inherit ['a, bool, HTMLView.er, bool, HTMLView.er] @aexpr
+        inherit ['a, bool, HTML.er, bool, HTML.er] @aexpr
         inherit ['a] Base.abbrev_html cb (cast pretty)
         method c_Indexed top v base index = 
 	  w#wrap v.GT.x 
 	    (if top 
 	     then
-	       HTMLView.seq [
+	       HTML.seq [
                  base.GT.fx false;
-	         HTMLView.tag "tt" (HTMLView.raw "[");
+	         HTML.tag "tt" (HTML.raw "[");
 	         index.GT.fx false;
-	         HTMLView.tag "tt" (HTMLView.raw "]");
+	         HTML.tag "tt" (HTML.raw "]");
                ]
 	     else w#bullet
             )
@@ -80,12 +80,12 @@ module Expr =
 	  w#wrap v.GT.x
             (if top && List.length elems <= 1
              then
-               HTMLView.seq (
-                 HTMLView.tag "tt" (HTMLView.raw "{") ::
+               HTML.seq (
+                 HTML.tag "tt" (HTML.raw "{") ::
                  List.map (fun e -> v.GT.t#a false e) elems @
-                 [HTMLView.tag "tt" (HTMLView.raw "}")]
+                 [HTML.tag "tt" (HTML.raw "}")]
 	       )
-             else HTMLView.seq [HTMLView.raw "{"; w#bullet; HTMLView.raw "}"]
+             else HTML.seq [HTML.raw "{"; w#bullet; HTML.raw "}"]
             )
       end
 
@@ -322,7 +322,7 @@ module IntArrayA =
 
     let html = function
     | I x -> Semantics.IntA.html x
-    | (A a) as x -> HTMLView.tag "attr" ~attrs:(Printf.sprintf "title=\"%s\"" (show x)) (HTMLView.raw "{&#8226;}")
+    | (A a) as x -> HTML.tag "attr" ~attrs:(Printf.sprintf "title=\"%s\"" (show x)) (HTML.raw "{&#8226;}")
 
     module Spec (S : sig val spec : (string * (int -> bool)) list end) =
       struct
@@ -370,7 +370,7 @@ let toplevel =
     (fun (p, h) ->         
        object inherit Toplevel.c
          method ast cb = View.toString (
-                           HTMLView.ul ~attrs:"id=\"ast\" class=\"mktree\"" (
+                           HTML.ul ~attrs:"id=\"ast\" class=\"mktree\"" (
                              Expr.html (Helpers.interval cb h) p
                            )
                          )

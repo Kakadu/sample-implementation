@@ -46,17 +46,17 @@ module Stmt =
 
     class ['self, 'e] html' =
       object inherit ['self, 'e] @t[html]
-        method c_Skip   _ _         = HTMLView.raw "skip"
-        method c_Assign _ _ x e     = HTMLView.seq [HTMLView.raw x; HTMLView.raw " := "; e.GT.fx ()]
-        method c_Write  _ _ e       = HTMLView.seq [HTMLView.raw "write ("; e.GT.fx (); HTMLView.raw ")"]
-        method c_Read   _ _ x       = HTMLView.seq [HTMLView.raw "read ("; HTMLView.raw x; HTMLView.raw ")"]
-        method c_Seq    _ _ s1 s2   = HTMLView.seq [s1.GT.fx (); HTMLView.raw " ; "; s2.GT.fx ()]
-        method c_While  _ _ e s     = HTMLView.seq [HTMLView.raw "while "; e.GT.fx (); HTMLView.raw " do "; s.GT.fx ()]
-        method c_If     _ _ e s1 s2 = HTMLView.seq [HTMLView.raw "if "; 
+        method c_Skip   _ _         = HTML.raw "skip"
+        method c_Assign _ _ x e     = HTML.seq [HTML.raw x; HTML.raw " := "; e.GT.fx ()]
+        method c_Write  _ _ e       = HTML.seq [HTML.raw "write ("; e.GT.fx (); HTML.raw ")"]
+        method c_Read   _ _ x       = HTML.seq [HTML.raw "read ("; HTML.raw x; HTML.raw ")"]
+        method c_Seq    _ _ s1 s2   = HTML.seq [s1.GT.fx (); HTML.raw " ; "; s2.GT.fx ()]
+        method c_While  _ _ e s     = HTML.seq [HTML.raw "while "; e.GT.fx (); HTML.raw " do "; s.GT.fx ()]
+        method c_If     _ _ e s1 s2 = HTML.seq [HTML.raw "if "; 
                                                     e.GT.fx (); 
-                                                    HTMLView.raw " then "; 
+                                                    HTML.raw " then "; 
                                                     s1.GT.fx (); 
-                                                    HTMLView.raw " else "; 
+                                                    HTML.raw " else "; 
                                                     s2.GT.fx ()
                                       ]
       end
@@ -101,14 +101,14 @@ module Stmt =
 
                 let conf_html (s, i, o) = 
                   let show l = GT.transform(GT.list) (GT.lift D.show) (new @GT.list[show]) () l in
-                  HTMLView.seq [
-                    HTMLView.raw "(";
+                  HTML.seq [
+                    HTML.raw "(";
                     State.html D.show s;
-                    HTMLView.raw ",";
-                    HTMLView.tag "attr" ~attrs:(Printf.sprintf "style=\"cursor:pointer\" title=\"[%s]\"" (show i)) (HTMLView.raw "i");
-                    HTMLView.raw ",";
-                    HTMLView.tag "attr" ~attrs:(Printf.sprintf "style=\"cursor:pointer\" title=\"[%s]\"" (show o)) (HTMLView.raw "o");
-                    HTMLView.raw ")"
+                    HTML.raw ",";
+                    HTML.tag "attr" ~attrs:(Printf.sprintf "style=\"cursor:pointer\" title=\"[%s]\"" (show i)) (HTML.raw "i");
+                    HTML.raw ",";
+                    HTML.tag "attr" ~attrs:(Printf.sprintf "style=\"cursor:pointer\" title=\"[%s]\"" (show o)) (HTML.raw "o");
+                    HTML.raw ")"
 	          ]
 
                 class ['self, 'e] step =
@@ -165,7 +165,7 @@ module Stmt =
                     (E : sig 
                            type expr 
                            val eval : unit * conf * (('a, expr) t as 'a) -> expr -> (unit * conf * D.t) Semantics.opt 
-                           val html : expr -> HTMLView.er
+                           val html : expr -> HTML.er
                          end
                      )
                     (C : sig val cb : Helpers.poly end) =
@@ -175,16 +175,16 @@ module Stmt =
                     type over  = ('a, E.expr) t as 'a
                     type right = conf
 
-                    let env_html     = HTMLView.unit
+                    let env_html     = HTML.unit
                     let left_html    = conf_html
                     let right_html   = conf_html   
                     let over_html  s = 
 		      let wrap node html =
-			HTMLView.tag "attr" ~attrs:(Printf.sprintf "style=\"cursor:pointer\" %s" (C.cb.Helpers.f node)) html
+			HTML.tag "attr" ~attrs:(Printf.sprintf "style=\"cursor:pointer\" %s" (C.cb.Helpers.f node)) html
 		      in
 		      wrap s
 			(GT.transform(t) 
-			   (fun _ stmt -> wrap stmt (HTMLView.raw "&#8226;"))
+			   (fun _ stmt -> wrap stmt (HTML.raw "&#8226;"))
 			   (GT.lift E.html)
 			   (new html') 
 			   ()
@@ -213,7 +213,7 @@ module Stmt =
                   object 
                     inherit ['self, 'e] @k[html]
                     inherit ['self, 'e] html'
-                    method c_L _ _ = HTMLView.raw "&Lambda;"
+                    method c_L _ _ = HTML.raw "&Lambda;"
                   end                       
 
                 type conf = Standard.conf
@@ -293,7 +293,7 @@ module Stmt =
                            type expr 
                            val eval : (('a, expr) k as 'a) * conf * (('a, expr) k as 'a) -> expr -> 
                                       ((('a, expr) k as 'a) * conf * D.t) Semantics.opt 
-                           val html : expr -> HTMLView.er
+                           val html : expr -> HTML.er
                          end
                      )
                     (C : sig val cb : Helpers.poly end) =
@@ -305,14 +305,14 @@ module Stmt =
 
                     let env_html s =
    	              let wrap node html =
-			HTMLView.tag "attr" 
+			HTML.tag "attr" 
                           ~attrs:(Printf.sprintf "style=\"cursor:pointer\" %s"   
                           (C.cb.Helpers.f node)) 
                           html
 		      in
 		      wrap s
 			(GT.transform(k) 
-			   (fun _ stmt -> wrap stmt (HTMLView.raw "&#8226;"))
+			   (fun _ stmt -> wrap stmt (HTML.raw "&#8226;"))
 			   (GT.lift E.html)
 			   (new html) 
 			   ()
@@ -351,12 +351,12 @@ module Stmt =
 	      function
               | Result c    -> fc c
               | Rest (s, c) -> 
-		  HTMLView.seq [
-		    HTMLView.raw "&lang;"; 
+		  HTML.seq [
+		    HTML.raw "&lang;"; 
 		    fs s; 
-		    HTMLView.raw ",&nbsp;"; 
+		    HTML.raw ",&nbsp;"; 
 		    fc c; 
-		    HTMLView.raw "&rang;"
+		    HTML.raw "&rang;"
 		  ]
 
             class ['self, 'e] step =
@@ -418,7 +418,7 @@ module Stmt =
                 (E : sig 
                        type expr 
                        val eval : unit * conf * (('a, expr) t as 'a) -> expr -> (unit * conf * D.t) Semantics.opt 
-                       val html : expr -> HTMLView.er
+                       val html : expr -> HTML.er
                      end
                  )
                 (C : sig val cb : Helpers.poly end) =
@@ -429,15 +429,15 @@ module Stmt =
 		type 's right' = 's right
                 type right = (('a, E.expr) t as 'a) right'
 
-                let env_html   = HTMLView.unit
+                let env_html   = HTML.unit
                 let left_html  = BigStep.Standard.conf_html
                 let over_html s = 
                   let wrap node html =
-	            HTMLView.tag "attr" ~attrs:(Printf.sprintf "style=\"cursor:pointer\" %s" (C.cb.Helpers.f node)) html
+	            HTML.tag "attr" ~attrs:(Printf.sprintf "style=\"cursor:pointer\" %s" (C.cb.Helpers.f node)) html
 		  in
 		  wrap s
 		    (GT.transform(t) 
-		        (fun _ stmt -> wrap stmt (HTMLView.raw "&#8226;"))
+		        (fun _ stmt -> wrap stmt (HTML.raw "&#8226;"))
 		        (GT.lift E.html)
 		        (new html') 
 		        ()
@@ -475,7 +475,7 @@ module Program =
       ostap (p:parse -EOF {p, hp, he}) s
 
     let rec html cbp cbe p = 
-      HTMLView.li ~attrs:(cbp.Helpers.f p)
+      HTML.li ~attrs:(cbp.Helpers.f p)
         (transform(Stmt.t) 
            (fun _ -> html cbp cbe) 
            (fun _ -> Expr.html cbe) 
@@ -507,7 +507,7 @@ let toplevel =
     (fun (p, hp, he) ->
        object 
          method ast cb = View.toString (
-                           HTMLView.ul ~attrs:"id=\"ast\" class=\"mktree\"" (
+                           HTML.ul ~attrs:"id=\"ast\" class=\"mktree\"" (
                              Program.html (Helpers.interval cb hp) (Helpers.interval cb he) p
                            )
                          )
@@ -522,11 +522,11 @@ let toplevel =
                  | Semantics.Bad  reason -> Semantics.Bad reason
 
                let html e = 
-                 HTMLView.tag "attr" ~attrs:(Printf.sprintf "style=\"cursor:pointer\" %s" ((Helpers.interval hcb he).Helpers.f e))
+                 HTML.tag "attr" ~attrs:(Printf.sprintf "style=\"cursor:pointer\" %s" ((Helpers.interval hcb he).Helpers.f e))
                    (match e with 
-	            | `Const i -> HTMLView.raw (string_of_int i)
-                    | `Var   x -> HTMLView.raw x
-		    | _        -> HTMLView.raw "&#8226;"
+	            | `Const i -> HTML.raw (string_of_int i)
+                    | `Var   x -> HTML.raw x
+		    | _        -> HTML.raw "&#8226;"
                    )
               end
 	   in
@@ -543,10 +543,10 @@ let toplevel =
 
            Toplevel.Wizard.Page (
              [                             
-              HTMLView.Wizard.combo "Type" [
-                HTMLView.raw "Big Step"  , "normal", "selected=\"true\""; 
-                HTMLView.raw "Small Step", "smallstep", "";
-                HTMLView.raw "CPS", "CPS", ""
+              HTML.Wizard.combo "Type" [
+                HTML.raw "Big Step"  , "normal", "selected=\"true\""; 
+                HTML.raw "Small Step", "smallstep", "";
+                HTML.raw "CPS", "CPS", ""
               ]; 
               Toplevel.Wizard.div "Input stream";
               Toplevel.Wizard.div ~default:"-1" "Tree depth"

@@ -35,7 +35,7 @@ let perform r source =
       | (po, o)::tl ->
           if po = p then (Buffer.add_string decorated o; tl) else opens
       in
-      Buffer.add_string decorated (HTMLView.escape (String.make 1 x));
+      Buffer.add_string decorated (HTML.escape (String.make 1 x));
       let closes' = match closes with
       | [] -> []
       | (pc, c)::tl ->

@@ -8,8 +8,8 @@ let string_array sa =
 let highlighted_msg source msg =
   match Ostap.Msg.loc msg with
   | Ostap.Msg.Locator.Point p ->
-     HTMLHighlighting.perform [HTMLHighlighting.error_item p] (source ^ " "), HTMLView.escape (Ostap.Msg.string msg)
-  | _ -> HTMLHighlighting.perform [] source, HTMLView.escape (Ostap.Msg.toString msg)
+     HTMLHighlighting.perform [HTMLHighlighting.error_item p] (source ^ " "), HTML.escape (Ostap.Msg.string msg)
+  | _ -> HTMLHighlighting.perform [] source, HTML.escape (Ostap.Msg.toString msg)
 
 let setHTML elem str =
   let target = Js.Unsafe.fun_call (Js.Unsafe.variable "document.getElementById") [|Js.Unsafe.inject (Js.string elem)|] in

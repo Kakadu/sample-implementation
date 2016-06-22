@@ -57,14 +57,14 @@ module Term =
 
     type ('a, 'b) env = ('a * 'b) list
 
-    let html_env (a : 'a -> HTMLView.er) (b : 'b -> HTMLView.er) e =
+    let html_env (a : 'a -> HTML.viewer) (b : 'b -> HTML.viewer) e =
       transform(list) 
-        (fun _ (x, t) -> HTMLView.seq [a x; HTMLView.string ":"; b t])
-        (object inherit ['a * 'b, unit, HTMLView.er, bool, HTMLView.er] @list 
-           method c_Nil  _ _      = HTMLView.string ""
+        (fun _ (x, t) -> HTML.seq [a x; HTML.string ":"; b t])
+        (object inherit ['a * 'b, unit, HTML.viewer, bool, HTML.viewer] @list 
+           method c_Nil  _ _      = HTML.string ""
            method c_Cons f _ x xs =
-             (fun s -> if f then s else HTMLView.seq [HTMLView.string "; "; s]) 
-             (HTMLView.seq [x.fx (); xs.fx false])
+             (fun s -> if f then s else HTML.seq [HTML.string "; "; s]) 
+             (HTML.seq [x.fx (); xs.fx false])
          end) 
          true 
          e
@@ -90,25 +90,25 @@ module Term =
 
     class ['self] pretty =
       object (this)
-        inherit [string, unit, HTMLView.er, 'self, prio, HTMLView.er, prio, HTMLView.er] @t
+        inherit [string, unit, HTML.viewer, 'self, prio, HTML.viewer, prio, HTML.viewer] @t
         method c_Var p _ v = 
-          match p with `Abs -> HTMLView.seq [HTMLView.string " . "; HTMLView.string v.GT.x] | _ -> HTMLView.string v.GT.x
+          match p with `Abs -> HTML.seq [HTML.string " . "; HTML.string v.GT.x] | _ -> HTML.string v.GT.x
         method c_Lambda p _ v x = 
-          let z = HTMLView.seq [HTMLView.string v.GT.x; x.GT.fx `Abs] in
+          let z = HTML.seq [HTML.string v.GT.x; x.GT.fx `Abs] in
           match p with
-          | `Left | `Right true -> HTMLView.seq [HTMLView.string "("; HTMLView.raw "&lambda;"; z; HTMLView.string ")"]
-          | `Abs  -> HTMLView.seq [HTMLView.string " "; z]
-          | _     -> HTMLView.seq [HTMLView.raw "&lambda;"; z]
+          | `Left | `Right true -> HTML.seq [HTML.string "("; HTML.raw "&lambda;"; z; HTML.string ")"]
+          | `Abs  -> HTML.seq [HTML.string " "; z]
+          | _     -> HTML.seq [HTML.raw "&lambda;"; z]
         method c_App p _ x y =
-          let xy = HTMLView.seq [x.GT.fx `Left; HTMLView.string " "; y.GT.fx (match p with `Left -> `Right true | `Right f -> `Right f | _ -> `Right false)] in
+          let xy = HTML.seq [x.GT.fx `Left; HTML.string " "; y.GT.fx (match p with `Left -> `Right true | `Right f -> `Right f | _ -> `Right false)] in
           match p with
-          | `Abs     -> HTMLView.seq [HTMLView.string " . "; xy]
-          | `Right _ -> HTMLView.seq [HTMLView.string "("; xy; HTMLView.string ")"]
+          | `Abs     -> HTML.seq [HTML.string " . "; xy]
+          | `Right _ -> HTML.seq [HTML.string "("; xy; HTML.string ")"]
           | _        -> xy
       end    
 
     let pretty l = 
-      let rec pretty' p l = transform(t) (lift HTMLView.string) pretty' (new pretty) p l in
+      let rec pretty' p l = transform(t) (lift HTML.string) pretty' (new pretty) p l in
       pretty' `Top l
 
     class ['self] abbrev_html cb pretty =
@@ -117,24 +117,24 @@ module Term =
         if top then p else w#wrap node w#bullet
       in
       object (this)
-        inherit [string, bool, HTMLView.er, 'self, bool, HTMLView.er, bool, HTMLView.er] @t
+        inherit [string, bool, HTML.viewer, 'self, bool, HTML.viewer, bool, HTML.viewer] @t
         method c_Var top s v = 
-          with_top top s.GT.x (HTMLView.tag "tt" (HTMLView.string v.GT.x))
+          with_top top s.GT.x (HTML.tag "tt" (HTML.string v.GT.x))
         method c_Lambda top s v x =
           with_top top s.GT.x 
-            (HTMLView.tag "tt" (
-               HTMLView.seq [
-                 HTMLView.string "\\"; 
-                 HTMLView.string v.GT.x; 
-                 HTMLView.string "."; 
+            (HTML.tag "tt" (
+               HTML.seq [
+                 HTML.string "\\"; 
+                 HTML.string v.GT.x; 
+                 HTML.string "."; 
                  x.GT.fx false
             ]))
         method c_App top s x y =
           with_top top s.GT.x 
-            (HTMLView.tag "tt" (
-               HTMLView.seq [
+            (HTML.tag "tt" (
+               HTML.seq [
                  x.GT.fx false;
-                 HTMLView.raw " ";
+                 HTML.raw " ";
                  y.GT.fx false
             ]))
       end
@@ -143,12 +143,12 @@ module Term =
       object
         inherit ['var, 'self] @t[html]
         inherit Helpers.cname as helped
-        method c_Var    _ _ v   = HTMLView.string v.GT.x
+        method c_Var    _ _ v   = HTML.string v.GT.x
         method c_Lambda _ _ v x =
-          HTMLView.seq [
-            HTMLView.raw "&lambda; ";
-            HTMLView.string v.GT.x;
-            HTMLView.ul (x.GT.fx ())
+          HTML.seq [
+            HTML.raw "&lambda; ";
+            HTML.string v.GT.x;
+            HTML.ul (x.GT.fx ())
           ]
         method cname name =
           match helped#cname name with
@@ -200,9 +200,9 @@ module Term =
       ostap (e:hparse[h] -EOF {e, h}) s
 
     let rec html_t cb e = 
-      HTMLView.li ~attrs:(cb.Helpers.f e)
+      HTML.li ~attrs:(cb.Helpers.f e)
         (transform(t) 
-           (fun _ -> HTMLView.string) 
+           (fun _ -> HTML.string) 
            (fun _ -> html_t cb) 
            (new html) 
            () 
@@ -230,7 +230,7 @@ module Term =
             type right = glam
 
             let left_html   = pretty
-            let over_html _ = HTMLView.string ""
+            let over_html _ = HTML.string ""
             let right_html  = pretty
            
 	    class html_customizer =
@@ -283,7 +283,7 @@ module Term =
 
 		type env = unit
 
-		let env_html _ = HTMLView.string ""
+		let env_html _ = HTML.string ""
 
 		class whr =
 		  object inherit [env] c
@@ -419,7 +419,7 @@ module Term =
             
                 type env = unit
 
-                let env_html _ = HTMLView.string ""
+                let env_html _ = HTML.string ""
 
                 class whr =
                   object inherit [env] c
@@ -585,16 +585,16 @@ module Term =
 
                 let env_html  (e, s) =
 		  let hl l e =
-		    if List.length l = 0 then HTMLView.raw "&epsilon;" else e
+		    if List.length l = 0 then HTML.raw "&epsilon;" else e
 		  in
-                  HTMLView.seq [ 
-		    hl e (HTMLView.seq [
-		            HTMLView.string "["; 
-		            html_env HTMLView.string pretty e; 
-		            HTMLView.string "]"
+                  HTML.seq [ 
+		    hl e (HTML.seq [
+		            HTML.string "["; 
+		            html_env HTML.string pretty e; 
+		            HTML.string "]"
                          ]);
-                    HTMLView.raw ";&nbsp;";
-                    hl s (HTMLView.raw (show(list) (fun x -> View.toString (pretty x)) s))
+                    HTML.raw ";&nbsp;";
+                    hl s (HTML.raw (show(list) (fun x -> View.toString (pretty x)) s))
                   ]
               end
             )
@@ -602,6 +602,8 @@ module Term =
 
         module SimpleTyping =
           struct
+
+	    let (!) = (!!);;
 
             @type ('var, 'self) typ = [`V of 'var | `Arr of 'self * 'self] with gmap, show, html
 
@@ -624,42 +626,39 @@ module Term =
                     i'
               end                     
 
-            let glam_to_llam l =
+            let glam_to_llam (l : glam) =
               let indexer = new indexer in
               let rec to_logic l = ! (gmap(t) (fun s -> !(indexer#index s)) to_logic l) in
-              to_logic l, indexer
+              (to_logic l : llam), indexer
 
-            exception Not_even_a_value 
-
-            let to_value' = function Value x -> x | _ -> raise Not_even_a_value
-
-            let llam_to_glam indexer l =
+            let llam_to_glam indexer (l : llam) =
               let rec of_logic x = 
-                gmap(t) (fun i -> indexer#get (to_value i)) of_logic (to_value x)
+                gmap(t) (fun i -> indexer#get (prj i)) of_logic (prj x)
               in
-              of_logic l
+              (of_logic l : glam)
 
             let rec gtyp_to_ltyp l = !(gmap(typ) (!) gtyp_to_ltyp l)
 
-            let ltyp_to_gtyp names l =
-              let rec of_logic = function
-                | Var   i -> `V (names#get i)
-                | Value t -> gmap(typ) (function Var i -> names#get i | Value t -> t) of_logic t
+            let ltyp_to_gtyp (names : Helpers.names) l =
+              let rec of_logic x = 
+		match destruct x with
+                | `Var   (i, _) -> `V (names#get i)
+                | `Value t      -> gmap(typ) (function n -> match destruct n with `Var (i, _) -> names#get i | `Value t -> t) of_logic t
               in
               of_logic l
 
             let rec html_typ t = 
               transform(typ) (fun _ x -> html string x) (fun _ -> html_typ) 
                 (object inherit [string, (string, 'a) typ as 'a] @typ[html] 
-                   method c_V   _ _ v  = HTMLView.string v.x
+                   method c_V   _ _ v  = HTML.string v.x
                    method c_Arr _ _ d c = 
-                     HTMLView.seq [
+                     HTML.seq [
                        (fun s -> 
                           match d.x with 
-                          | `Arr _ -> HTMLView.seq [HTMLView.string "("; s; HTMLView.string ")"] 
+                          | `Arr _ -> HTML.seq [HTML.string "("; s; HTML.string ")"] 
                           | _ -> s
                        ) (d.fx ()); 
-                       HTMLView.raw "&#8594;"; 
+                       HTML.raw "&#8594;"; 
                        c.fx ()
                      ]
                  end) 
@@ -671,18 +670,19 @@ module Term =
                                                    | `Abs of 'env * 'self * 'lam * 'typ
                                                    ] with gmap 
 
-            type lenv = (int logic * ltyp) llist logic
+            type lenv = (int logic * ltyp) logic List.logic
             type env  = (string * gtyp) list
 
             type ltree = (lenv, llam, ltyp, ltree) tree logic
             type gtree = (env, glam, gtyp, gtree) tree
 
-            let to_env names indexer l = List.map (fun (x, y) -> indexer#get (to_value x), ltyp_to_gtyp names y) (to_list l)
+            let to_env (names : Helpers.names) indexer (l : lenv) =                
+              (List.to_list @@ List.prj (fun l -> let (x, y) = prj l in indexer#get (prj x), ltyp_to_gtyp names y) l : env)
 
-            let html_env e = html_env HTMLView.string html_typ e
+            let html_env e = html_env HTML.string html_typ e
 
-            let rec to_tree names indexer t =
-              gmap tree (to_env names indexer) (llam_to_glam indexer) (ltyp_to_gtyp names) (to_tree names indexer) (to_value' t)
+            let rec to_tree (names : Helpers.names) indexer t =
+              gmap tree (to_env names indexer) (llam_to_glam indexer) (ltyp_to_gtyp names) (to_tree names indexer) (prj t)
 
             module Tree = TopSemantics.Deterministic.BigStep.Tree
 
@@ -705,7 +705,7 @@ module Term =
                  end)
                 (lift html_env)
                 (lift pretty) 
-                (fun _ _ -> HTMLView.string "") 
+                (fun _ _ -> HTML.string "") 
                 (lift html_typ) 
                 t
             
@@ -739,16 +739,16 @@ module Term =
                 in
                 infero !Nil expr typ tree      
               in
-              run (fun st -> 
-                     let names          = new Helpers.names in
-                     let lexpr, indexer = glam_to_llam expr in
-                     let inferred, t, d = qr (fun t d st -> infero lexpr t d st, t, d) st in
-                     match take ~n:2 inferred with
-                     | []   -> html_tree (Tree.Node ([], expr, (), TopSemantics.Bad "no type", [], ""))
-                     | [st] -> 
-                         let tree = to_stree (to_tree names indexer (fst (refine st d))) in
-                         html_tree tree
-                  )
+              let names          = new Helpers.names in
+              let lexpr, indexer = glam_to_llam expr in
+              run two (fun t  d  -> infero lexpr t d)
+                      (fun ts ds ->
+                         if Stream.is_empty ts 
+			 then html_tree (Tree.Node ([], expr, (), TopSemantics.Bad "no type", [], ""))
+			 else
+                           let tree = to_stree (to_tree names indexer (Stream.hd ds)) in
+			   html_tree tree
+		       )
 
           end
       end
@@ -761,7 +761,7 @@ let toplevel =
     (fun (p, h) ->         
        object inherit Toplevel.c
          method ast cb = View.toString (
-                           HTMLView.ul ~attrs:"id=\"ast\" class=\"mktree\"" (
+                           HTML.ul ~attrs:"id=\"ast\" class=\"mktree\"" (
                              Term.html_t (Helpers.interval cb h) p
                            )
                          )
@@ -770,9 +770,9 @@ let toplevel =
            let depth = ref (-1) in
            Toplevel.Wizard.Page (
              [                             
-              HTMLView.Wizard.radio "Type" [
-                HTMLView.string "typing"    , "typing"    , "checked=\"true\"";
-                HTMLView.string "evaluation", "evaluation", ""
+              HTML.Wizard.radio "Type" [
+                HTML.string "typing"    , "typing"    , "checked=\"true\"";
+                HTML.string "evaluation", "evaluation", ""
               ] 
              ],
              [(fun page conf -> conf "Type" = "typing"),
@@ -783,16 +783,16 @@ let toplevel =
               (fun page conf -> conf "Type" = "evaluation"),
               Toplevel.Wizard.Page (
                 [
-                 HTMLView.Wizard.radio "Semantic Type" [
-                   HTMLView.string "Small-Step", "SS", "checked=\"true\"";
-                   HTMLView.string "Big-Step"  , "BS", ""
+                 HTML.Wizard.radio "Semantic Type" [
+                   HTML.string "Small-Step", "SS", "checked=\"true\"";
+                   HTML.string "Big-Step"  , "BS", ""
                  ];
-                 HTMLView.Wizard.combo "Reduction order" [
-                   HTMLView.string "Normal Order"         , "NR" , "selected=\"true\"";
-                   HTMLView.string "Call by Name"         , "CBN", "";
-                   HTMLView.string "Call by Value"        , "CBV", "";
-                   HTMLView.string "Head Reduction"       , "HR" , "";
-                   HTMLView.string "Head Linear Reduction", "HLR", ""
+                 HTML.Wizard.combo "Reduction order" [
+                   HTML.string "Normal Order"         , "NR" , "selected=\"true\"";
+                   HTML.string "Call by Name"         , "CBN", "";
+                   HTML.string "Call by Value"        , "CBV", "";
+                   HTML.string "Head Reduction"       , "HR" , "";
+                   HTML.string "Head Linear Reduction", "HLR", ""
                  ];
                  Toplevel.Wizard.div ~default:"-1" "Tree depth"           
                 ],

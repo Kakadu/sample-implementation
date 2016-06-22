@@ -28,14 +28,14 @@ module Expr =
     class ['a] abbrev_html cb pretty =
       let w = new Helpers.wrap cb pretty in
       object (this)
-        inherit ['a, bool, HTMLView.er, bool, HTMLView.er] @t
+        inherit ['a, bool, HTML.er, bool, HTML.er] @t
         method c_Binop top v s x y = 
           if top 
           then 
-	    HTMLView.tag "tt" (
-              HTMLView.seq [
+	    HTML.tag "tt" (
+              HTML.seq [
                 x.GT.fx false;
-	        w#wrap v.GT.x (HTMLView.raw (Printf.sprintf " %s " s));
+	        w#wrap v.GT.x (HTML.raw (Printf.sprintf " %s " s));
                 y.GT.fx false;
 	      ]
 	    )
@@ -218,9 +218,9 @@ module SimpleExpr
     class primary_abbrev_html cb pretty =
       let w = new Helpers.wrap cb pretty in
       object (this)       
-        inherit [bool, HTMLView.er] @primary
-        method c_Var   _ s x = w#wrap s.GT.x (HTMLView.tag "tt" (HTMLView.raw x))
-        method c_Const _ s i = w#wrap s.GT.x (HTMLView.tag "tt" (HTMLView.int i))
+        inherit [bool, HTML.er] @primary
+        method c_Var   _ s x = w#wrap s.GT.x (HTML.tag "tt" (HTML.raw x))
+        method c_Const _ s i = w#wrap s.GT.x (HTML.tag "tt" (HTML.int i))
       end
     
     let nothing p x = p x
@@ -276,13 +276,13 @@ module SimpleExpr
       end
 
     let rec html cb e = 
-      HTMLView.li ~attrs:(cb.Helpers.f e) (transform(expr) (fun _ -> html cb) (new html) () e)
+      HTML.li ~attrs:(cb.Helpers.f e) (transform(expr) (fun _ -> html cb) (new html) () e)
 
     let cast f = fun x -> f (x :> 'a expr)
 
     class ['a] abbrev_html cb pretty =
       object (this)
-        inherit ['a, bool, HTMLView.er, bool, HTMLView.er] @expr
+        inherit ['a, bool, HTML.er, bool, HTML.er] @expr
         inherit ['a] Expr.abbrev_html cb (cast pretty)
         inherit primary_abbrev_html cb (cast pretty)
       end
@@ -350,7 +350,7 @@ module SimpleExpr
                 inherit ['a] ENS.step
               end
 
-            module MakeBase (O : sig type over val over_html : over -> HTMLView.er end) =
+            module MakeBase (O : sig type over val over_html : over -> HTML.er end) =
               struct
                 include O
 
@@ -358,7 +358,7 @@ module SimpleExpr
                 type left  = D.t State.t
                 type right = D.t
 
-                let env_html   = HTMLView.unit
+                let env_html   = HTML.unit
                 let left_html  = State.html D.show
                 let right_html = D.html
 
@@ -450,14 +450,14 @@ module SimpleExpr
                 inherit ['a] ENS.step h
               end
             
-            module MakeBase (O : sig type t val html : t -> HTMLView.er end) =
+            module MakeBase (O : sig type t val html : t -> HTML.er end) =
               struct
                 type env   = unit
                 type left  = D.t State.t
                 type over  = O.t
                 type right = O.t
 
-                let env_html   = HTMLView.unit
+                let env_html   = HTML.unit
                 let left_html  = State.html D.show
                 let over_html  = O.html
                 let right_html = O.html
@@ -541,10 +541,10 @@ module LExpr (L : Lexer.Sig) = SimpleExpr
 let wizard context =
   let state = ref State.empty in	        
   Toplevel.Wizard.Page ([
-    HTMLView.Wizard.flag  "strict";
-    HTMLView.Wizard.combo "type" [
-      HTMLView.raw "Big-Step"  , "bigstep"  , "selected=\"true\""; 
-      HTMLView.raw "Small-Step", "smallstep", ""
+    HTML.Wizard.flag  "strict";
+    HTML.Wizard.combo "type" [
+      HTML.raw "Big-Step"  , "bigstep"  , "selected=\"true\""; 
+      HTML.raw "Small-Step", "smallstep", ""
     ];
     Toplevel.Wizard.div ~attrs:("style=\"width:200px\"") "state"
    ], 
@@ -570,7 +570,7 @@ let toplevel =
     (fun (p, h) ->         
        object inherit Toplevel.c
          method ast cb = View.toString (
-                           HTMLView.ul ~attrs:"id=\"ast\" class=\"mktree\"" (
+                           HTML.ul ~attrs:"id=\"ast\" class=\"mktree\"" (
                              Expr.html (Helpers.interval cb h) p
                            )
                          )

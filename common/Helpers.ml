@@ -49,9 +49,9 @@ class cname =
 
 class ['a] wrap cb pretty =
   object
-    method bullet = HTMLView.raw "&#8226;"
+    method bullet = HTML.raw "&#8226;"
     method wrap (node : 'a) html =
-      HTMLView.tag "attr" 
+      HTML.tag "attr" 
         ~attrs:(Printf.sprintf "%s style=\"cursor:pointer\" title=\"%s\"" (cb.f node) (pretty node)) 
          html
   end

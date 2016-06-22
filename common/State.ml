@@ -17,7 +17,7 @@ let html fa s =
     ) ^ 
     "]" 
   in
-  HTMLView.tag "attr" ~attrs:(Printf.sprintf "style=\"cursor:pointer\" title=\"%s\"" text) 
+  HTML.tag "attr" ~attrs:(Printf.sprintf "style=\"cursor:pointer\" title=\"%s\"" text) 
     (View.string "s")
 
 open Ostap.Util
