@@ -191,6 +191,11 @@ Proof.
   contradiction (Hundef x).
 Qed.
 
+(* The evaluation relation is deterministic *)
+Lemma bs_eval_deterministic: forall (e : expr) (s : state Z) (z1 z2 : Z),
+  [| e |] s => z1 -> [| e |] s => z2 -> z1 = z2.
+Proof.
+
 (* The result of expression evaluation in a state dependes only on the values
    of occurring variables
 *)
@@ -199,10 +204,6 @@ Lemma equivalent_states: forall (e : expr) (s1 s2 : state Z) (z : Z),
   [| e |] s1 => z -> [| e |] s2 => z.
 Proof. admit. Qed.
 
-(* The evaluation relation is deterministic *)
-Lemma bs_eval_deterministic: forall (e : expr) (s : state Z) (z1 z2 : Z),
-  [| e |] s => z1 -> [| e |] s => z2 -> z1 = z2.
-Proof. admit. Qed.
  
 
 

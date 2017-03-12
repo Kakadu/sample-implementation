@@ -6,32 +6,32 @@ module type Sig =
       object ('a)
         method col        : int
         method coord      : Ostap.Msg.Coord.t
-        method get        : string -> Re_str.regexp -> ('a, Ostap.Matcher.Token.t, Ostap.Reason.t) Ostap.Combinators.result
-        method getEOF     : ('a, Ostap.Matcher.Token.t, Ostap.Reason.t) Ostap.Combinators.result
-        method getIDENT   : ('a, Ostap.Matcher.Token.t, Ostap.Reason.t) Ostap.Combinators.result
-        method getLITERAL : ('a, Ostap.Matcher.Token.t, Ostap.Reason.t) Ostap.Combinators.result
+        method get        : string -> Re_str.regexp -> ('a, Ostap.Matcher.Token.t, Ostap.Reason.t) Ostap.Types.result
+        method getEOF     : ('a, Ostap.Matcher.Token.t, Ostap.Reason.t) Ostap.Types.result
+        method getIDENT   : ('a, Ostap.Matcher.Token.t, Ostap.Reason.t) Ostap.Types.result
+        method getLITERAL : ('a, Ostap.Matcher.Token.t, Ostap.Reason.t) Ostap.Types.result
         method line       : int
         method loc        : Ostap.Msg.Locator.t
-        method look       : string -> ('a, Ostap.Matcher.Token.t, Ostap.Reason.t) Ostap.Combinators.result
+        method look       : string -> ('a, Ostap.Matcher.Token.t, Ostap.Reason.t) Ostap.Types.result
         method pos        : int
         method prefix     : int -> string
-        method regexp     : string -> string -> ('a, Ostap.Matcher.Token.t, Ostap.Reason.t) Ostap.Combinators.result
+        method regexp     : string -> string -> ('a, Ostap.Matcher.Token.t, Ostap.Reason.t) Ostap.Types.result
         method skip       : int -> Ostap.Msg.Coord.t -> [ `Failed of Ostap.Msg.t | `Skipped of int * Ostap.Msg.Coord.t ]
       end
 
     val ident :
       (< getIDENT : ('a, Ostap.Matcher.Token.t, 'b)
-                    Ostap.Combinators.result;
+                    Ostap.Types.result;
          .. >
        as 'a) ->
-      ('a, string, 'b) Ostap.Combinators.result
+      ('a, string, 'b) Ostap.Types.result
  
     val literal :
       (< getLITERAL : ('a, Ostap.Matcher.Token.t, 'b)
-                      Ostap.Combinators.result;
+                      Ostap.Types.result;
          .. >
        as 'a) ->
-      ('a, int, 'b) Ostap.Combinators.result
+      ('a, int, 'b) Ostap.Types.result
 
     val fromString :
       (t ->
@@ -43,7 +43,7 @@ module type Sig =
                       list)
                      list;
           .. >)
-       Ostap.Combinators.result) ->
+       Ostap.Types.result) ->
       string -> ('b, Ostap.Msg.t) Checked.t
 
   end

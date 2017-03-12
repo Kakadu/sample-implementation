@@ -7,6 +7,40 @@ module Term =
 
     @type ('var, 'self) t = [`Var of 'var | `App of 'self * 'self | `Lambda of 'var * 'self] with gmap, show, html, foldl
 
+    module DeBruijn =
+      struct
+
+	type t = Lam of t | Var of int | App of t * t
+
+        let of_lam t =
+	  let ext s x v = fun y ->
+	    if x = y then v else s y
+	  in
+          let rec inner (g, l) = function
+	  | `Lambda (v, t) -> Lam (inner (ext g v l, l+1) t)
+	  | `Var v -> Var (l - g v - 1)
+	  | `App (a, b) -> App (inner (g, l) a, inner (g, l) b)
+	  in
+	  inner ((fun _ -> invalid_arg "undefined"), 0) t
+
+	let vertical t =
+	  let b = 
+	    let b = Buffer.create 1024 in
+	    object 		
+	      method append s = Buffer.add_string b s
+	      method contents = Buffer.contents b
+	    end
+	  in
+	  let rec inner = function
+	  | Var i      -> b#append (Printf.sprintf "%d\n" i)
+	  | App (x, y) -> b#append "@\n"; inner x; inner y
+	  | Lam a      -> b#append "\\\n"; inner a
+	  in
+	  inner t;
+	  b#contents
+
+      end
+
     type glam = (string, glam) t
 
     module SS = Set.Make (String)
@@ -209,14 +243,16 @@ module Term =
            e
         )
 
-    let rec vertical e = 
+    let rec vertical e = DeBruijn.vertical (DeBruijn.of_lam e)
+
+(*
       transform(t) 
         (fun _ x -> x)
         (fun _ -> vertical) 
         (new vertical) 
         () 
         e
-
+*)
     module Semantics =
       struct
 
