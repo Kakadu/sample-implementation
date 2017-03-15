@@ -98,6 +98,8 @@ Inductive bs_eval : expr -> state Z -> Z -> Prop :=
               [| a |] s => za -> [| b |] s => zb -> zbool za -> zbool zb -> [| a [\/] b |] s => (zor za zb)
 where "[| e |] st => z" := (bs_eval e st z). 
 
+Hint Constructors bs_eval.
+
 Module SmokeTest.
 
   Lemma nat_always : 
@@ -195,14 +197,260 @@ Qed.
 Lemma bs_eval_deterministic: forall (e : expr) (s : state Z) (z1 z2 : Z),
   [| e |] s => z1 -> [| e |] s => z2 -> z1 = z2.
 Proof.
+  intros e s z1 z2 H1 H2.
+  generalize dependent z1.
+  generalize dependent z2.
+  induction e;
+    try (intros z2 H2 z1 H1; inversion H1; inversion H2; reflexivity);
+    try (intros z2 H2 z1 H1; 
+           inversion H1; 
+           inversion H2; 
+           rewrite <-(state_deterministic Z s i z1 z2); auto);
+    try (intros z2 H2 z1 H1; 
+           inversion H1; 
+           inversion H2; 
+           apply (IHe1 za0) in H3; 
+           apply (IHe2 zb0) in H6; congruence; assumption);
+    try (intros z2 H2 z1 H1;
+           inversion H1; 
+             (inversion H2; 
+                try reflexivity;
+                apply (IHe1 za0) in H3; [
+                  subst za;
+                  apply (IHe2 zb0) in H4; [
+                    subst zb; contradiction 
+                  | assumption ] 
+                | assumption]; 
+                try reflexivity
+             ));
+    try (intros z2 H2 z1 H1;
+           inversion H1;
+             (inversion H2; 
+                apply (IHe1 za0) in H3; [
+                  subst za; 
+                  apply (IHe2 zb0) in H4; [
+                    subst zb; reflexivity 
+                  | assumption] 
+                | assumption]
+             )).
+Qed.
 
 (* The result of expression evaluation in a state dependes only on the values
    of occurring variables
 *)
+Ltac apply_bs_constructor :=
+  match goal with 
+    H1: [|?e1|]?s => ?za, H2: [|?e2|]?s => ?zb |- [|?e1[<=]?e2|]?s => Z.one => 
+      apply (bs_Le_T s e1 e2 za zb)
+  | H1: [|?e1|]?s => ?za, H2: [|?e2|]?s => ?zb |- [|?e1[<=]?e2|]?s => Z.zero => 
+      apply (bs_Le_F s e1 e2 za zb)
+  | H1: [|?e1|]?s => ?za, H2: [|?e2|]?s => ?zb |- [|?e1[<]?e2|]?s => Z.one => 
+      apply (bs_Lt_T s e1 e2 za zb)
+  | H1: [|?e1|]?s => ?za, H2: [|?e2|]?s => ?zb |- [|?e1[<]?e2|]?s => Z.zero => 
+      apply (bs_Lt_F s e1 e2 za zb)
+  | H1: [|?e1|]?s => ?za, H2: [|?e2|]?s => ?zb |- [|?e1[>=]?e2|]?s => Z.one => 
+      apply (bs_Ge_T s e1 e2 za zb)
+  | H1: [|?e1|]?s => ?za, H2: [|?e2|]?s => ?zb |- [|?e1[>=]?e2|]?s => Z.zero => 
+      apply (bs_Ge_F s e1 e2 za zb)
+  | H1: [|?e1|]?s => ?za, H2: [|?e2|]?s => ?zb |- [|?e1[>]?e2|]?s => Z.one => 
+      apply (bs_Gt_T s e1 e2 za zb)
+  | H1: [|?e1|]?s => ?za, H2: [|?e2|]?s => ?zb |- [|?e1[>]?e2|]?s => Z.zero => 
+      apply (bs_Gt_F s e1 e2 za zb)
+  | H1: [|?e1|]?s => ?za, H2: [|?e2|]?s => ?zb |- [|?e1[==]?e2|]?s => Z.one => 
+      apply (bs_Eq_T s e1 e2 za zb)
+  | H1: [|?e1|]?s => ?za, H2: [|?e2|]?s => ?zb |- [|?e1[==]?e2|]?s => Z.zero => 
+      apply (bs_Eq_F s e1 e2 za zb)
+  | H1: [|?e1|]?s => ?za, H2: [|?e2|]?s => ?zb |- [|?e1[/=]?e2|]?s => Z.one => 
+      apply (bs_Ne_T s e1 e2 za zb)
+  | H1: [|?e1|]?s => ?za, H2: [|?e2|]?s => ?zb |- [|?e1[/=]?e2|]?s => Z.zero => 
+      apply (bs_Ne_F s e1 e2 za zb)
+  end.
+
 Lemma equivalent_states: forall (e : expr) (s1 s2 : state Z) (z : Z),
   (forall (id : id) (z : Z), id ? e -> s1 / id => z -> s2 / id => z) -> 
   [| e |] s1 => z -> [| e |] s2 => z.
-Proof. admit. Qed.
+Proof. 
+  intros e s1 s2 z H1 H2. 
+  generalize dependent s1.
+  generalize dependent s2.
+  generalize dependent z.
+  induction e.
+    try (intros z s2 s1 H1 H2; inversion H2; constructor).
+    try (intros z s2 s1 H1 H2; inversion H2; apply (H1 i z) in H0; [constructor; assumption | constructor]).
+    try (intros z s1 s2 H1 H2;
+           inversion H2;
+             apply (IHe1 za s1 s2) in H3; [        
+               apply (IHe2 zb s1 s2) in H6; [
+                 constructor; assumption
+               | intros id z0 HVar HVal; 
+                 apply (H1 id z0); [
+                   constructor; right; assumption
+                 | assumption
+                 ]
+               ]
+             | intros id z0 HVar HVal; 
+               apply (H1 id z0); [
+                 constructor; left; assumption 
+               | assumption
+               ]
+             ]).
+
+    try (intros z s1 s2 H1 H2;
+           inversion H2;
+             apply (IHe1 za s1 s2) in H3; [        
+               apply (IHe2 zb s1 s2) in H6; [
+                 constructor; assumption
+               | intros id z0 HVar HVal; 
+                 apply (H1 id z0); [
+                   constructor; right; assumption
+                 | assumption
+                 ]
+               ]
+             | intros id z0 HVar HVal; 
+               apply (H1 id z0); [
+                 constructor; left; assumption 
+               | assumption
+               ]
+             ]).
+    try (intros z s1 s2 H1 H2;
+           inversion H2;
+             apply (IHe1 za s1 s2) in H3; [        
+               apply (IHe2 zb s1 s2) in H6; [
+                 constructor; assumption
+               | intros id z0 HVar HVal; 
+                 apply (H1 id z0); [
+                   constructor; right; assumption
+                 | assumption
+                 ]
+               ]
+             | intros id z0 HVar HVal; 
+               apply (H1 id z0); [
+                 constructor; left; assumption 
+               | assumption
+               ]
+             ]).
+    try (intros z s1 s2 H1 H2;
+           inversion H2;
+             apply (IHe1 za s1 s2) in H3; [        
+               apply (IHe2 zb s1 s2) in H6; [
+                 constructor; assumption
+               | intros id z0 HVar HVal; 
+                 apply (H1 id z0); [
+                   constructor; right; assumption
+                 | assumption
+                 ]
+               ]
+             | intros id z0 HVar HVal; 
+               apply (H1 id z0); [
+                 constructor; left; assumption 
+               | assumption
+               ]
+             ]).
+    try (intros z s1 s2 H1 H2;
+           inversion H2;
+             apply (IHe1 za s1 s2) in H3; [        
+               apply (IHe2 zb s1 s2) in H6; [
+                 constructor; assumption
+               | intros id z0 HVar HVal; 
+                 apply (H1 id z0); [
+                   constructor; right; assumption
+                 | assumption
+                 ]
+               ]
+             | intros id z0 HVar HVal; 
+               apply (H1 id z0); [
+                 constructor; left; assumption 
+               | assumption
+               ]
+             ]).
+
+    (* <= *)
+    try (intros z s1 s2 H1 H2;
+           inversion H2;        
+             (apply (IHe1 za s1 s2) in H3; [
+               apply (IHe2 zb s1 s2) in H4; [
+                 apply_bs_constructor; assumption 
+               | intros id z0 HVar HVal;
+                 apply (H1 id z0); [constructor; right; assumption | assumption]
+               ]
+             | intros id z0 HVar HVal;
+               apply (H1 id z0); [constructor; left; assumption | assumption]
+             ])).
+
+    try (intros z s1 s2 H1 H2;
+           inversion H2;        
+             (apply (IHe1 za s1 s2) in H3; [
+               apply (IHe2 zb s1 s2) in H4; [
+                 apply_bs_constructor; assumption 
+               | intros id z0 HVar HVal;
+                 apply (H1 id z0); [constructor; right; assumption | assumption]
+               ]
+             | intros id z0 HVar HVal;
+               apply (H1 id z0); [constructor; left; assumption | assumption]
+             ])).
+
+    try (intros z s1 s2 H1 H2;
+           inversion H2;        
+             (apply (IHe1 za s1 s2) in H3; [
+               apply (IHe2 zb s1 s2) in H4; [
+                 apply_bs_constructor; assumption 
+               | intros id z0 HVar HVal;
+                 apply (H1 id z0); [constructor; right; assumption | assumption]
+               ]
+             | intros id z0 HVar HVal;
+               apply (H1 id z0); [constructor; left; assumption | assumption]
+             ])).
+
+    try (intros z s1 s2 H1 H2;
+           inversion H2;        
+             (apply (IHe1 za s1 s2) in H3; [
+               apply (IHe2 zb s1 s2) in H4; [
+                 apply_bs_constructor; assumption 
+               | intros id z0 HVar HVal;
+                 apply (H1 id z0); [constructor; right; assumption | assumption]
+               ]
+             | intros id z0 HVar HVal;
+               apply (H1 id z0); [constructor; left; assumption | assumption]
+             ])).
+
+    try (intros z s1 s2 H1 H2;
+           inversion H2;        
+             (apply (IHe1 za s1 s2) in H3; [
+               apply (IHe2 zb s1 s2) in H4; [
+                 apply_bs_constructor; assumption 
+               | intros id z0 HVar HVal;
+                 apply (H1 id z0); [constructor; right; assumption | assumption]
+               ]
+             | intros id z0 HVar HVal;
+               apply (H1 id z0); [constructor; left; assumption | assumption]
+             ])).
+
+    try (intros z s1 s2 H1 H2;
+           inversion H2;        
+             (apply (IHe1 za s1 s2) in H3; [
+               apply (IHe2 zb s1 s2) in H4; [
+                 apply_bs_constructor; assumption 
+               | intros id z0 HVar HVal;
+                 apply (H1 id z0); [constructor; right; assumption | assumption]
+               ]
+             | intros id z0 HVar HVal;
+               apply (H1 id z0); [constructor; left; assumption | assumption]
+             ])).
+
+
+
+
+
+
+              
+             
+
+
+
+
+
+
+Qed.
 
  
 
