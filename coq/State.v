@@ -14,45 +14,12 @@ Section S.
 
   Reserved Notation "st / x => y" (at level 0).
 
-(*
-  Inductive st_binds : state -> id -> A -> Prop := 
-    st_binds_hd : forall st id x, ((id, x) :: st) / id => x
-  | st_binds_tl : forall st id x id' x', id >> id' -> st / id => x -> ((id', x')::st) / id => x
-  where "st / x => y" := (st_binds st x y).
-*)
-
   Inductive st_binds : state -> id -> A -> Prop := 
     st_binds_hd : forall st id x, ((id, x) :: st) / id => x
   | st_binds_tl : forall st id x id' x', id <> id' -> st / id => x -> ((id', x')::st) / id => x
   where "st / x => y" := (st_binds st x y).
 
-  Hint Constructors st_binds.
-  
-(*
-  Fixpoint update (st : state) (id : id) (a : A) : state := 
-    match st with
-    | [] => [(id, a)]
-    | (id', a')::st' =>
-      if eq_id_dec id' id 
-      then (id, a)::st' 
-      else if le_gt_id_dec id' id 
-           then (id', a') :: update st' id a
-           else (id, a) :: st
-    end.
-*)
-
   Definition update (st : state) (id : id) (a : A) : state := (id, a) :: st.
-(*
-    match st with
-    | [] => [(id, a)]
-    | (id', a')::st' =>
-      if eq_id_dec id' id 
-      then (id, a)::st' 
-      else if le_gt_id_dec id' id 
-           then (id', a') :: update st' id a
-           else (id, a) :: st
-    end.
-*)
 
   Notation "st [ x <- y ]" := (update st x y) (at level 0).
 
@@ -70,18 +37,6 @@ Section S.
     intros st x n. unfold update. constructor.
   Qed.
 
-(*
-    intros st x n. induction st. simpl. constructor.
-      destruct a eqn:D. destruct (le_gt_id_dec x i).
-      apply (le_lt_eq_id_dec x i) in l. inversion_clear l. rewrite H. simpl. 
-        rewrite (eq_id state i). constructor. simpl.
-          destruct (eq_id_dec i x). apply st_binds_hd.
-          destruct (le_gt_id_dec i x). apply (le_gt_id_false x i) in l. contradiction. assumption.
-            auto.
-            simpl. destruct (eq_id_dec i x). auto. destruct (le_gt_id_dec i x);
-              auto. 
-  Qed.
-*)
   Lemma update_neq : forall (st : state) (x2 x1 : id) (n m : A),
     x2 <> x1 -> st / x1 => m -> st [x2 <- n] / x1 => m.
   Proof.
