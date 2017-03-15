@@ -235,6 +235,10 @@ Proof.
              )).
 Qed.
 
+(* Equivalence of states w.r.t. an identifier *)
+Definition equivalent_states (s1 s2 : state Z) (id : id) :=
+  forall z :Z, s1 /id => z <-> s2 / id => z.
+
 (* The result of expression evaluation in a state dependes only on the values
    of occurring variables
 *)
@@ -266,190 +270,80 @@ Ltac apply_bs_constructor :=
       apply (bs_Ne_F s e1 e2 za zb)
   end.
 
-Lemma equivalent_states: forall (e : expr) (s1 s2 : state Z) (z : Z),
-  (forall (id : id) (z : Z), id ? e -> s1 / id => z -> s2 / id => z) -> 
+Lemma variable_relevance: forall (e : expr) (s1 s2 : state Z) (z : Z),
+  (forall (id : id) (z : Z), id ? e -> equivalent_states s1 s2 id) -> 
   [| e |] s1 => z -> [| e |] s2 => z.
 Proof. 
+  unfold equivalent_states.
   intros e s1 s2 z H1 H2. 
   generalize dependent s1.
   generalize dependent s2.
   generalize dependent z.
-  induction e.
-    try (intros z s2 s1 H1 H2; inversion H2; constructor).
-    try (intros z s2 s1 H1 H2; inversion H2; apply (H1 i z) in H0; [constructor; assumption | constructor]).
-    try (intros z s1 s2 H1 H2;
-           inversion H2;
-             apply (IHe1 za s1 s2) in H3; [        
-               apply (IHe2 zb s1 s2) in H6; [
-                 constructor; assumption
-               | intros id z0 HVar HVal; 
-                 apply (H1 id z0); [
-                   constructor; right; assumption
-                 | assumption
+  induction e; 
+    solve [
+      (* constant *)
+      intros z s2 s1 H1 H2; inversion H2; constructor 
+      (* variable *)
+    | intros z s2 s1 H1 H2; inversion H2; apply (H1 i z) in H0; [constructor; assumption | constructor]
+      (* arithmetics *)
+    | intros z s1 s2 H1 H2;
+        inversion H2;
+          apply (IHe1 za s1 s2) in H3; 
+            apply (IHe2 zb s1 s2) in H6; 
+              try (constructor; assumption);
+              (intros id z0 HVar; 
+                 split; (
+                   intro HVal;
+                     apply (H1 id z0); [
+                       solve [
+                         constructor; right; assumption 
+                       | constructor; left; assumption ]
+                     | assumption ]
+                 )
+              )
+      (* relations *)
+    | intros z s1 s2 H1 H2;
+        inversion H2;
+          (apply (IHe1 za s1 s2) in H3; [
+             apply (IHe2 zb s1 s2) in H4; [
+               apply_bs_constructor; assumption 
+             | intros id z0 HVar; 
+                 split; [
+                   intro HVal; apply (H1 id z0); [ 
+                     constructor; right; assumption
+                   | assumption]
+                 | intro HVal; apply (H1 id z0) in HVal; [ 
+                     assumption 
+                   | constructor; right; assumption ]
                  ]
+             ] 
+           | intros id z0 HVar;
+               split; [
+                 intro HVal; apply (H1 id z0); [ 
+                   constructor; left; assumption 
+                 | assumption] 
+               | intro HVal; apply (H1 id z0) in HVal; [ 
+                   assumption 
+               | constructor; left; assumption ]
                ]
-             | intros id z0 HVar HVal; 
-               apply (H1 id z0); [
-                 constructor; left; assumption 
-               | assumption
-               ]
-             ]).
-
-    try (intros z s1 s2 H1 H2;
-           inversion H2;
-             apply (IHe1 za s1 s2) in H3; [        
-               apply (IHe2 zb s1 s2) in H6; [
-                 constructor; assumption
-               | intros id z0 HVar HVal; 
-                 apply (H1 id z0); [
-                   constructor; right; assumption
-                 | assumption
-                 ]
-               ]
-             | intros id z0 HVar HVal; 
-               apply (H1 id z0); [
-                 constructor; left; assumption 
-               | assumption
-               ]
-             ]).
-    try (intros z s1 s2 H1 H2;
-           inversion H2;
-             apply (IHe1 za s1 s2) in H3; [        
-               apply (IHe2 zb s1 s2) in H6; [
-                 constructor; assumption
-               | intros id z0 HVar HVal; 
-                 apply (H1 id z0); [
-                   constructor; right; assumption
-                 | assumption
-                 ]
-               ]
-             | intros id z0 HVar HVal; 
-               apply (H1 id z0); [
-                 constructor; left; assumption 
-               | assumption
-               ]
-             ]).
-    try (intros z s1 s2 H1 H2;
-           inversion H2;
-             apply (IHe1 za s1 s2) in H3; [        
-               apply (IHe2 zb s1 s2) in H6; [
-                 constructor; assumption
-               | intros id z0 HVar HVal; 
-                 apply (H1 id z0); [
-                   constructor; right; assumption
-                 | assumption
-                 ]
-               ]
-             | intros id z0 HVar HVal; 
-               apply (H1 id z0); [
-                 constructor; left; assumption 
-               | assumption
-               ]
-             ]).
-    try (intros z s1 s2 H1 H2;
-           inversion H2;
-             apply (IHe1 za s1 s2) in H3; [        
-               apply (IHe2 zb s1 s2) in H6; [
-                 constructor; assumption
-               | intros id z0 HVar HVal; 
-                 apply (H1 id z0); [
-                   constructor; right; assumption
-                 | assumption
-                 ]
-               ]
-             | intros id z0 HVar HVal; 
-               apply (H1 id z0); [
-                 constructor; left; assumption 
-               | assumption
-               ]
-             ]).
-
-    (* <= *)
-    try (intros z s1 s2 H1 H2;
-           inversion H2;        
-             (apply (IHe1 za s1 s2) in H3; [
-               apply (IHe2 zb s1 s2) in H4; [
-                 apply_bs_constructor; assumption 
-               | intros id z0 HVar HVal;
-                 apply (H1 id z0); [constructor; right; assumption | assumption]
-               ]
-             | intros id z0 HVar HVal;
-               apply (H1 id z0); [constructor; left; assumption | assumption]
-             ])).
-
-    try (intros z s1 s2 H1 H2;
-           inversion H2;        
-             (apply (IHe1 za s1 s2) in H3; [
-               apply (IHe2 zb s1 s2) in H4; [
-                 apply_bs_constructor; assumption 
-               | intros id z0 HVar HVal;
-                 apply (H1 id z0); [constructor; right; assumption | assumption]
-               ]
-             | intros id z0 HVar HVal;
-               apply (H1 id z0); [constructor; left; assumption | assumption]
-             ])).
-
-    try (intros z s1 s2 H1 H2;
-           inversion H2;        
-             (apply (IHe1 za s1 s2) in H3; [
-               apply (IHe2 zb s1 s2) in H4; [
-                 apply_bs_constructor; assumption 
-               | intros id z0 HVar HVal;
-                 apply (H1 id z0); [constructor; right; assumption | assumption]
-               ]
-             | intros id z0 HVar HVal;
-               apply (H1 id z0); [constructor; left; assumption | assumption]
-             ])).
-
-    try (intros z s1 s2 H1 H2;
-           inversion H2;        
-             (apply (IHe1 za s1 s2) in H3; [
-               apply (IHe2 zb s1 s2) in H4; [
-                 apply_bs_constructor; assumption 
-               | intros id z0 HVar HVal;
-                 apply (H1 id z0); [constructor; right; assumption | assumption]
-               ]
-             | intros id z0 HVar HVal;
-               apply (H1 id z0); [constructor; left; assumption | assumption]
-             ])).
-
-    try (intros z s1 s2 H1 H2;
-           inversion H2;        
-             (apply (IHe1 za s1 s2) in H3; [
-               apply (IHe2 zb s1 s2) in H4; [
-                 apply_bs_constructor; assumption 
-               | intros id z0 HVar HVal;
-                 apply (H1 id z0); [constructor; right; assumption | assumption]
-               ]
-             | intros id z0 HVar HVal;
-               apply (H1 id z0); [constructor; left; assumption | assumption]
-             ])).
-
-    try (intros z s1 s2 H1 H2;
-           inversion H2;        
-             (apply (IHe1 za s1 s2) in H3; [
-               apply (IHe2 zb s1 s2) in H4; [
-                 apply_bs_constructor; assumption 
-               | intros id z0 HVar HVal;
-                 apply (H1 id z0); [constructor; right; assumption | assumption]
-               ]
-             | intros id z0 HVar HVal;
-               apply (H1 id z0); [constructor; left; assumption | assumption]
-             ])).
-
-
-
-
-
-
-              
-             
-
-
-
-
-
-
+           ]
+          )
+      (* booleans *)
+    | intros z s1 s2 H1 H2;
+        inversion H2;
+          constructor; 
+            try assumption;
+            try apply (IHe1 za s1 s2); 
+            try apply (IHe2 zb s1 s2); (
+              try assumption;
+              intros id z0 HVar;
+              split; (
+                intro HVal; apply (H1 id z0); [ 
+                  solve [ constructor; left; assumption | constructor; right; assumption ]
+                | assumption ]
+              )
+            )
+    ].
 Qed.
 
  
