@@ -21,7 +21,7 @@ Section S.
 
   Definition update (st : state) (id : id) (a : A) : state := (id, a) :: st.
 
-  Notation "st [ x <- y ]" := (update st x y) (at level 0).
+  Notation "st [ x '<-' y ]" := (update st x y) (at level 0).
 
   Lemma state_deterministic: forall (st : state) (x : id) (n m : A),
     st / x => n -> st / x => m -> n = m.
