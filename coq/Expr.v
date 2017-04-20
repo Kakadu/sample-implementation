@@ -269,30 +269,30 @@ Ltac apply_bs_constructor :=
   end.
 
 Lemma variable_relevance: forall (e : expr) (s1 s2 : state Z) (z : Z),
-  (forall (id : id) (z : Z), id ? e -> equivalent_states s1 s2 id) -> 
+  (forall (id : id), id ? e -> equivalent_states s1 s2 id) -> 
   [| e |] s1 => z -> [| e |] s2 => z.
 Proof. 
   unfold equivalent_states.
   intros e s1 s2 z H1 H2. 
   generalize dependent s1.
   generalize dependent s2.
-  generalize dependent z.
-  induction e; 
+  generalize dependent z. 
+  induction e;
     solve [
       (* constant *)
       intros z s2 s1 H1 H2; inversion H2; constructor 
       (* variable *)
-    | intros z s2 s1 H1 H2; inversion H2; apply (H1 i z) in H0; [constructor; assumption | constructor]
+    | intros z s2 s1 H1 H2; inversion H2; apply (H1 i) in H0; [constructor; assumption | constructor]
       (* arithmetics *)
     | intros z s1 s2 H1 H2;
         inversion H2;
           apply (IHe1 za s1 s2) in H3; 
             apply (IHe2 zb s1 s2) in H6; 
               try (constructor; assumption);
-              (intros id z0 HVar; 
+              (intros id HVar; 
                  split; (
                    intro HVal;
-                     apply (H1 id z0); [
+                     apply (H1 id); [
                        solve [
                          constructor; right; assumption 
                        | constructor; left; assumption ]
@@ -305,22 +305,22 @@ Proof.
           (apply (IHe1 za s1 s2) in H3; [
              apply (IHe2 zb s1 s2) in H4; [
                apply_bs_constructor; assumption 
-             | intros id z0 HVar; 
+             | intros id HVar; 
                  split; [
-                   intro HVal; apply (H1 id z0); [ 
+                   intro HVal; apply (H1 id); [ 
                      constructor; right; assumption
                    | assumption]
-                 | intro HVal; apply (H1 id z0) in HVal; [ 
+                 | intro HVal; apply (H1 id) in HVal; [ 
                      assumption 
                    | constructor; right; assumption ]
                  ]
              ] 
-           | intros id z0 HVar;
+           | intros id HVar;
                split; [
-                 intro HVal; apply (H1 id z0); [ 
+                 intro HVal; apply (H1 id); [ 
                    constructor; left; assumption 
                  | assumption] 
-               | intro HVal; apply (H1 id z0) in HVal; [ 
+               | intro HVal; apply (H1 id) in HVal; [ 
                    assumption 
                | constructor; left; assumption ]
                ]
@@ -334,9 +334,9 @@ Proof.
             try apply (IHe1 za s1 s2); 
             try apply (IHe2 zb s1 s2); (
               try assumption;
-              intros id z0 HVar;
+              intros id HVar;
               split; (
-                intro HVal; apply (H1 id z0); [ 
+                intro HVal; apply (H1 id); [ 
                   solve [ constructor; left; assumption | constructor; right; assumption ]
                 | assumption ]
               )
@@ -370,7 +370,8 @@ Proof.
   inversion_clear H1. inversion_clear H2. constructor.
   intros n s. split; [
     intro HVal; apply H0; apply H; assumption
-  | intro HVal; apply H; apply H0; assumption].     
+  | intro HVal; apply H; apply H0; assumption
+  ].     
 Qed.
  
 Inductive Context : Type :=
