@@ -2,38 +2,42 @@ Require Export BigZ.
 Require Export Id.
 Require Export State.
 
+(* Type of binary operators *)
+Inductive bop : Type :=
+| Add : bop
+| Sub : bop
+| Mul : bop
+| Div : bop
+| Mod : bop
+| Le  : bop
+| Lt  : bop
+| Ge  : bop
+| Gt  : bop
+| Eq  : bop
+| Ne  : bop
+| And : bop
+| Or  : bop.
+
 (* Type of arithmetic expressions *)
 Inductive expr : Type :=
-  | Nat : nat  -> expr
-  | Var : id   -> expr              
-  | Add : expr -> expr -> expr
-  | Sub : expr -> expr -> expr
-  | Mul : expr -> expr -> expr
-  | Div : expr -> expr -> expr
-  | Mod : expr -> expr -> expr
-  | Le  : expr -> expr -> expr
-  | Lt  : expr -> expr -> expr
-  | Ge  : expr -> expr -> expr
-  | Gt  : expr -> expr -> expr
-  | Eq  : expr -> expr -> expr
-  | Ne  : expr -> expr -> expr
-  | And : expr -> expr -> expr
-  | Or  : expr -> expr -> expr.
+| Nat : nat -> expr
+| Var : id  -> expr              
+| Bop : bop -> expr -> expr -> expr.
 
 (* Supplementary notation *)
-Notation "x '[+]'  y" := (Add x y) (at level 40, left associativity).
-Notation "x '[-]'  y" := (Sub x y) (at level 40, left associativity).
-Notation "x '[*]'  y" := (Mul x y) (at level 41, left associativity).
-Notation "x '[/]'  y" := (Div x y) (at level 41, left associativity).
-Notation "x '[%]'  y" := (Mod x y) (at level 41, left associativity).
-Notation "x '[<=]' y" := (Le  x y) (at level 39, no associativity).
-Notation "x '[<]'  y" := (Lt  x y) (at level 39, no associativity).
-Notation "x '[>=]' y" := (Ge  x y) (at level 39, no associativity).
-Notation "x '[>]'  y" := (Gt  x y) (at level 39, no associativity).
-Notation "x '[==]' y" := (Eq  x y) (at level 39, no associativity).
-Notation "x '[/=]' y" := (Ne  x y) (at level 39, no associativity).
-Notation "x '[&]'  y" := (And x y) (at level 38, left associativity).
-Notation "x '[\/]' y" := (Or  x y) (at level 38, left associativity).
+Notation "x '[+]'  y" := (Bop Add x y) (at level 40, left associativity).
+Notation "x '[-]'  y" := (Bop Sub x y) (at level 40, left associativity).
+Notation "x '[*]'  y" := (Bop Mul x y) (at level 41, left associativity).
+Notation "x '[/]'  y" := (Bop Div x y) (at level 41, left associativity).
+Notation "x '[%]'  y" := (Bop Mod x y) (at level 41, left associativity).
+Notation "x '[<=]' y" := (Bop Le  x y) (at level 39, no associativity).
+Notation "x '[<]'  y" := (Bop Lt  x y) (at level 39, no associativity).
+Notation "x '[>=]' y" := (Bop Ge  x y) (at level 39, no associativity).
+Notation "x '[>]'  y" := (Bop Gt  x y) (at level 39, no associativity).
+Notation "x '[==]' y" := (Bop Eq  x y) (at level 39, no associativity).
+Notation "x '[/=]' y" := (Bop Ne  x y) (at level 39, no associativity).
+Notation "x '[&]'  y" := (Bop And x y) (at level 38, left associativity).
+Notation "x '[\/]' y" := (Bop Or  x y) (at level 38, left associativity).
 
 Definition zbool (x : Z) : Prop := x = Z.one \/ x = Z.zero.
   
@@ -121,19 +125,7 @@ Reserved Notation "x ? e" (at level 0).
 (* Set of variables is an expression *)
 Inductive V : expr -> id -> Prop := 
   v_Var : forall (id : id), id ? (Var id)
-| v_Add : forall (id : id) (a b : expr), id ? a \/ id ? b -> id ? (a [+]  b)
-| v_Sub : forall (id : id) (a b : expr), id ? a \/ id ? b -> id ? (a [-]  b)
-| v_Mul : forall (id : id) (a b : expr), id ? a \/ id ? b -> id ? (a [*]  b)
-| v_Div : forall (id : id) (a b : expr), id ? a \/ id ? b -> id ? (a [/]  b)
-| v_Mod : forall (id : id) (a b : expr), id ? a \/ id ? b -> id ? (a [%]  b)
-| v_Le  : forall (id : id) (a b : expr), id ? a \/ id ? b -> id ? (a [<=] b)
-| v_Lt  : forall (id : id) (a b : expr), id ? a \/ id ? b -> id ? (a [<]  b)
-| v_Ge  : forall (id : id) (a b : expr), id ? a \/ id ? b -> id ? (a [>=] b)
-| v_Gt  : forall (id : id) (a b : expr), id ? a \/ id ? b -> id ? (a [>]  b)
-| v_Eq  : forall (id : id) (a b : expr), id ? a \/ id ? b -> id ? (a [==] b)
-| v_Ne  : forall (id : id) (a b : expr), id ? a \/ id ? b -> id ? (a [/=] b)
-| v_And : forall (id : id) (a b : expr), id ? a \/ id ? b -> id ? (a [&]  b)
-| v_Or  : forall (id : id) (a b : expr), id ? a \/ id ? b -> id ? (a [\/] b)
+| v_Bop : forall (id : id) (a b : expr) (op : bop), id ? a \/ id ? b -> id ? (Bop op a b)
 where "x ? e" := (V e x).
 
 (* If an expression is defined in some state, then each its' variable is
@@ -144,7 +136,15 @@ Lemma defined_expression: forall (e : expr) (s : state Z) (z : Z) (id : id),
 Proof.
   intros e s z id Heval Hdef.
   generalize dependent z.
-  induction e;
+  induction e. 
+    inversion Hdef.
+    induction s.
+      (* base *)
+      intros z Heval. inversion Heval. inversion H0.
+      (* step *)
+      intros z Hdef_new. inversion Hdef_new. inversion Hdef.
+      subst i i0 id0. exists z. assumption. 
+    destruct b;
     (* solves cases with binary operations Z->Z->Z *)
     try solve [
           intros z Hact;     
@@ -167,15 +167,6 @@ Proof.
                 exact (IHe1 Hl za H0) |
                 exact (IHe2 Hr zb H1)] ]
         ].  
-  (* e = Nat n*)
-  inversion Hdef.
-  (* e = Var i*)
-  induction s.
-     (* base *)
-     intros z Heval. inversion Heval. inversion H0.
-     (* step *)
-     intros z Hdef_new. inversion Hdef_new. inversion Hdef.
-     subst i i0 id0. exists z. assumption. 
   Qed.
 
 (* If a variable in expression is undefined in some state, then the expression
@@ -199,6 +190,7 @@ Proof.
   generalize dependent z1.
   generalize dependent z2.
   induction e;
+    try (destruct b);
     try (intros z2 H2 z1 H1; inversion H1; inversion H2; reflexivity);
     try (intros z2 H2 z1 H1; 
            inversion H1; 
@@ -277,7 +269,7 @@ Proof.
   generalize dependent s1.
   generalize dependent s2.
   generalize dependent z. 
-  induction e;
+  induction e; try (destruct b);
     solve [
       (* constant *)
       intros z s2 s1 H1 H2; inversion H2; constructor 
@@ -375,63 +367,15 @@ Proof.
 Qed.
  
 Inductive Context : Type :=
-  | Hole : Context
-  | AddL : Context -> expr -> Context
-  | SubL : Context -> expr -> Context
-  | MulL : Context -> expr -> Context
-  | DivL : Context -> expr -> Context
-  | ModL : Context -> expr -> Context
-  | LeL  : Context -> expr -> Context
-  | LtL  : Context -> expr -> Context
-  | GeL  : Context -> expr -> Context
-  | GtL  : Context -> expr -> Context
-  | EqL  : Context -> expr -> Context
-  | NeL  : Context -> expr -> Context
-  | AndL : Context -> expr -> Context
-  | OrL  : Context -> expr -> Context
-  | AddR : expr -> Context -> Context
-  | SubR : expr -> Context -> Context
-  | MulR : expr -> Context -> Context
-  | DivR : expr -> Context -> Context
-  | ModR : expr -> Context -> Context
-  | LeR  : expr -> Context -> Context
-  | LtR  : expr -> Context -> Context
-  | GeR  : expr -> Context -> Context
-  | GtR  : expr -> Context -> Context
-  | EqR  : expr -> Context -> Context
-  | NeR  : expr -> Context -> Context
-  | AndR : expr -> Context -> Context
-  | OrR  : expr -> Context -> Context.
+| Hole : Context
+| BopL : bop -> Context -> expr -> Context
+| BopR : bop -> expr -> Context -> Context.
 
 Fixpoint plug (C : Context) (e : expr) : expr := 
   match C with
   | Hole => e
-  | AddL C e1 => Add (plug C e) e1
-  | SubL C e1 => Sub (plug C e) e1
-  | MulL C e1 => Mul (plug C e) e1
-  | DivL C e1 => Div (plug C e) e1
-  | ModL C e1 => Mod (plug C e) e1
-  | LeL  C e1 => Le  (plug C e) e1
-  | LtL  C e1 => Lt  (plug C e) e1
-  | GeL  C e1 => Ge  (plug C e) e1
-  | GtL  C e1 => Gt  (plug C e) e1
-  | EqL  C e1 => Eq  (plug C e) e1
-  | NeL  C e1 => Ne  (plug C e) e1
-  | AndL C e1 => And (plug C e) e1
-  | OrL  C e1 => Or  (plug C e) e1
-  | AddR e1 C => Add e1 (plug C e)
-  | SubR e1 C => Sub e1 (plug C e)
-  | MulR e1 C => Mul e1 (plug C e)
-  | DivR e1 C => Div e1 (plug C e)
-  | ModR e1 C => Mod e1 (plug C e)
-  | LeR  e1 C => Le  e1 (plug C e)
-  | LtR  e1 C => Lt  e1 (plug C e)
-  | GeR  e1 C => Ge  e1 (plug C e)
-  | GtR  e1 C => Gt  e1 (plug C e)
-  | EqR  e1 C => Eq  e1 (plug C e)
-  | NeR  e1 C => Ne  e1 (plug C e)
-  | AndR e1 C => And e1 (plug C e)
-  | OrR  e1 C => Or  e1 (plug C e)
+  | BopL b C e1 => Bop b (plug C e) e1
+  | BopR b e1 C => Bop b (plug C e) e1
   end.  
 
 Notation "C '<~' e" := (plug C e) (at level 43, no associativity).
@@ -447,7 +391,7 @@ Lemma eq_eq_ceq: forall (e1 e2 : expr), e1 ~~ e2 <-> e1 ~c~ e2.
 Proof.
   intros e1 e2. split.
     intro H. constructor. intro C.
-      induction C; solve [
+      induction C; try (destruct b); solve [
         simpl; assumption
       | simpl; constructor; intros;
           split;
