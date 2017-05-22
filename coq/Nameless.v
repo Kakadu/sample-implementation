@@ -19,6 +19,14 @@ Inductive wfg : nat -> term -> Prop :=
 
 Hint Constructors wfg.
 
+Lemma wfg_monotone: forall n m k, wfg m n -> k > m -> wfg k n.
+Proof.
+  intro. induction n; intros; inversion H; constructor. 
+   omega. 
+   apply IHn1 with m. auto. omega. apply IHn2 with m. auto. omega.
+   apply IHn with (m+1); auto. omega.
+Qed.
+
 Definition wf : term -> Prop := wfg 0.
 
 Fixpoint lookup s env := 
@@ -81,8 +89,7 @@ Proof.
         simpl. rewrite plus_comm. auto. 
 
     destruct (import' t1 env) eqn:D1.
-    destruct (import' t2 env) eqn:D2;
-    inversion H0.
+    destruct (import' t2 env) eqn:D2; inversion H0.
     constructor. 
       apply IHt1 with env; auto. 
       apply IHt2 with env; auto.
@@ -99,5 +106,60 @@ Proof.
   unfold import in H. 
   apply import'_wf with (t)([]); auto.
 Qed.
+
+Fixpoint lift l n := 
+  match n with
+  | Index i => if leb l i then Index (i+1) else n
+  | App m n => App (lift l m) (lift l n)
+  | Abs m   => Abs (lift (l+1) m)
+  | _ => n
+  end.
+
+Reserved Notation "m [ x <- n ]" (at level 0).
+
+Fixpoint subst (m : term) (i : nat) (n : term) :=
+  match m with
+  | Index i'  => if beq_nat i' i then n else m
+  | App   p q => App (p [i <- n]) (q [i <- n])
+  | Abs   p   => Abs (p [i+1 <- lift 0 n])
+  | _         => m
+  end
+where "m [ x <- n ]" := (subst m x n).
     
-  
+Lemma lift_lemma_g: forall n k, wfg k n -> wfg (k+1) (lift k n).
+Proof.
+  intro. induction n; intros; inversion H; simpl.
+    destruct (leb k n); constructor; omega.
+    constructor.
+    constructor; auto.
+    constructor. auto.
+Qed.
+    
+Lemma lift_lemma: forall n l, wfg l n -> wfg (l+1) (lift 0 n).
+Proof. admit. 
+(*
+  intros.   
+  rewrite plus_n_O with (n:=1). 
+  rewrite (plus_comm 1). 
+  apply lift_lemma_g.  
+  assumption.  *)
+Qed.
+
+Hint Resolve lift_lemma.
+
+Lemma subst_lemma: 
+  forall m l i n, wfg l n -> wfg l m -> wfg l (m [i <- n]).
+Proof.
+  intro. induction m; intros; simpl; auto; inversion H0; auto.
+    destruct (beq_nat n i) eqn:D; auto.
+Qed.
+
+Hint Resolve subst_lemma.
+
+Lemma subst_wfg: 
+  forall m l i n, i < l -> wfg l m -> wfg l n -> wfg l (m [i <- n]).
+Proof.
+  intro. 
+  induction m; intros; simpl; auto; inversion H0; try constructor; auto.
+    unfold subst. destruct (beq_nat n i) eqn:D; assumption. 
+Qed.
