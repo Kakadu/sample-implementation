@@ -48,7 +48,7 @@ Reserved Notation "[| e |] st => z" (at level 0).
 Notation "st / x => y" := (st_binds Z st x y) (at level 0).
 
 (* Big-step evaluation relation *)
-Inductive bs_eval : expr -> state Z -> Z -> Prop := 
+Inductive eval : expr -> state Z -> Z -> Prop := 
   bs_Nat  : forall (s : state Z) (n : nat), [| Nat n |] s => (Z.of_nat n)
 | bs_Var  : forall (s : state Z) (i : id) (z : Z), s / i => z -> [| Var i |] s => z
 
@@ -98,15 +98,15 @@ Inductive bs_eval : expr -> state Z -> Z -> Prop :=
 
 | bs_Or   : forall (s : state Z) (a b : expr) (za zb : Z), 
               [| a |] s => za -> [| b |] s => zb -> zbool za -> zbool zb -> [| a [\/] b |] s => (zor za zb)
-where "[| e |] st => z" := (bs_eval e st z). 
+where "[| e |] st => z" := (eval e st z). 
 
-Hint Constructors bs_eval.
+Hint Constructors eval.
 
 Module SmokeTest.
 
   Lemma nat_always : 
     forall (n : nat) (s : state Z), [| Nat n |] s => (Z.of_nat n).
-  Proof. intros n s. apply bs_Nat. Qed.
+  Proof. intros. constructor. Qed.
 
   Lemma double_and_sum : 
     forall (s : state Z) (e : expr) (z : Z), 
@@ -115,7 +115,7 @@ Module SmokeTest.
     intros s e z H. 
       inversion H. inversion H5. 
         assert (A: (za * Z.of_nat 2)%Z = (za + za)%Z). simpl. omega.
-      rewrite A. apply bs_Add; assumption.
+      rewrite A; auto.
   Qed.
 
 End SmokeTest.
@@ -130,44 +130,16 @@ where "x ? e" := (V e x).
 
 (* If an expression is defined in some state, then each its' variable is
    defined in that state
-*)
+ *)
 Lemma defined_expression: forall (e : expr) (s : state Z) (z : Z) (id : id),
   [| e |] s => z -> id ? e -> exists z', s / id => z'.
 Proof.
-  intros e s z id Heval Hdef.
-  generalize dependent z.
-  induction e. 
-    inversion Hdef.
-    induction s.
-      (* base *)
-      intros z Heval. inversion Heval. inversion H0.
-      (* step *)
-      intros z Hdef_new. inversion Hdef_new. inversion Hdef.
-      subst i i0 id0. exists z. assumption. 
-    destruct b;
-    (* solves cases with binary operations Z->Z->Z *)
-    try solve [
-          intros z Hact;     
-          inversion_clear Hdef;
-          inversion_clear Hact;
-          inversion_clear H as [Hl | Hr];
-          [ exact (IHe1 Hl za H0) |
-            exact (IHe2 Hr zb H1) ]
-        ];
-    (* solves cases with binary operations Z->Z->bool *)
-    try solve [
-          intros z Hact;
-          inversion_clear Hdef;
-          inversion_clear Hact;
-          [
-            inversion_clear H as [Hl | Hr]; [
-              exact (IHe1 Hl za H0) |
-              exact (IHe2 Hr zb H1) ] |
-            inversion_clear H as [Hl | Hr]; [
-                exact (IHe1 Hl za H0) |
-                exact (IHe2 Hr zb H1)] ]
-        ].  
-  Qed.
+  intros. generalize dependent z.
+  induction e.
+  + intros. inversion H0.
+  + intros. inversion H0. inversion H. rewrite <- H1. exists z. assumption.
+  + intros. inversion_clear H; inversion_clear H0; inversion_clear H; eauto.
+Qed.
 
 (* If a variable in expression is undefined in some state, then the expression
    is undefined is that state as well
@@ -175,54 +147,39 @@ Proof.
 Lemma undefined_variable: forall (e : expr) (s : state Z) (id : id),
   id ? e -> (forall (z : Z), ~ (s / id => z)) -> (forall (z : Z), ~ ([| e |] s => z)).
 Proof.
-  intros e s id Hvar Hundef z.
-  unfold not; intro Heval.
-  pose proof (defined_expression e s z id Heval Hvar) as Hex.
-  inversion Hex as [x Hdef].
-  contradiction (Hundef x).
+  intros. generalize dependent z. induction e.
+  + intro. inversion H.
+  + intro. inversion_clear H. unfold not in *. intro. inversion_clear H. apply H0 in H1. assumption.
+  + intro. unfold not in *. intro. inversion_clear H;
+    (inversion_clear H2; [
+       inversion_clear H1; repeat (apply IHe1 in H2; assumption) |
+       inversion_clear H1; repeat (apply IHe2 in H3; assumption)
+    ]).
 Qed.
 
 (* The evaluation relation is deterministic *)
-Lemma bs_eval_deterministic: forall (e : expr) (s : state Z) (z1 z2 : Z),
+Lemma eval_deterministic: forall (e : expr) (s : state Z) (z1 z2 : Z),
   [| e |] s => z1 -> [| e |] s => z2 -> z1 = z2.
 Proof.
-  intros e s z1 z2 H1 H2.
-  generalize dependent z1.
-  generalize dependent z2.
-  induction e;
-    try (destruct b);
-    try (intros z2 H2 z1 H1; inversion H1; inversion H2; reflexivity);
-    try (intros z2 H2 z1 H1; 
-           inversion H1; 
-           inversion H2; 
-           rewrite <-(state_deterministic Z s i z1 z2); auto);
-    try (intros z2 H2 z1 H1; 
-           inversion H1; 
-           inversion H2; 
-           apply (IHe1 za0) in H3; 
-           apply (IHe2 zb0) in H6; congruence; assumption);
-    try (intros z2 H2 z1 H1;
-           inversion H1; 
-             (inversion H2; 
-                try reflexivity;
-                apply (IHe1 za0) in H3; [
-                  subst za;
-                  apply (IHe2 zb0) in H4; [
-                    subst zb; contradiction 
-                  | assumption ] 
-                | assumption]; 
-                try reflexivity
-             ));
-    try (intros z2 H2 z1 H1;
-           inversion H1;
-             (inversion H2; 
-                apply (IHe1 za0) in H3; [
-                  subst za; 
-                  apply (IHe2 zb0) in H4; [
-                    subst zb; reflexivity 
-                  | assumption] 
-                | assumption]
-             )).
+  intros ? ?.
+  induction e.
+  * intros. inversion_clear H. inversion_clear H0. reflexivity.
+  * intros. inversion_clear H. inversion_clear H0. apply state_deterministic with (st:=s)(x:=i); assumption.
+  * intros. destruct b; inversion_clear H; inversion_clear H0;
+     try (
+          apply (IHe1 _ _ H1) in H;
+          apply (IHe2 _ _ H2) in H3;
+          subst;
+          reflexivity
+       );
+      try (apply (IHe1 _ _ H1) in H;
+           apply (IHe2 _ _ H2) in H4;
+           subst;
+           unfold not in *;
+           try omega; auto);
+      try (apply H5 in H3; inversion H3);
+      try (apply H3 in H5; inversion H5);
+      (apply (IHe1 _ _ H1) in H; apply (IHe2 _ _ H2) in H5; subst; reflexivity).
 Qed.
 
 (* Equivalence of states w.r.t. an identifier *)

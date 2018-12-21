@@ -46,7 +46,7 @@ Section S.
   Lemma update_shadow : forall (st : state) (x1 x2 : id) (n1 n2 m : A),
     st[x2 <- n1][x2 <- n2] / x1 => m -> st[x2 <- n2] / x1 => m.
   Proof.
-    intros st x1 x2 n1 n2 m H. unfold update in *. set (eq_id_dec x2 x1). inversion_clear s.
+    intros st x1 x2 n1 n2 m H. unfold update in *. set (id_eq_dec x2 x1). inversion_clear s.
       rewrite H0 in *. inversion H. constructor. unfold not in H6. exfalso. auto.
       inversion H. constructor. apply st_binds_tl. assumption. inversion H7. exfalso. auto. assumption.
   Qed.
@@ -54,7 +54,7 @@ Section S.
   Lemma update_same : forall (st : state) (x1 x2 : id) (n1 m : A),
     st / x1 => n1 -> st / x2 => m -> st [x1 <- n1] / x2 => m.
   Proof.
-    intros st x1 x2 n1 m H1 H2. unfold update. set (eq_id_dec x1 x2). inversion_clear s.
+    intros st x1 x2 n1 m H1 H2. unfold update. set (id_eq_dec x1 x2). inversion_clear s.
       rewrite H in *. apply (state_deterministic st x2 n1 m) in H1. rewrite H1. constructor. assumption.
         apply st_binds_tl. congruence. assumption.    
   Qed.

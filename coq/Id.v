@@ -73,17 +73,17 @@ Proof.
     apply H in H1. left. assumption. right. auto.
 Qed.
 
-Lemma eq_id_dec : forall id1 id2 : id, {id1 = id2} + {id1 <> id2}.
+Lemma id_eq_dec : forall id1 id2 : id, {id1 = id2} + {id1 <> id2}.
 Proof. prove_with eq_dec. Qed. 
 
-Lemma eq_id : forall (T:Type) x (p q:T), (if eq_id_dec x x then p else q) = p. 
+Lemma eq_id : forall (T:Type) x (p q:T), (if id_eq_dec x x then p else q) = p. 
 Proof.
-  intros. destruct (eq_id_dec x x). reflexivity. exfalso; auto.
+  intros. destruct (id_eq_dec x x). reflexivity. exfalso; auto.
 Qed.
 
-Lemma neq_id : forall (T:Type) x y (p q:T), x <> y -> (if eq_id_dec x y then p else q) = q. 
+Lemma neq_id : forall (T:Type) x y (p q:T), x <> y -> (if id_eq_dec x y then p else q) = q. 
 Proof.
- intros. destruct (eq_id_dec x y). contradiction. reflexivity.
+ intros. destruct (id_eq_dec x y). contradiction. reflexivity.
 Qed.
 
 Lemma lt_gt_id_false : forall id1 id2 : id,
