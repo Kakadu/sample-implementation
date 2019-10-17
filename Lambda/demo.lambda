@@ -1,0 +1,19 @@
+def y    = \f . (\ x. f (x x)) (\x .f (x x)) in
+def true = \x y . x in
+def false = \x y . y in
+def zero = \f x . x in
+def one = \f x . f x in
+def three = \f x . f (f ( f x))) in
+def plus = \m n f x . m f (n f x) in
+def mul = \m n f x . m (n f) x in
+
+def ite = \c t e . c t e in
+def isZero = \x . x false neg false in
+def neg = \x . x false true in
+def sub = \m n . n pred m in
+def pred = \n f x . n xxx (\u . x) (\u.u) in
+def xxx = \g h . h (g f) in 
+
+def fac = \self n . ite (isZero n) one (mul n (self (minus n one))) in
+
+y fac three
