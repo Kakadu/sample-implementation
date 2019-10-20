@@ -58,6 +58,7 @@ module Make (K : sig val keywords : string list end) =
       let s = List.fold_left (fun s k -> S.add k s) S.empty K.keywords in
       (fun i -> S.mem i s)
 
+    open Ostap
     ostap (
       ident  : x:IDENT =>{not (is_keyword (r x))}=> {r x};
       literal: x:LITERAL {int_of_string (r x)}
@@ -71,8 +72,8 @@ module Make (K : sig val keywords : string list end) =
                  ]
       in
 
-      let ident   = Str.regexp "[a-zA-Z_]\([a-zA-Z_0-9]\)*\\b" in
-      let literal = Str.regexp "-?[0-9]+" in
+      let ident   = Re_str.regexp "[a-zA-Z_]\([a-zA-Z_0-9]\)*\\b" in
+      let literal = Re_str.regexp "-?[0-9]+" in
       object (self)
         inherit Ostap.Matcher.t s
         method skip p coord = skip s p coord

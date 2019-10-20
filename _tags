@@ -1,5 +1,5 @@
 true: rectypes
-true: package(checked)
+true: package(GT,re,re.str)
 <common/*.ml>: syntax(camlp5o), package(ostap.syntax,GT.syntax)
 <js/Js_frontend.ml>: syntax(camlp4o), package(js_of_ocaml.syntax,ostap)
 <js/Js_frontend.byte>: package(js_of_ocaml,ostap)

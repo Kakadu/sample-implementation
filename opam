@@ -1,0 +1,34 @@
+opam-version: "2.0"
+
+name: "sample-implemetation"
+synopsis: "Aasdf"
+description: """
+Aasdf
+"""
+version: "0.0.2"
+
+maintainer: "kakadu.hafanana@gmail.com"
+authors: ["https://github.com/dboulytchev" "https://github.com/Kakadu"]
+#homepage: "https://github.com/dboulytchev/GT"
+#bug-reports: "https://github.com/dboulytchev/GT/issues"
+depends: [
+  "ocaml"
+  "ocamlfind"  {build}
+  "ocamlbuild" {build}
+  "js_of_ocaml-ocamlbuild" {build}
+  "camlp5"
+  "ostap"
+  "re"         { >= "1.9.0" }
+  "ppx_import" {with-test}
+]
+build: [
+  [make]
+#  [make "test"] {with-test}
+]
+install: [make "PREFIX=%{prefix}%" "install"]
+remove: [make "PREFIX=%{prefix}%" "uninstall"]
+#dev-repo: "git+https://github.com/dboulytchev/GT.git"
+#url {
+#  src: "git+https://github.com/Kakadu/GT.git"
+#}
+
